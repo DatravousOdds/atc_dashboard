@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "192.168.1.80",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "database": "atc_contracts",
+            "username": "postgres",
+            "name": "Remote PG",
+            "password": "postgres"
+        }
+    ]
+}

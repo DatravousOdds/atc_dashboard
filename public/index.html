@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATC Analytics Dashboard</title>
+    <link rel="icon" type="image/png" href="./assets/favicon-96x96.png">
+    <!-- CSS Files-->
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <!-- Font Awesome-->
+    <script src="https://kit.fontawesome.com/854f8a6196.js" crossorigin="anonymous"></script>
+    <!-- JQuery-->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <!-- Charts.js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!--- DataTables **LOAD AFTER JQUERY** -->
+    <script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
+
+    
+
+</head>
+<body>
+    <header>
+        <h1>ATC Contracts Dashboard</h1>
+        <nav>
+            <li><p>American Traffic Construction Analytics</p></li>
+            <li class="theme-toggle" id="theme-toggle" aria-label="Toggle light mode">
+                <i class="fa-solid fa-sun"></i>
+            </li>
+        </nav>
+        
+
+    </header>
+    <main>
+        <!-- Overview & Filters-->
+        <section id="overview" class="overview">
+            <div id="overview-filters" class="overview-filters">
+                <!-- Date Range Filter -->
+                <label for="date-range">Year:</label>
+                <select id="date-range">
+                    <option value="all">All</option>
+                    
+                </select>
+                <!-- Month Filter -->
+                <label for="month">Month:</label>
+                <select id="month">
+                    <option value="all">All</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <!-- Contracts Filter -->
+                <label for="contracts">Contracts:</label>
+                    
+                    <select id="contracts">
+                        <option value="all">All</option>
+                        <!-- Display dynamically-->
+                    </select>
+                
+                <!-- Search Bar Specific Bid Item-->
+                 <div class="search-input-container">
+                   <input type="search" class="search-bid-item" id="search-bid-item" placeholder="Search Specific Contract..."  autocomplete="off" >
+                    <i class="fa-solid fa-magnifying-glass"></i> 
+                    <!-- Search Dropdown -->
+                     <div id="searchDropdown" class="searchDropdown">
+                        <ul class="searchResults">
+                            <!-- Display dynamically-->
+                        </ul>
+                     </div>
+                 </div>
+                
+                
+            </div>
+            <div id="kpi" class="kpi-container">
+                <!-- KPI Cards -->
+                <div class="kpi-card">
+                    <h3>Total Contract Value (YTD)</h3>
+                    <p id="total-contract-value">$0</p>
+                    <p class="kpi-note">Across all contracts</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Number of Active Contracts</h3>
+                    <p id="price-bid-growth">0</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Win Rate %</h3>
+                    <p id="total-contracts">0%</p>
+                    <p class="kpi-note">In selected period</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Average Contract Value</h3>
+                    <p id="average-contract-value">3.33</p>
+                </div>
+                
+            </div>
+        </section>
+        <!-- Chart Displays-->
+        <section id="charts">
+            
+            <div class="charts-container">
+               <div id="chart1" class="chart-container">
+                <h3>Contract Value Over Time</h3>
+                <canvas id="contractValueChart"></canvas>
+                </div>
+            
+                <div id="chart3" class="chart-container">
+                    <h3>Contracts Per Month</h3>
+                    <canvas id="contractsPerMonthChart"></canvas>
+                </div>
+
+                <div id="chart4" class="chart-container">
+                    <h3>Revenue By Customer</h3>
+                    <canvas id="averageContractValueChart"></canvas>
+                </div>
+
+                <div id="chart5" class="chart-container">
+                    <h3>Top 5 Vendors By Value</h3>
+                    <canvas id="mostQuotedVendors"></canvas>
+                </div> 
+            </div>
+            
+
+        </section>
+        <!-- Data Tables -->
+        <section id="data-tables">
+            <!-- Win/Loss Table-->
+            <div class="data-table-container">
+            <h2>Win/Loss By Contractor</h2>
+            <table id="contracts-table" >
+                <thead>
+                    <tr>
+                        <th>Contractor</th>
+                        <th>Bids Submitted</th>
+                        <th>Bids Won</th>
+                        <th>Win Rate</th>
+                    </tr>
+                    
+                </thead>
+                <tbody>
+                    <!-- Data rows will be populated here dynamically -->
+                     
+                </tbody>
+            </table>
+            </div>
+            <!-- Bid Items Table-->
+            <div class="data-table-container">
+              <h2>Top Bid Items</h2>
+            <table id="bid-items-table" class="data-table-container ">
+                <thead>
+                    <tr>
+                        <th>Contract</th>
+                        <th>Item #</th>
+                        <th>Description</th>
+                        <th>Unit Price</th>
+                        <th>Bid Value</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be populated here dynamically -->
+                </tbody>
+            </table>  
+            </div>
+            <!-- Vendors Table-->
+            <div class="data-table-container">
+              <h2>Vendor Performance</h2>
+            <table id="vendor-performance-table" class="data-table-container">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Qunatity</th>
+                        <th>Unit Price</th>
+                        <th>Extended Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be populated here dynamically -->
+                </tbody>
+            </table>  
+            </div>
+            
+        </section>
+    </main>
+    
+    <script src="js/theme.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/dataTables.js"></script>
+    <script src="js/charts.js"></script>
+    
+    
+</body>
+</html>
