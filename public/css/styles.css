@@ -224,11 +224,12 @@ border-bottom-right-radius: 0;
 
 
 .kpi-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
     margin-top: 1rem;
     margin-bottom: 1rem;
     gap: 1rem;
-    flex-wrap: wrap;
+   
 
 }
 
@@ -617,16 +618,21 @@ footer {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
-  .kpi-container .kpi-card {
-    width: calc(50% - 0.5rem);
-    max-width: 390px;
-  }
+    .kpi-container {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+  
 }
 
 /* Medium devices (768px and up) */
 @media (min-width: 768px) {
 
     .charts-container { 
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    .kpi-container {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
@@ -642,10 +648,8 @@ footer {
     /* min-width: 200px; */
   }
 
-  .kpi-container .kpi-card {
-    width: calc(50% - 0.5rem);
-    max-width: 450px;
-  }
+  
+
 
   table.dt-table thead th {
         padding: var(--spacing-sm);
@@ -675,10 +679,11 @@ footer {
         grid-template-columns: repeat(2, 2fr);
     }
 
-  .kpi-container .kpi-card {
-    width: calc(50% - 0.5rem);
-    max-width: 500px;
-  }
+    .kpi-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+  
 
   .dt-layout-row {
         flex-direction: column;
@@ -705,16 +710,11 @@ footer {
 
 /* Desktop (1440px and up) */
 @media (min-width: 1440px) {
-  .kpi-container .kpi-card {
-    width: calc(25% - 0.75rem);
-    max-width: 100%;
-  }
+  
 }
 
 /* Large desktop (2560px and up) */
 @media (min-width: 2560px) {
-  .kpi-container .kpi-card {
-    width: 618px;
-  }
+  
 }
 
