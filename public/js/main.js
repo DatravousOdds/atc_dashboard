@@ -406,6 +406,7 @@ $(document).ready(function () {
 
     dateRangeDropdown.addEventListener('change', async function() {
         contractDropdown.value = 'all';
+        searchInput.value = '';
 
         applyFilters();
         
