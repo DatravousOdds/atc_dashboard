@@ -1,3 +1,8 @@
+
+/* ================================
+   GLOBAL STYLES
+   ================================ */
+
 * {
     margin: 0;
     padding: 0;
@@ -10,15 +15,27 @@ body {
     color: #333;
     line-height: 1.6;
     padding: 20px;
+    min-height: 100vh;
 }
 
+/* ================================
+   FOCUS STYLES
+   ================================ */
 
+*:focus-visible {
+    outline: 2px solid var(--color-prime);
+    outline-offset: 2px;
+}
+
+/* ================================
+   HEADER STYLES
+   ================================ */
 
 header {
     
     color:var(--color-prime);
-    padding: 10px 0;
-    margin-bottom: 20px;
+    padding: var(--spacing-md) 0;
+    margin-bottom: var(--spacing-lg);
     border-bottom: 3px solid var(--color-prime);
 }
 
@@ -26,9 +43,24 @@ header p {
     color: var(--text-color);
 }
 
+
+/* ================================
+   NAVIGATION STYLES
+   ================================ */
+
 nav {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+nav ul {
+    display: flex;
+    gap: var(--spacing-md);
+    list-style: none;
+    flex-wrap: wrap;
 }
 
 nav li {
@@ -40,6 +72,7 @@ nav li {
 
 .theme-toggle {
     background: none;
+    border: 2px solid transparent;
     color: var(--main-text-color);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
@@ -50,12 +83,17 @@ nav li {
 
 .theme-toggle:hover {
     color: var(--color-prime);
+    background-color: var(--navy-light);
 }
 
+/* ================================
+   OVERVIEW SECTION
+   ================================ */
+
 .overview {
-    /* padding: 0.5rem; */
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-md);
 }
 
 .overview-filters { 
@@ -74,7 +112,8 @@ nav li {
     font-weight: 600;
     color: var(--main-text-color);
     font-size: 0.95rem;
-    margin: auto;
+    display: block;
+    margin-bottom: var(--spacing-xs);
 }
 
 .overview-filters select,
@@ -87,26 +126,26 @@ nav li {
     background-color: var(--navy-light-light);
     width: 100%;
     color: var(--text-color);
+    transition: var(--transition);
     
 }
 
 .overview-filters select:hover,
 .overview-filters input:hover {
     background-color: var(--navy-medium-light);
-   
+    border-color: var(--color-prime);
     cursor: pointer;
+
 }
 
-.overview-filters input:focus {
-    outline: none;
-     border: 2px solid var(--color-prime);
-}
-
+.overview-filters input:focus,
 .overview-filters select:focus {
     outline: none;
-    border: 2px solid var(--color-prime);
-    box-shadow: 0px 0px 4px 4px rgba(220, 20, 60, 0.3);
+    border-color: var(--color-prime);
+    box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
 }
+
+
 
 
 
@@ -118,19 +157,21 @@ nav li {
  color: var(--text-color);
  padding-left: 2rem;
  border: 2px solid var(--color-prime);
- /* border-bottom: transparent; */
  background-color: var(--navy-light-light);
  width: 100%;
- transition: 0.3s ease-in-out;
+ transition: all 0.3s ease-in-out;
 }
 
 .search-bid-item.active {
-border-bottom: transparent !important;
+border-bottom: transparent;
 box-shadow: none;
-border-bottom-left-radius: 0%;
-border-bottom-right-radius: 0%;
-
+border-bottom-left-radius: 0;
+border-bottom-right-radius: 0;
 }
+
+/* ================================
+   SEARCH INPUT
+   ================================ */
 
 
 .search-input-container {
@@ -150,11 +191,12 @@ border-bottom-right-radius: 0%;
 
 .search-input-container input::placeholder {
     color:var(--text-color);
-    font-size: 15px;
+    font-size: 0.95rem;
     /* padding-left: 0.5rem; */
 }
 
-.search-input-container input:active
+.search-input-container input:active,
+.search-input-container input:focus
  {
     outline: none;
     border: 2px solid var(--color-prime);
@@ -162,8 +204,16 @@ border-bottom-right-radius: 0%;
 
 }
 
+.search-input-container input:hover {
+    background-color: var(--navy-medium-light);
+    cursor: pointer;
+    border-color: var(--color-prime);
+}
 
-/* Kpi Section */
+
+/*  ================================
+    KPI SECTION
+    ================================ */
 
 #price-bid-growth,
 #total-contracts,
@@ -178,7 +228,6 @@ border-bottom-right-radius: 0%;
     margin-top: 1rem;
     margin-bottom: 1rem;
     gap: 1rem;
-    /* padding: 0.5rem; */
     flex-wrap: wrap;
 
 }
@@ -191,15 +240,14 @@ border-bottom-right-radius: 0%;
     background-color: var(--background-prime);
     text-align: left;
     width: 100%;
-    transition: 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
 }
 
 .kpi-container .kpi-card:hover {
     border: 2px solid var(--color-prime);
-    /* transition: 0.2s ease-in-out; */
-    transform: translateY(-3%);
+    transform: translateY(-3px);
     cursor: pointer;
-    box-shadow: 0 2px 12px 2px rgba(203, 31, 31, 0.92);
+    box-shadow: 0 4px 16px rgba(220, 20, 60, 0.2);
    
 }
 
@@ -217,12 +265,14 @@ border-bottom-right-radius: 0%;
     font-size: 1.8rem;
     color: var(--color-prime);
     margin-bottom: 0.25rem;
+    transition: all 0.3s ease-in-out;
 }
 
 .kpi-card .kpi-note {
     color: var(--text-color);
     font-size: 0.85rem;
     font-weight: 400;
+    line-height: 1.4;
 }
 
 .charts-container {
@@ -246,7 +296,7 @@ border-bottom-right-radius: 0%;
 .chart-container:hover {
     border: 2px solid var(--color-prime);
     box-shadow: 0 2px 12px 2px rgba(203, 31, 31, 0.92);
-    /* transition: box-shadow 0.2s ease-in-out; */
+   
 }
 
 .chart-container h3 {
@@ -256,7 +306,7 @@ border-bottom-right-radius: 0%;
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
     padding-bottom: 0.25rem;
-    /* border-radius: 8px; */
+   
 }
 
 
@@ -268,8 +318,6 @@ border-bottom-right-radius: 0%;
 
 
 /* Tables Styles */
-
-
 .dt-container {
     color: var(--main-text-color);
 }
@@ -499,6 +547,7 @@ table.dt-table thead th.dt-type-numeric {
     color: var(--main-text-color);
     z-index: 999;
     text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* Empty State */
