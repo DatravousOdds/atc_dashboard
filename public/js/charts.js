@@ -8,6 +8,10 @@ function initCharts() {
     
 }
 
+// ====== TO DO =================
+//  UPDATE LABELS & VALUE 
+//  TO SHOW YEAR & REVENUE 
+// ==============================
 function initContractValueOverTime() {
     const ctx = document.getElementById("contractValueChart");
     // fetch api
@@ -21,10 +25,10 @@ function initContractValueOverTime() {
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: contracts,
+                labels: contracts, // YEAR
                 datasets: [{
                     label: 'Value Over Time',
-                    data: value,
+                    data: value, // REVENUE PER YEAR
                     borderWidth:2,
                     borderColor: '#DC143C',
                     backgroundColor: '#DC143C',

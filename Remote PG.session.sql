@@ -32,8 +32,12 @@ WHERE 1=1
 --Total Wins/Total Game Played
 
 
-
-
+-- Insert mock contracts data
+INSERT INTO (contract_name, contract_type, total_bid_amount, date_awarded, status, bid_open, bid_close, awarded_to) VALUES
+  ('Mccart Avenue And Westcreek Drive Intersection Improvements', 'Traffic Signal', 550000, 5/1/2025, "Awarded", 2/1/2025, 10/7/2025, 1),
+  ('EParkville Road at Academy Way Traffic Signal Installation', 'Traffic Signal', 123000, 10/7/2025, "Awareded", 11/9/2025, 10/28/2025, 2),
+  ('Josey Lane at Rawhide Parkway Intersection Improvements', 'Traffic Signal', 7600000, 1/22/2026, "Awarded", 10/9/2025 , 10/28/2025 , 3),
+  ('2025 On-Call Street Light Contract', ''),
 
 
 -- Insert fake bid_items data

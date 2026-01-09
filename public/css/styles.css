@@ -611,8 +611,8 @@ footer {
 
 
 /* Responsive Design */
-/* Tablet (425px and up) */
-@media (min-width: 425px) {
+/* Tablet (480px and up) */
+@media (min-width: 480px) {
 
     .charts-container { 
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -710,11 +710,25 @@ footer {
 
 /* Desktop (1440px and up) */
 @media (min-width: 1440px) {
-  
+  .kpi-container {
+      grid-template-columns: repeat(4, 1fr);
+  }
+
+  .charts-container { 
+      grid-template-columns: repeat(2, 2fr);
+  }
 }
 
 /* Large desktop (2560px and up) */
 @media (min-width: 2560px) {
-  
+  body {
+    max-width: 2400px;
+    margin: 0 auto;
+  }
+
+  .kpi-container {
+      grid-template-columns: repeat(4, minmax(580px, 1fr));
+      max-width: 2000px;
+  }
 }
 

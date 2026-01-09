@@ -205,8 +205,9 @@ function displayResults(results) {
     searchInput.classList.add('active')
     // Check if no results
     if (results.length == 0) {
+        const theme = document.body.getAttribute('data-theme');
         // check theme and set color accordingly
-        if (document.body.classList.contains('dark-mode')) {
+        if (theme === 'dark') {
             searchResults.innerHTML = `<li style="color:white;">No results found!</li>`;
         } else {
             searchResults.innerHTML = `<li style="color:black;">No results found!</li>`;
