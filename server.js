@@ -403,6 +403,7 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
 
         let query = `
                     SELECT 
+                        v.company_name,
                         v.description,
                         v.order_qty,
                         v.unit_price,
@@ -474,8 +475,6 @@ app.get('/api/contracts/vendor/quote', async(req, res) => {
 
         const results = await pool.query(query, params);
 
-        // console.log("Results from vendors: ", results.rows.length);
-
         res.json(results.rows);
 
     } catch (error) {
@@ -483,7 +482,7 @@ app.get('/api/contracts/vendor/quote', async(req, res) => {
     }
 })
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3300;
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -237,7 +237,7 @@ function initMostQuotedVendors() {
         console.log("QUOTE DATA",data)
         const vendors = data.map(vendor => vendor.company_name);
         console.log("VENDORS",vendors)
-        const prices = data.map(price => price.total_price);
+        const prices = data.map(price => price.extended_price);
         console.log("PRICES",prices)
 
         // draw chart

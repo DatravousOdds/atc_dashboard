@@ -8,7 +8,7 @@ const bidItemsTable = $('#bid-items-table').DataTable({
         type: 'GET',
         data: function(d) {
             // Add filter parameters from dropdowns
-            const {dataRangeDropdown, monthDropdown, contractDropdown} = appState;
+            const { dataRangeDropdown, monthDropdown, contractDropdown } = appState;
             const selectedDateRange = dataRangeDropdown ? dataRangeDropdown.value : 'all';
             const selectedMonth = monthDropdown ? monthDropdown.value : 'all';
             const selectedContract = contractDropdown ? contractDropdown.value : 'all';
@@ -118,7 +118,8 @@ const vendorPerformanceTable = $('#vendor-performance-table').DataTable({
         }
     },
     columns : [
-        { data: 'descriptopm', title: 'Item Name', defaultContent: '-' },
+        { data: 'company_name', title: 'Vendor', defaultContent: '-'},
+        { data: 'description', title: 'Item', defaultContent: '-' },
         { data: 'order_qty', title: 'Qunatity', defaultContent: '0' },
         { data: 'unit_price', title: 'Unit Price', defaultContent: '0' },
         { data: 'extended_price', title: 'Extended Price', defaultContent: '0%' }
