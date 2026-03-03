@@ -12,6 +12,7 @@
 // ==========================================
 
 // Get 
+
     
 async function getTotalContractValue(year, month, contractId) {
     const params = new URLSearchParams();   
@@ -41,6 +42,25 @@ async function getTotalContractValue(year, month, contractId) {
 
 }
 
+async function getTotalRevenue() {
+    const { averageContractValue } = appState;
+  try {
+        const res = await fetch(`/api/contracts/revenue`);
+        if(!res.ok) {
+            throw new Error("API Error:", res.status)
+        }
+
+        const data = await res.json();
+        // console.log("total revenue", data.total_revenue)
+
+        averageContractValue.textContent = formatCurrency(data.total_revenue) || "$0.00";
+
+    } catch(error) {
+        console.log("Error fetching data!", error.message);
+        averageContractValue.textContent = "Error loading data";
+    }  
+}
+
 function getTopBidItems(year, month, contractId) {
     const params = new URLSearchParams();   
 
@@ -48,11 +68,11 @@ function getTopBidItems(year, month, contractId) {
     if( month && month !=='all') params.append('month', month);
     if( contractId && contractId !=='all') params.append('contractId', contractId);
 
-    console.log("Fetching bid items for contract:", contractId);
+    // console.log("Fetching bid items for contract:", contractId);
     fetch(`/api/contracts/bidItems?${params.toString()}`)
     .then(res => res.json())
     .then(data => {
-        console.log("Bid Items",data);
+        // console.log("Bid Items",data);
         // reload data table
         if (appState.bidItemsTable) {
             appState.bidItemsTable.ajax.reload();
@@ -71,7 +91,7 @@ function getTotalActiveContracts(year, month, contractId) {
     if( month && month !=='all') params.append('month', month);
     if( contractId && contractId !=='all') params.append('contractId', contractId);
 
-    fetch(`/api/contracts?status=completed&${params.toString()}`)
+    fetch(`/api/contracts?status=pending&${params.toString()}`)
     .then(res => res.json())
     .then(data => {
         activeContracts.textContent = data.length || 0; 
@@ -81,35 +101,35 @@ function getTotalActiveContracts(year, month, contractId) {
     })
 }
 
-function getAverageContractValue(year, month, contractId) {
-    const { averageContractValue } = appState;
+// function getAverageContractValue(year, month, contractId) {
+//     const { averageContractValue } = appState;
     
-    const params = new URLSearchParams();
+//     const params = new URLSearchParams();
 
-    if( year && year !=='all') params.append('year', year);
-    if( month && month !=='all') params.append('month', month);
-    if( contractId && contractId !=='all') params.append('contractId', contractId);
+//     if( year && year !=='all') params.append('year', year);
+//     if( month && month !=='all') params.append('month', month);
+//     if( contractId && contractId !=='all') params.append('contractId', contractId);
 
-    try{
-        // ask api
-        fetch(`/api/contracts/average?${params.toString()}`)
-        .then(res => res.json())
-        .then(data => {
+//     try{
+//         // ask api
+//         fetch(`/api/contracts/average?${params.toString()}`)
+//         .then(res => res.json())
+//         .then(data => {
         
-            // display average to client
-            averageContractValue.textContent = formatCurrency(data.average_contract_value) || "$0.00";
-        })
-        .catch(error => {
-            console.error("Error fetching average:", error);
-            averageContractValue.textContent = "Error";
-        })
+//             // display average to client
+//             averageContractValue.textContent = formatCurrency(data.average_contract_value) || "$0.00";
+//         })
+//         .catch(error => {
+//             console.error("Error fetching average:", error);
+//             averageContractValue.textContent = "Error";
+//         })
 
-    } catch(error) {
-        console.log("Error fetching average contract value!", error)
-    }
+//     } catch(error) {
+//         console.log("Error fetching average contract value!", error)
+//     }
         
     
-}
+// }
 
 function getWinRatePercentage(year, month, contractId) {
     const { winRate } = appState;
@@ -121,7 +141,7 @@ function getWinRatePercentage(year, month, contractId) {
     fetch(`/api/contracts/win-rate?${params.toString()}`)
     .then(res => res.json())
     .then(data => {
-        console.log("Win Rate Data:", data)
+        // console.log("Win Rate Data:", data)
         winRate.textContent = data.win_rate ? `${data.win_rate}%` : "0%";
     })
     .catch(error => {
@@ -138,7 +158,7 @@ function loadContracts() {
     fetch(`/api/contracts/dropdown`)
     .then(res => res.json())
     .then(data => {
-        console.log(data)
+        // console.log(data)
         data.forEach(d => {
             const op = document.createElement('option');
             op.textContent = d.contract_name;
@@ -254,12 +274,12 @@ function applyFilters() {
     const year = dateRangeDropdown.value;
     const contractId = contractDropdown.value;
   
-     console.log("Applying Filters - Year:", year, "Month:", month, "Contract:", contractId);
+    //  console.log("Applying Filters - Year:", year, "Month:", month, "Contract:", contractId);
 
     // Fetch filtered contracts
 
     getTotalActiveContracts(year, month, contractId);
-    getAverageContractValue(year, month, contractId);
+    // getAverageContractValue(year, month, contractId);
     getTotalContractValue(year, month, contractId);
     getWinRatePercentage(year, month, contractId);
     getTopBidItems(year, month, contractId);
@@ -267,7 +287,7 @@ function applyFilters() {
 
 
     if(appState.bidItemsTable) {
-       console.log(appState.bidItemsTable.data());
+       appState.bidItemsTable.clear().draw();
     }
 }
 
@@ -337,6 +357,7 @@ $(document).ready(function () {
     loadDateRange();
     loadContracts();
     applyFilters(); // initial load with default filters
+    getTotalRevenue();
 
     // Click outside to close search dropdown
     document.addEventListener('click', function(event) {

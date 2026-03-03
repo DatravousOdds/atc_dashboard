@@ -244,6 +244,18 @@ border-bottom-right-radius: 0;
     transition: all 0.3s ease-in-out;
 }
 
+.kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.kpi-header i {
+    font-size: 1.5rem;
+    color: var(--color-prime);
+}
+
 .kpi-container .kpi-card:hover {
     border: 2px solid var(--color-prime);
     transform: translateY(-3px);

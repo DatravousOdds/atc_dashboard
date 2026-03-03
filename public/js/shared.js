@@ -22,7 +22,7 @@ const appState = {
     
     // ===== DATA TABLES =====
     bidItemsTable: null,
-    contractsTable: null,
+    profitabilityTable: null,
     vendorPerformanceTable: null,
     winLossByContractorTable: null
 };

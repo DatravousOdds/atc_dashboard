@@ -1,6 +1,9 @@
 
+
+
+
 function initCharts() {
-    initContractValueOverTime();
+    initRevenueVsExpenseChart();
     initContractsPerMonth();
     initAverageContractValue();
     initMostQuotedVendors();
@@ -12,36 +15,50 @@ function initCharts() {
 //  UPDATE LABELS & VALUE 
 //  TO SHOW YEAR & REVENUE 
 // ==============================
-function initContractValueOverTime() {
-    const ctx = document.getElementById("contractValueChart");
+function initRevenueVsExpenseChart() {
+    const ctx = document.getElementById("revenueVsExpenseChart");
     // fetch api
-    fetch('/api/contracts/revenue/customer')
+    fetch('/api/contracts/finance/revenue-vs-expense')
     .then(res => res.json())
     .then(data => {
-        const contracts = data.map(contract => contract.contract_name);
-        const value = data.map(val => val.revenue)
-        console.log("contract values",value)
-
+        
+        console.log("Revenue vs Expense Data:",data)
+        console.log("Revenue:",data.revenue);
+        const revenue = data.revenue;
+        const expense = data.expense;
+        // const labels = data.labels;
+    
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: contracts, // YEAR
-                datasets: [{
-                    label: 'Value Over Time',
-                    data: value, // REVENUE PER YEAR
+                labels: ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'], // YEAR
+                datasets: 
+                [
+                    {
+                    label: 'Revenue',
+                    data: revenue, // revenue per month
                     borderWidth:2,
                     borderColor: '#DC143C',
                     backgroundColor: '#DC143C',
-                    pointStyle: 'line',
+                    pointStyle: 'circle',
                     tension: 0.1,
-                    hoverBackgroundColor: '#DC143C',
-
-                    
-                    
-                }]
+                    hoverBackgroundColor: '#DC143C', 
+                    },
+                    {
+                    label: 'Expense',
+                    data: expense, // expense per month
+                    borderWidth:2,
+                    borderColor: '#92a6bd',
+                    backgroundColor: '#92a6bd',
+                    borderDash: [5, 5],
+                    pointStyle: 'circle',
+                    tension: 0.1,
+                    hoverBackgroundColor: '#92a6bd', 
+                    },
+            ]
             },
             options: {
-                resposive: true,
+                responsive: true,
                 maintainAspectRatio: true,
                 scales: {
                     x: {
@@ -52,8 +69,7 @@ function initContractValueOverTime() {
                             color: '#334155'
                         }
                     },
-                    y: {min:0,
-                        max:Math.max(value),
+                    y: {beginAtZero: true,
                         ticks: { 
                             callback: function(value, index, ticks) {
                                 return new Intl.NumberFormat('en-US', {
@@ -68,9 +84,13 @@ function initContractValueOverTime() {
                         }
                     }
                 },
-                labels: {
-                    color: '#E8E8E8'
-                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                        }
+                    }
+                }
                 
             }
         }) 
@@ -85,15 +105,15 @@ function initContractValueOverTime() {
 }
 
 function initContractsPerMonth() {
-    const ctx = document.getElementById("contractsPerMonthChart")
+    const ctx = document.getElementById("contractsPerMonthChart");
 
     // data
     fetch(`api/contracts/perMonth`)
     .then(res => res.json())
     .then(data => {
-        console.log(data)
-        const monthName = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
-        const labels = data.map(item => monthName[item.month - 1]);
+        // console.log( "Contracts Per Month Data:",data)
+        ;
+        const labels = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
         // console.log(labels)
         const contractCount = data.map(item => item.count);
         
@@ -116,7 +136,7 @@ function initContractsPerMonth() {
         }]
     },
     options: {
-        resposive: true,
+        responsive: true,
         maintainAspectRatio: true,
         scales: {
             x: {
@@ -127,8 +147,8 @@ function initContractsPerMonth() {
                     color: '#334155'
                 }
             },
-            y: {min:0,
-                max:50,
+            y: {beginAtZero: true,
+                max: Math.max(...contractCount) + 5, // Add some padding to the max value
                 ticks: { 
                     
                     color: '#55687E'},
@@ -140,6 +160,13 @@ function initContractsPerMonth() {
         },
         labels: {
             color: '#E8E8E8'
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    usePointStyle: true,
+                }
+            }
         }
     }
         })
@@ -152,70 +179,86 @@ function initContractsPerMonth() {
 
 }
 
+
 function initRevenueByCustomer() {
+    let revenueByCustomerChart;
     const ctx = document.getElementById("averageContractValueChart");
     // fetch api
     fetch(`api/contracts/revenue/customer`)
     .then(res => res.json())
     .then(data => {
 
-        const customers = data.map(customer => customer.contract_name);
-        const revenue = data.map(r => r.revenue)
-        
-        new Chart(ctx, {
-        type: 'line',
-        data: {
-        labels: customers,
-        datasets: [{
-            label: 'Revenue By Customer',
-            data: revenue,
-            borderWidth:2,
-            borderColor: '#DC143C',
-            backgroundColor: '#e0424294',
-            fill: 'origin',
-            borderRadius:8,
-            tension: 0.1,
-            hoverBackgroundColor: '#DC143C'
-            
-            
-            
-            
-        }]
-            },
-        options: {
-            resposive: true,
-            maintainAspectRatio: true,
-            scales: {
-                x: {
-                    ticks:  {
-                        color: '#7c8a99'
+        // console.log("Revenue by Customer Data:", data);
+        const customers = data.map(customer => customer.customer_name);
+        const revenue = data.map(customer => parseFloat(customer.revenue));
+        // console.log("Customers:", customers);
+        if (revenueByCustomerChart) {
+            revenueByCustomerChart.destroy();
+        }
+
+        revenueByCustomerChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: ['Customer1', 'Customer2', 'Customer3', 'Customer4'], // REPLACE WITH CUSTOMER NAMES
+            datasets: [{
+                label: 'Revenue', 
+                data: ['12000', '15000', '8000', '22000', '18000'], // REPLACE WITH REVENUE VALUES
+                borderWidth:2,
+                borderColor: '#DC143C',
+                backgroundColor: '#e0424294',
+                fill: 'start',
+                borderRadius: 8,
+                tension: 0.4,
+                hoverBackgroundColor: '#DC143C' 
+            }]
+                },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        ticks:  {
+                            color: '#7c8a99'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
                     },
-                    grid: {
-                        color: '#334155'
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            callback: function(value) {
+                            return new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                maximumSignificantDigits: 3
+                            }).format(value)
+                        },        
+                            color: '#55687E'},   
+                        grid: {
+                            color: '#334155'
+                        }
                     }
                 },
-                y: {min:0,
-                    max:1000000,
-                    ticks: { 
-                        callback: function(value, index, ticks) {
-                        return new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: 'USD'
-                        }).format(value)
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#E8E8E8'
+                        }
                     },
-                        
-                        color: '#55687E'},
-                        
-                    grid: {
-                        color: '#334155'
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label; // Show customer name as title
+                            } 
+                        }
                     }
-                }
-            },
-            labels: {
-                color: '#E8E8E8'
+                },
+                
             }
-        }
-    })
+        })
+        
+        
     })
     .catch(err => {
         console.log("Fetching Error:", err);
@@ -228,45 +271,99 @@ function initAverageContractValue() {
 
 }
 
+let laborVsProfitChart;
 function initMostQuotedVendors() {
-    const ctx = document.getElementById("mostQuotedVendors");
+    const ctx = document.getElementById("laborVsProfitChart");
     // api fetch
-    fetch('api/contracts/vendor/quote')
+    fetch('api/contracts/labor-vs-profit')
     .then(res => res.json())
     .then(data => {
-        console.log("QUOTE DATA",data)
-        const vendors = data.map(vendor => vendor.company_name);
-        console.log("VENDORS",vendors)
-        const prices = data.map(price => price.extended_price);
-        console.log("PRICES",prices)
-
+        // console.log("Labor vs Profit Data:", data);
+        const laborCost = data.map(item => parseFloat(item.labor_cost));
+        const profit = data.map(item => parseFloat(item.profit));
+        // console.log("Labor Cost:", laborCost);
+        // console.log("Profit:", profit);
         // draw chart
-        new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: vendors,
-        datasets: [{
-            label: 'Vendors By Value',
-            data: prices,
-            borderWidth:2,
-            borderColor: '#DC143C',
-            backgroundColor: '#e0424294',
-            fill: 'origin',
-            borderRadius:8,
-            tension: 0.1,
-            hoverBackgroundColor: '#DC143C'
-            
-            
-            
-        }]
-    },
-    options: {
-        resposive: true,
-        maintainAspectRatio: true,
-        labels: {
-            color: '#E8E8E8'
+
+        if (laborVsProfitChart) {
+            laborVsProfitChart.destroy();
         }
-    }
+
+        laborVsProfitChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'], // REPLACE WITH MONTHS
+                datasets: 
+                [
+                    {
+                    label: 'Labor Cost',
+                    data: laborCost,
+                    borderWidth:2,
+                    borderColor: '#DC143C',
+                    backgroundColor: '#e0424294',
+                    borderRadius:8,
+                    hoverBackgroundColor: '#DC143C',
+                    yAxisID: 'yMoney'
+                    },
+
+                    {
+                    label: 'Profit',
+                    data: profit,
+                    borderWidth:2,
+                    borderColor: '#ffffff55',
+                    backgroundColor: '#ffffff22',
+                    borderRadius:8,
+                    tension: 0.1,
+                    hoverBackgroundColor: '#ffffff99',
+                    yAxisID: 'yMoney' 
+                    },
+
+                ]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#7c8a99'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    },
+                    yMoney: {
+                        type: 'linear',
+                        position: 'left',
+                        beginAtZero: true,
+                        ticks: { 
+                            callback: function(value) {
+                                return new Intl.NumberFormat('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
+                                    maximumSignificantDigits: 3
+                                }).format(value)
+                            },        
+                            color: '#55687E'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    },
+                },
+
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#E8E8E8'
+                        }
+                    },
+                    tooltip: {
+                        
+                    }
+                }
+            }
         }) 
     })
     

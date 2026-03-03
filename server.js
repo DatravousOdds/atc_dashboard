@@ -108,7 +108,11 @@ app.get('/api/contracts/value', async(req, res) => {
 })
 
 app.get('/api/contracts/perMonth', async(req, res) => {
-    const query = 'SELECT count(*), EXTRACT(MONTH FROM date_awarded) as month FROM contracts GROUP BY month ORDER BY month';
+    const query = 
+    `   SELECT count(*),
+            
+             EXTRACT(MONTH FROM date_awarded) as month FROM contracts 
+        GROUP BY month ORDER BY month`;
     const result = await pool.query(query)
     res.json(result.rows)
     // console.log(result.rows)
@@ -148,12 +152,12 @@ app.get('/api/contracts/win-rate', async(req, res) => {
                 params.push(month)
             }
 
-            console.log('Win Rate Query:', query);
-            console.log('With Parameters:', params);
+            // console.log('Win Rate Query:', query);
+            // console.log('With Parameters:', params);
 
             const result = await pool.query(query, params)
             res.json(result.rows[0])
-            console.log("Win Rate Result:", result.rows);
+            // console.log("Win Rate Result:", result.rows);
    
     
     } catch (error) {
@@ -172,23 +176,55 @@ app.get('/api/contracts/year/dropdown', async(req,res) => {
     res.json(result.rows)
 })
 
-app.get('/api/contracts/revenue/customer', async(req,res) => {
-    try {
-        let query = `
-                    SELECT DISTINCT 
-                        contract_name, 
-                        SUM(total_bid_amount) as revenue
-                    FROM contracts
-                    GROUP BY contract_name
-                    ORDER BY revenue ASC
-                    LIMIT 5
-        `;
+app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
 
-        const results = await pool.query(query);
-        res.json(results.rows);
+    const { year, month, contractId } = req.query;
+
+    let query = `
+            SELECT 
+                TO_CHAR(i.invoice_date, 'Mon YYYY') as period,
+                i.total_amount AS total_revenue,
+                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))  AS total_expense
+            FROM contracts c
+            JOIN employees e ON c.id = e.contract_id
+            JOIN time_entries t ON t.employee_id = e.id
+            JOIN invoices i ON i.contract_id = c.id
+            WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (year && year !== 'all') {
+        query += ' AND EXTRACT(YEAR FROM i.invoice_date) = $' + (params.length + 1)
+        params.push(year)
+    }
+
+    if (month && month !== 'all') {
+        query += ' AND EXTRACT(MONTH FROM i.invoice_date) = $' + (params.length + 1)
+        params.push(month)
+    }
+    if (contractId && contractId !== 'all') {
+        query += ' AND c.id = $' + (params.length + 1)
+        params.push(contractId)
+    }
+
+    query += ` GROUP BY period, i.invoice_date, i.total_amount ORDER BY i.invoice_date ASC`;
+
+    try {
+        const results = await pool.query(query, params);
+
+        const response = {
+            revenue: results.rows.map(row => row.total_revenue),
+            expense: results.rows.map(row => row.total_expense),
+            labels: results.rows.map(row => row.period)
+        }
+
+        console.log("Revenue vs Expense results:",response);
+        res.json(response);
 
     } catch (error) {
-
+        res.status(500).json({ error: 'Failed to fetch revenue vs expense data' });
+        console.log("Error occured when fetching revenue vs expense data...", error)
     }
 })
 
@@ -202,20 +238,25 @@ app.get('/api/contracts/dropdown', async(req,res) => {
 })
 
 app.get('/api/contracts/bidItems', async(req, res) => {
-    try {
-        const { contractId, month, year } = req.query;
+    
+        const { contractId } = req.query;
 
         // console.log("Contract ID received:", name);
 
         let query = `SELECT 
-                        c.contract_name, 
-                        bi.bid_item_no,
-                        bi.description, 
-                        bi.unit_price, 
-                        bi.bid_value 
-                    FROM bid_items bi
-                    INNER JOIN contracts c ON c.id = bi.contract_id
-                    WHERE 1=1 
+                        c.contract_name AS project,
+                        bi.specification_section_no AS spec,
+                        bi.description AS desc,
+                        bi.unit_price AS unit_price,
+                        MIN(CASE WHEN cb.bidder_id != 2 THEN cb.unit_price END) AS competitor_price,
+                        MAX(CASE WHEN cb.bidder_id = 2 THEN cb.unit_price END) AS our_price,
+                        MAX(cb.unit_price) AS max_price,
+                        MAX(CASE WHEN cb.bidder_id = 2 THEN cb.total_price END) AS total,
+                        bi.quantity AS quantity
+                    FROM contracts c
+                    INNER JOIN bid_items bi ON c.id = bi.contract_id
+                    INNER JOIN contractor_bids cb ON bi.id = cb.bid_item_id
+                    WHERE 1=1
         `;
         const params = [];
 
@@ -224,20 +265,18 @@ app.get('/api/contracts/bidItems', async(req, res) => {
             params.push(contractId);
         }
 
-        if (year && year !== 'all') {
-            query += ' AND EXTRACT(YEAR FROM c.date_awarded) = $' + (params.length + 1);
-            params.push(year);
-        }
+        query += ` GROUP BY 
+                        c.contract_name, 
+                        bi.description, 
+                        bi.unit_price, 
+                        bi.quantity, 
+                        bi.specification_section_no 
+                    ORDER BY c.contract_name, bi.specification_section_no`;
 
-        if (month && month !== 'all') {
-            query += ' AND EXTRACT(MONTH FROM c.date_awarded) = $' + (params.length + 1);
-            params.push(month);
-        }
-        // console.log("Final Query:", query);        
-        // console.log("With Parameters:", params);
+    try {
 
         const results = await pool.query(query, params)
-        console.log("Bid Items rows return from api:",results.rows);
+        // console.log("Bid Items rows return from api:",results.rows);
 
         res.json(results.rows)
 
@@ -254,19 +293,31 @@ app.get('/api/contracts/winLoss', async(req, res) => {
         const params = [];
 
         let query = `
-            SELECT 
-                b.company_name,
-                COUNT(*) as contracts_submitted,
-                COUNT(CASE WHEN status = 'completed' THEN 1 END) as bids_won,
-                ROUND(
-                    COUNT(CASE WHEN status = 'completed' THEN 1 END) /
-                    COUNT(*) * 100,
-                    2
-                ) as win_rate
+            SELECT c.contract_name AS project,
+                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0) AS NUMERIC(10,2)) AS total_hours,
+                CAST
+                (
+                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)
+                AS NUMERIC(10,2)) AS total_labor_cost,
+
+                i.total_amount AS revenue,
+                CAST
+                (
+                    i.total_amount - 
+                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) 
+                AS NUMERIC(10,2)) AS profit,
+                CAST 
+                (
+                    (i.total_amount - 
+                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(i.total_amount, 0) * 100 
+                AS NUMERIC(5,2)) AS profit_margin_percent      
             FROM contracts c
-            INNER JOIN bidders b ON c.awarded_to = b.id
+            JOIN employees e ON c.id = e.contract_id
+            JOIN time_entries t ON t.employee_id = e.id
+            JOIN invoices i ON i.contract_id = c.id
             WHERE 1=1
-        `;
+            
+            `;
 
         if (contractId && contractId !== 'all') {
             
@@ -284,9 +335,7 @@ app.get('/api/contracts/winLoss', async(req, res) => {
             params.push(month)
         }
 
-        query += ` GROUP BY b.company_name
-                    ORDER BY win_rate DESC
-        `;
+        query += ` GROUP BY c.contract_name, i.total_amount ORDER BY c.contract_name ASC`;
 
         
 
@@ -297,7 +346,7 @@ app.get('/api/contracts/winLoss', async(req, res) => {
         }
 
         // console.log("Win/Loss results:",results.rows);
-        res.json(results.rows[0])
+        res.json(results.rows)
 
     } catch(error) {
         res.status(500).json({ error: 'Failed to fetch win/loss data' });
@@ -390,6 +439,83 @@ app.get('/api/contracts/average', async(req, res) => {
     }
 })
 
+app.get('/api/contracts/revenue/customer', async(req, res) => {
+    
+        const { year, month, contractId } = req.query;
+       
+        let query = `
+            SELECT
+                cl.name AS customer_name,
+                c.contract_name AS project,
+                i.total_amount AS revenue
+            FROM contracts c
+            JOIN invoices i ON i.contract_id = c.id
+            JOIN clients cl ON i.client_id = cl.id
+            WHERE 1=1 AND i.payment_status = 'pending'
+            
+        `;
+
+        const params = [];
+
+        if (year && year !== 'all') {
+            query += ' AND EXTRACT(YEAR FROM c.date_awarded) = $' + (params.length + 1)
+            params.push(year)
+        }
+
+        if (month && month !== 'all') {
+            query += ' AND EXTRACT(MONTH FROM c.date_awarded) = $' + (params.length + 1)
+            params.push(month)
+        }
+        if (contractId && contractId !== 'all') {
+            query += ' AND c.id = $' + (params.length + 1)
+            params.push(contractId)
+        }
+
+        query += `ORDER BY i.total_amount DESC`;
+
+    try {
+        const results = await pool.query(query);
+
+        if (results.rows.length === 0) {
+            return res.status(404).json({ error: "No data found for the given contract ID" });
+        }
+        
+        // console.log("Revenue by Customer results:",results.rows);
+
+        res.json(results.rows)
+
+    } catch (error) {
+        console.error("Error occured when fetching revenue by customer...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+})
+
+app.get('/api/contracts/revenue', async(req, res) => {
+    try {
+
+        let query = `
+            SELECT  SUM(i.total_amount) as total_revenue
+            FROM invoices i
+            WHERE 1=1 AND i.payment_status = 'paid';
+        `;
+
+    
+        const results = await pool.query(query);
+
+        if (results.rows.length === 0) {
+            return res.status(404).json({ error: "No data found for the given contract ID" });
+        }
+        
+        res.json(results.rows[0])
+
+        // console.log("revenue returned:",results.rows[0])
+
+    } catch (error) {
+        console.error("Error occured when fetching average contract value...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+})
+
 // ==================
 //  Vendors Routes
 // ==================
@@ -402,15 +528,15 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
         const params = [];
 
         let query = `
-                    SELECT 
-                        v.company_name,
-                        v.description,
-                        v.order_qty,
-                        v.unit_price,
-                        v.extended_price
-                    FROM vendors v
-                    INNER JOIN contracts c ON v.contract_id = c.id
-                    WHERE 1=1
+            SELECT v.name AS vendor_name,
+                bi.description AS item,
+                LAG(m.unit_cost, 1, 0.00) OVER (PARTITION BY v.id ORDER BY m.date_used) AS previous_price,
+                    m.unit_cost AS current_price,
+                    m.unit_cost - LAG(m.unit_cost, 1, 0.00) OVER (PARTITION BY v.id ORDER BY m.date_used) AS price_change
+            FROM materials m
+            JOIN vendors v ON m.vendor_id = v.id
+            JOIN bid_items bi ON m.bid_item_id = bi.id
+            WHERE 1=1  
         `;
 
         
@@ -420,11 +546,11 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
             params.push(contractId);
         }
 
-        query += `ORDER BY extended_price DESC`;
+        query += `ORDER BY m.date_used DESC`;
 
         const results = await pool.query(query, params);
 
-        // console.log("Performance results:",results.rows);
+        // console.log("Vendor Performance results:",results.rows);
 
         return res.json(results.rows);
 
@@ -433,7 +559,7 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
     }
 })
 
-app.get('/api/contracts/vendor/quote', async(req, res) => {
+app.get('/api/contracts/labor-vs-profit', async(req, res) => {
     
 
     try {
@@ -442,12 +568,20 @@ app.get('/api/contracts/vendor/quote', async(req, res) => {
 
         let query = `
                 SELECT 
-                    v.company_name,
-                    SUM(v.extended_price) as total_value,
-                    COUNT(v.contract_id) as quote_count
-                FROM vendors v
-                INNER JOIN contracts c ON v.contract_id = c.id
-                WHERE 1=1         
+                    CAST(
+                        i.total_amount - 
+                        SUM(EXTRACT(EPOCH FROM t.hours_worked)
+                        / 3600.0 * e.hourly_rate) 
+                    AS NUMERIC(10,2)) as profit,
+                    CAST
+                    (
+                        SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)
+                    ) AS labor_cost
+                FROM contracts c
+                JOIN employees e ON c.id = e.contract_id
+                JOIN time_entries t ON t.employee_id = e.id
+                JOIN invoices i ON i.contract_id = c.id
+                WHERE 1=1  
         `;
 
         
@@ -467,14 +601,11 @@ app.get('/api/contracts/vendor/quote', async(req, res) => {
             params.push(month);
         }
 
-        query += `
-            GROUP BY v.company_name
-            ORDER BY total_value DESC 
-            LIMIT 5
-        `;
+        query += ` GROUP BY i.total_amount ORDER BY profit DESC`;
 
         const results = await pool.query(query, params);
 
+        console.log("Labor vs Profit results:",results.rows);
         res.json(results.rows);
 
     } catch (error) {

@@ -22,11 +22,11 @@ const bidItemsTable = $('#bid-items-table').DataTable({
             if (selectedContract && selectedContract !== 'all') {
                 d.contractId = selectedContract;
             }
-            console.log('Sending to API:', d);
+            // console.log('Sending to API:', d);
             return d;
         },
         dataSrc: function(json) {
-            console.log('API Response:', json);
+            // console.log('API Response:', json);
             if(Array.isArray(json)) {
                 return json;
             }
@@ -38,18 +38,18 @@ const bidItemsTable = $('#bid-items-table').DataTable({
     },
     columns: [
         { 
-            data: 'contract_name', 
-            title: 'Contract',
+            data: 'project', 
+            title: 'Project',
             defaultContent: '-'
         },
         { 
-            data: 'bid_item_no', 
-            title: 'Item #',
+            data: 'spec', 
+            title: 'Spec',
             defaultContent: '-'
         },
         { 
-            data: 'description', 
-            title: 'Description',
+            data: 'desc', 
+            title: 'Desc',
             defaultContent: '-'
         },
         { 
@@ -62,8 +62,35 @@ const bidItemsTable = $('#bid-items-table').DataTable({
             }
         },
         { 
-            data: 'bid_value', 
-            title: 'Bid Value',
+            data: 'competitor_price', 
+            title: 'Competitor Price',
+            defaultContent: '$0.00',
+            render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            }
+        },
+        { 
+            data: 'our_price', 
+            title: 'Our Price',
+            defaultContent: '$0.00',
+            render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            }
+        },    
+        { 
+            data: 'max_price', 
+            title: 'Max Price',
+            defaultContent: '$0.00',
+            render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            }
+        },
+        { 
+            data: 'total', 
+            title: 'Total',
             defaultContent: '$0.00',
             render: function(data) {
                 if (!data) return '$0.00';
@@ -75,7 +102,7 @@ const bidItemsTable = $('#bid-items-table').DataTable({
 
 appState.bidItemsTable = bidItemsTable;
 
-const contractsTable = $('#contracts-table').DataTable({
+const profitabilityTable = $('#profitability-table').DataTable({
         processing: true,
         serverSide: false,
         pageLength: 10,
@@ -84,7 +111,7 @@ const contractsTable = $('#contracts-table').DataTable({
             url: '/api/contracts/winLoss',
             type: 'GET',
             dataSrc: function(json) {
-                console.log('API Response contracts:', json);
+                // console.log('API Response contracts:', json);
 
                 if(Array.isArray(json)) {
                     return json;
@@ -93,14 +120,38 @@ const contractsTable = $('#contracts-table').DataTable({
             }
         },
         columns: [
-            { data: 'company_name', title: 'Contractor', defaultContent: '-' },
-            { data: 'contracts_submitted', title: 'Bids Submitted', defaultContent: '0' },
-            { data: 'bids_won', title: 'Bids Won', defaultContent: '0' },
-            { data: 'win_rate', title: 'Win Rate', defaultContent: '0%' }
+            { data: 'project', title: 'Project', defaultContent: '-' },
+            { data: 'total_hours', title: 'Total Hours', defaultContent: '0', render: function(data) {
+                if (!data) return '0';
+                const days = data / 24; // Convert hours to days
+                const months = days / 25 // Convert days to months (assuming 25 working days per month)
+                return `${data} hrs (${months.toFixed(1)} months)`;
+            } },
+            { data: 'total_labor_cost', title: 'Labor Cost', defaultContent: '$0.00', render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            } },
+            { data: 'revenue', title: 'Revenue', defaultContent: '$0.00', render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            } },
+            { data: 'profit', title: 'Profit', defaultContent: '$0.00', render: function(data) {
+                if (!data) return '$0.00';
+                return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            } },
+            { 
+                data: 'profit_margin_percent', 
+                title: 'Profit Margin %', 
+                defaultContent: '0%',
+                render: function(data) {
+                    if (!data) return '0%';
+                    return parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '%';
+                }
+            }
         ]
 });
 
-appState.contractsTable = contractsTable;
+appState.profitabilityTable = profitabilityTable;
 
 const vendorPerformanceTable = $('#vendor-performance-table').DataTable({
     processing: true,
@@ -110,7 +161,7 @@ const vendorPerformanceTable = $('#vendor-performance-table').DataTable({
         url: '/api/contracts/vendor/performance',
         type: 'GET', 
         dataSrc: function(json) {
-            console.log("API Response vendors:", json)
+            // console.log("API Response vendors:", json)
             if(Array.isArray(json)) {
                 return json;
             }
@@ -118,11 +169,20 @@ const vendorPerformanceTable = $('#vendor-performance-table').DataTable({
         }
     },
     columns : [
-        { data: 'company_name', title: 'Vendor', defaultContent: '-'},
+        { data: 'vendor_name', title: 'Vendor', defaultContent: '-'},
         { data: 'description', title: 'Item', defaultContent: '-' },
-        { data: 'order_qty', title: 'Qunatity', defaultContent: '0' },
-        { data: 'unit_price', title: 'Unit Price', defaultContent: '0' },
-        { data: 'extended_price', title: 'Extended Price', defaultContent: '0%' }
+        { data: 'previous_price', title: 'Previous Price', defaultContent: '0', render: function(data) {
+            if (!data) return '$0.00';
+            return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }},
+        { data: 'current_price', title: 'Current Price', defaultContent: '0', render: function(data) {
+            if (!data) return '$0.00';
+            return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }},
+        { data: 'change_percent', title: 'Change %', defaultContent: '0%', render: function(data) {
+            if (!data) return '0%';
+            return parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '%';
+        }}
     ]
 })
 
