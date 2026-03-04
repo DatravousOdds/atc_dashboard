@@ -188,9 +188,9 @@ function initRevenueByCustomer() {
     .then(res => res.json())
     .then(data => {
 
-        // console.log("Revenue by Customer Data:", data);
+        console.log("Revenue by Customer Data:", data);
         const customers = data.map(customer => customer.customer_name);
-        const revenue = data.map(customer => parseFloat(customer.revenue));
+        const revenue = data.map(customer => parseFloat(customer.total_revenue));
         // console.log("Customers:", customers);
         if (revenueByCustomerChart) {
             revenueByCustomerChart.destroy();
@@ -199,10 +199,10 @@ function initRevenueByCustomer() {
         revenueByCustomerChart = new Chart(ctx, {
             type: 'bar',
             data: {
-            labels: ['Customer1', 'Customer2', 'Customer3', 'Customer4'], // REPLACE WITH CUSTOMER NAMES
+            labels: customers, // REPLACE WITH CUSTOMER NAMES
             datasets: [{
                 label: 'Revenue', 
-                data: ['12000', '15000', '8000', '22000', '18000'], // REPLACE WITH REVENUE VALUES
+                data: revenue, // REPLACE WITH REVENUE VALUES
                 borderWidth:2,
                 borderColor: '#DC143C',
                 backgroundColor: '#e0424294',

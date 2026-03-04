@@ -119,6 +119,7 @@ app.get('/api/contracts/perMonth', async(req, res) => {
     
 })
 
+// awaiting invoices to be paid
 app.get('/api/contracts/win-rate', async(req, res) => {
     try {
         const { contractId, year, month } = req.query;
@@ -182,13 +183,24 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
 
     let query = `
             SELECT 
-                TO_CHAR(i.invoice_date, 'Mon YYYY') as period,
-                i.total_amount AS total_revenue,
-                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))  AS total_expense
+                TO_CHAR(te.month, 'Mon YYYY') as period,
+                COALESCE(i.total_amount, 0) AS total_revenue,
+                te.total_expense
             FROM contracts c
-            JOIN employees e ON c.id = e.contract_id
-            JOIN time_entries t ON t.employee_id = e.id
-            JOIN invoices i ON i.contract_id = c.id
+            JOIN (
+            SELECT 
+                e.contract_id,
+                DATE_TRUNC('month', t.date_worked) AS month,
+                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+            FROM time_entries t
+            JOIN employees e ON t.employee_id = e.id
+            GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
+            ) te ON te.contract_id = c.id
+            LEFT JOIN (
+            SELECT contract_id, invoice_date, MAX(total_amount) AS total_amount
+            FROM invoices
+            GROUP BY contract_id, invoice_date
+            ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
             WHERE 1=1
     `;
 
@@ -208,7 +220,7 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
         params.push(contractId)
     }
 
-    query += ` GROUP BY period, i.invoice_date, i.total_amount ORDER BY i.invoice_date ASC`;
+    query += ` GROUP BY period, i.invoice_date, i.total_amount, te.total_expense ORDER BY i.invoice_date ASC`;
 
     try {
         const results = await pool.query(query, params);
@@ -295,29 +307,20 @@ app.get('/api/contracts/winLoss', async(req, res) => {
         let query = `
             SELECT c.contract_name AS project,
                 CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0) AS NUMERIC(10,2)) AS total_hours,
-                CAST
-                (
-                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)
-                AS NUMERIC(10,2)) AS total_labor_cost,
-
-                i.total_amount AS revenue,
-                CAST
-                (
-                    i.total_amount - 
-                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) 
-                AS NUMERIC(10,2)) AS profit,
-                CAST 
-                (
-                    (i.total_amount - 
-                    SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(i.total_amount, 0) * 100 
-                AS NUMERIC(5,2)) AS profit_margin_percent      
+                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_labor_cost,
+                inv.total_revenue AS revenue,
+                CAST(inv.total_revenue  - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS profit,
+                CAST((inv.total_revenue - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(inv.total_revenue, 0) * 100 AS NUMERIC(5,2)) AS profit_margin_percent
             FROM contracts c
             JOIN employees e ON c.id = e.contract_id
             JOIN time_entries t ON t.employee_id = e.id
-            JOIN invoices i ON i.contract_id = c.id
+            JOIN (
+                SELECT contract_id, MAX(total_amount) AS total_revenue
+                FROM invoices
+                GROUP BY contract_id
+            ) inv ON inv.contract_id = c.id
             WHERE 1=1
-            
-            `;
+        `;
 
         if (contractId && contractId !== 'all') {
             
@@ -335,7 +338,7 @@ app.get('/api/contracts/winLoss', async(req, res) => {
             params.push(month)
         }
 
-        query += ` GROUP BY c.contract_name, i.total_amount ORDER BY c.contract_name ASC`;
+        query += ` GROUP BY c.contract_name, inv.total_revenue`;
 
         
 
@@ -444,14 +447,15 @@ app.get('/api/contracts/revenue/customer', async(req, res) => {
         const { year, month, contractId } = req.query;
        
         let query = `
-            SELECT
+            SELECT 
                 cl.name AS customer_name,
                 c.contract_name AS project,
-                i.total_amount AS revenue
+                CAST(SUM(i.amount_paid) AS NUMERIC(10,2)) AS total_revenue
             FROM contracts c
             JOIN invoices i ON i.contract_id = c.id
             JOIN clients cl ON i.client_id = cl.id
             WHERE 1=1 AND i.payment_status = 'pending'
+            
             
         `;
 
@@ -471,10 +475,10 @@ app.get('/api/contracts/revenue/customer', async(req, res) => {
             params.push(contractId)
         }
 
-        query += `ORDER BY i.total_amount DESC`;
+        query += `GROUP BY cl.name, c.contract_name ORDER BY total_revenue DESC`;
 
     try {
-        const results = await pool.query(query);
+        const results = await pool.query(query, params);
 
         if (results.rows.length === 0) {
             return res.status(404).json({ error: "No data found for the given contract ID" });
@@ -494,9 +498,10 @@ app.get('/api/contracts/revenue', async(req, res) => {
     try {
 
         let query = `
-            SELECT  SUM(i.total_amount) as total_revenue
-            FROM invoices i
-            WHERE 1=1 AND i.payment_status = 'paid';
+            SELECT  SUM(i.amount_paid) as total_revenue
+                FROM invoices i
+            WHERE 1=1 AND i.payment_status = 'pending'
+            GROUP BY i.payment_status
         `;
 
     
@@ -580,7 +585,11 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
                 FROM contracts c
                 JOIN employees e ON c.id = e.contract_id
                 JOIN time_entries t ON t.employee_id = e.id
-                JOIN invoices i ON i.contract_id = c.id
+                JOIN (
+                    SELECT contract_id, MAX(total_amount) AS total_amount
+                    FROM invoices
+                    GROUP BY contract_id
+                ) i ON i.contract_id = c.id
                 WHERE 1=1  
         `;
 

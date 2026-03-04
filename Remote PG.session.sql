@@ -16,7 +16,8 @@
 
 -- DROP TABLE vendors;
 
--- SELECT * FROM invoices;
+-- SELECT * FROM invoices
+-- WHERE 1=1 AND contract_id = 1;
 
 -- TRUNCATE TABLE contracts RESTART IDENTITY CASCADE;
 
@@ -70,22 +71,33 @@
 
 -- SELECT COUNT(*) FROM invoices WHERE contract_id = 1;
 
-SELECT c.contract_name AS project,
-    CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0) AS NUMERIC(10,2)) AS total_hours,
-    CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_labor_cost,
-    inv.total_revenue AS revenue,
-    CAST(inv.total_revenue - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS profit,
-    CAST((inv.total_revenue - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(inv.total_revenue, 0) * 100 AS NUMERIC(5,2)) AS profit_margin_percent
-FROM contracts c
-JOIN employees e ON c.id = e.contract_id
-JOIN time_entries t ON t.employee_id = e.id
-JOIN (
-    SELECT contract_id, SUM(total_amount) AS total_revenue
-    FROM invoices
-    GROUP BY contract_id
-) inv ON inv.contract_id = c.id
-WHERE 1=1
-GROUP BY c.contract_name, inv.total_revenue;
+-- SELECT c.contract_name AS project,
+--     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0) AS NUMERIC(10,2)) AS total_hours,
+--     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_labor_cost,
+--     inv.total_revenue AS revenue,
+--     CAST(inv.total_revenue  - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS profit,
+--     CAST((inv.total_revenue - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(inv.total_revenue, 0) * 100 AS NUMERIC(5,2)) AS profit_margin_percent
+-- FROM contracts c
+-- JOIN employees e ON c.id = e.contract_id
+-- JOIN time_entries t ON t.employee_id = e.id
+-- JOIN (
+--     SELECT contract_id, MAX(total_amount) AS total_revenue
+--     FROM invoices
+--     GROUP BY contract_id
+-- ) inv ON inv.contract_id = c.id
+-- WHERE 1=1
+-- GROUP BY c.contract_name, inv.total_revenue;
+
+
+-- SELECT 
+--     e.contract_id,
+--     DATE_TRUNC('month', t.date_worked) AS month,
+--     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+-- FROM time_entries t
+-- JOIN employees e ON t.employee_id = e.id
+-- GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
+-- ORDER BY e.contract_id, month;
+
 
 
 -- SELECT CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0) AS NUMERIC(10,2)) AS total_hours
@@ -166,6 +178,7 @@ GROUP BY c.contract_name, inv.total_revenue;
 
 
 
+-- SELECT * FROM invoices;                                                                    
 
 -- Total labor cost is each person's hours worked multiplied by their labor cost per hour, summed across all personnel on the project.
 -- SELECT 
@@ -179,3 +192,50 @@ GROUP BY c.contract_name, inv.total_revenue;
 -- JOIN time_entries t ON t.employee_id = e.id
 -- WHERE c.id = 1
 -- GROUP BY c.contract_name, e.first_name, e.hourly_rate;
+
+
+-- SELECT 
+--     TO_CHAR(te.month, 'Mon YYYY') as period,
+--     COALESCE(i.amount_due, 0) AS total_revenue,
+--     te.total_expense
+-- FROM contracts c
+-- JOIN (
+-- SELECT 
+--     e.contract_id,
+--     DATE_TRUNC('month', t.date_worked) AS month,
+--     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+-- FROM time_entries t
+-- JOIN employees e ON t.employee_id = e.id
+-- GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
+-- ) te ON te.contract_id = c.id
+-- LEFT JOIN (
+-- SELECT contract_id, invoice_date, MAX(amount_due) AS amount_due
+-- FROM invoices
+-- GROUP BY contract_id, invoice_date
+-- ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
+-- WHERE 1=1;
+
+-- SELECT DISTINCT
+--     cl.name AS customer_name,
+--     c.contract_name AS project,
+--     i.total_amount AS revenue
+-- FROM contracts c
+-- JOIN invoices i ON i.contract_id = c.id
+-- JOIN clients cl ON i.client_id = cl.id
+-- WHERE 1=1 AND i.payment_status = 'pending';
+
+-- SELECT 
+--     cl.name AS customer_name,
+--     c.contract_name AS project,
+--     CAST(SUM(i.amount_paid) AS NUMERIC(10,2)) AS total_revenue
+-- FROM contracts c
+-- JOIN invoices i ON i.contract_id = c.id
+-- JOIN clients cl ON i.client_id = cl.id
+-- WHERE i.payment_status = 'pending'
+-- GROUP BY cl.name, c.contract_name
+-- ORDER BY total_revenue DESC;
+
+-- SELECT  SUM(i.amount_paid) as total_revenue
+--     FROM invoices i
+--     WHERE 1=1 AND i.payment_status = 'pending'
+-- GROUP BY i.payment_status;                                                                       
