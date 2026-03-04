@@ -143,9 +143,21 @@ const profitabilityTable = $('#profitability-table').DataTable({
                 data: 'profit_margin_percent', 
                 title: 'Profit Margin %', 
                 defaultContent: '0%',
-                render: function(data) {
+                render: (data, type) => {
                     if (!data) return '0%';
-                    return parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '%';
+                    if (type === 'display') {
+                        return `${data}%`;
+                    }
+                    return data;
+                },
+                createdCell: (td, cellData) => {
+                    if (cellData > 0) {
+                        console.log('Profit Margin Cell:',td, cellData);
+                        $(td).addClass('is-positive');
+                       
+                    } else if (cellData < 0) {
+                        $(td).addClass('is-negative');
+                    }
                 }
             }
         ]

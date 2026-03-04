@@ -141,8 +141,8 @@ function getWinRatePercentage(year, month, contractId) {
     fetch(`/api/contracts/win-rate?${params.toString()}`)
     .then(res => res.json())
     .then(data => {
-        // console.log("Win Rate Data:", data)
-        winRate.textContent = data.win_rate ? `${data.win_rate}%` : "0%";
+        console.log("Pending Invoices:", data);
+        winRate.textContent = data.pending_invoices ? `${formatCurrency(data.pending_invoices)}` : "$0.00";
     })
     .catch(error => {
         console.error("Error fetching win rate:", error);

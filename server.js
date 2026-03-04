@@ -124,16 +124,11 @@ app.get('/api/contracts/win-rate', async(req, res) => {
     try {
         const { contractId, year, month } = req.query;
             let query = `
-                SELECT
-                    COUNT(*) as total_contracts,
-                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as won_contracts,
-                    ROUND(
-                        COUNT(CASE WHEN status = 'completed' THEN 1 END)::numeric /
-                        NULLIF(COUNT(*), 0)::numeric * 100,
-                        2
-                    ) as win_rate
-                FROM contracts 
-                WHERE 1=1
+                SELECT  SUM(i.amount_paid) as pending_invoices
+                FROM invoices i
+                WHERE 1=1 AND i.payment_status = 'pending'
+                 
+                    
             `; 
 
             const params = [];
@@ -153,12 +148,10 @@ app.get('/api/contracts/win-rate', async(req, res) => {
                 params.push(month)
             }
 
-            // console.log('Win Rate Query:', query);
-            // console.log('With Parameters:', params);
+            query += `GROUP BY i.payment_status`;
 
             const result = await pool.query(query, params)
             res.json(result.rows[0])
-            // console.log("Win Rate Result:", result.rows);
    
     
     } catch (error) {
@@ -239,8 +232,6 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
         console.log("Error occured when fetching revenue vs expense data...", error)
     }
 })
-
-
 
 app.get('/api/contracts/dropdown', async(req,res) => {
     const query = 'SELECT DISTINCT id, contract_name FROM contracts WHERE 1=1 ORDER BY contract_name ASC'

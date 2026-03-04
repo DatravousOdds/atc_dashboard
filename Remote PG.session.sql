@@ -235,7 +235,9 @@
 -- GROUP BY cl.name, c.contract_name
 -- ORDER BY total_revenue DESC;
 
--- SELECT  SUM(i.amount_paid) as total_revenue
+-- SELECT  SUM(i.amount_paid) as pending_invoices
 --     FROM invoices i
 --     WHERE 1=1 AND i.payment_status = 'pending'
 -- GROUP BY i.payment_status;                                                                       
+
+SELECT * FROM contracts;
