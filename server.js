@@ -177,7 +177,7 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
     let query = `
             SELECT 
                 TO_CHAR(te.month, 'Mon YYYY') as period,
-                COALESCE(i.total_amount, 0) AS total_revenue,
+                COALESCE(i.amount_paid, 0) AS total_revenue,
                 te.total_expense
             FROM contracts c
             JOIN (
@@ -190,7 +190,7 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
             GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
             ) te ON te.contract_id = c.id
             LEFT JOIN (
-            SELECT contract_id, invoice_date, MAX(total_amount) AS total_amount
+            SELECT contract_id, invoice_date, MAX(amount_paid) AS amount_paid
             FROM invoices
             GROUP BY contract_id, invoice_date
             ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
@@ -213,7 +213,7 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
         params.push(contractId)
     }
 
-    query += ` GROUP BY period, i.invoice_date, i.total_amount, te.total_expense ORDER BY i.invoice_date ASC`;
+    query += ` GROUP BY period, i.invoice_date, i.amount_paid, te.total_expense ORDER BY i.invoice_date ASC`;
 
     try {
         const results = await pool.query(query, params);
@@ -445,7 +445,7 @@ app.get('/api/contracts/revenue/customer', async(req, res) => {
             FROM contracts c
             JOIN invoices i ON i.contract_id = c.id
             JOIN clients cl ON i.client_id = cl.id
-            WHERE 1=1 AND i.payment_status = 'pending'
+            WHERE 1=1 AND i.payment_status = 'paid'
             
             
         `;
@@ -491,7 +491,7 @@ app.get('/api/contracts/revenue', async(req, res) => {
         let query = `
             SELECT  SUM(i.amount_paid) as total_revenue
                 FROM invoices i
-            WHERE 1=1 AND i.payment_status = 'pending'
+            WHERE 1=1 AND i.payment_status = 'paid'
             GROUP BY i.payment_status
         `;
 

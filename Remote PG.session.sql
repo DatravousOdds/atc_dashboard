@@ -16,8 +16,14 @@
 
 -- DROP TABLE vendors;
 
--- SELECT * FROM invoices
--- WHERE 1=1 AND contract_id = 1;
+-- DELETE FROM invoices
+-- WHERE 1=1 AND id = 5;
+
+-- SELECT * FROM invoices;
+
+
+-- INSERT INTO invoices (contract_id, payment_status, invoice_date, invoice_number, amount_paid, total_amount, client_id)
+-- VALUES (1, 'pending', '2026-02-25', '202601240801', 30271.75, 178253.25, 1);
 
 -- TRUNCATE TABLE contracts RESTART IDENTITY CASCADE;
 
@@ -240,4 +246,26 @@
 --     WHERE 1=1 AND i.payment_status = 'pending'
 -- GROUP BY i.payment_status;                                                                       
 
-SELECT * FROM contracts;
+-- SELECT * FROM contracts;
+
+-- SELECT 
+--     TO_CHAR(te.month, 'Mon YYYY') as period,
+--     COALESCE(i.amount_paid, 0) AS total_revenue,
+--     te.total_expense
+-- FROM contracts c
+-- JOIN (
+--     SELECT 
+--         e.contract_id,
+--         DATE_TRUNC('month', t.date_worked) AS month,
+--         CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+--     FROM time_entries t
+--     JOIN employees e ON t.employee_id = e.id
+--     GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
+-- ) te ON te.contract_id = c.id
+-- LEFT JOIN (
+--     SELECT contract_id, invoice_date, MAX(amount_paid) AS amount_paid
+--     FROM invoices
+--     GROUP BY contract_id, invoice_date
+-- ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
+-- WHERE 1=1
+-- ORDER BY period ASC;
