@@ -91,7 +91,7 @@ function getTotalActiveContracts(year, month, contractId) {
     if( month && month !=='all') params.append('month', month);
     if( contractId && contractId !=='all') params.append('contractId', contractId);
 
-    fetch(`/api/contracts?status=pending&${params.toString()}`)
+    fetch(`/api/contracts?status=active&${params.toString()}`)
     .then(res => res.json())
     .then(data => {
         activeContracts.textContent = data.length || 0; 

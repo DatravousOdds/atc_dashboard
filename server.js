@@ -60,9 +60,6 @@ app.get('/api/contracts', async(req, res) => {
             params.push(status)
         }
 
-        // console.log('query:', query)
-        // console.log('params:',params)
-
         const result = await pool.query(query, params)
         res.json(result.rows)
         // console.log(result.rows)
@@ -107,15 +104,34 @@ app.get('/api/contracts/value', async(req, res) => {
     // console.log(result.rows)
 })
 
+// get contracts completed each month FILTERS: (year, month)
 app.get('/api/contracts/perMonth', async(req, res) => {
-    const query = 
-    `   SELECT count(*),
-            
-             EXTRACT(MONTH FROM date_awarded) as month FROM contracts 
-        GROUP BY month ORDER BY month`;
-    const result = await pool.query(query)
+    const { year, month } = req.query;
+
+    let query = 
+    `SELECT 
+        count(*),
+        EXTRACT(MONTH FROM date_awarded) as month
+    FROM contracts
+    WHERE 1=1
+        AND status = 'active'
+    `;
+    const params = [];
+    
+    if (year && year !== 'all') {
+        query += ' AND EXTRACT(YEAR FROM date_awarded) = $' + (params.length + 1);
+        params.push(year);
+    }
+
+    if (month && month !== 'all') {
+        query += ' AND EXTRACT(MONTH FROM date_awarded) = $' + (params.length + 1);
+        params.push(month);
+    }
+
+    query += ` GROUP BY EXTRACT(MONTH FROM date_awarded)`;
+
+    const result = await pool.query(query, params)
     res.json(result.rows)
-    // console.log(result.rows)
     
 })
 
@@ -134,29 +150,31 @@ app.get('/api/contracts/win-rate', async(req, res) => {
             const params = [];
 
             if (contractId && contractId !== 'all') {
-                query += ' AND id = $' + (params.length + 1)
+                query += ' AND i.contract_id = $' + (params.length + 1)
                 params.push(contractId)
             }
 
             if (year && year !== 'all') {
-                query += ' AND EXTRACT(YEAR FROM date_awarded) = $' + (params.length + 1)
+                query += ' AND EXTRACT(YEAR FROM invoice_date) = $' + (params.length + 1)
                 params.push(year)
             }
 
             if (month && month !== 'all') {
-                query += ' AND EXTRACT(MONTH FROM date_awarded) = $' + (params.length + 1)
+                query += ' AND EXTRACT(MONTH FROM invoice_date) = $' + (params.length + 1)
                 params.push(month)
             }
 
-            query += `GROUP BY i.payment_status`;
+            query += ` GROUP BY i.payment_status`;
 
             const result = await pool.query(query, params)
-            res.json(result.rows[0])
-   
+
+            console.log("results: ", { pending_invoices: result.rows[0]?.pending_invoices || 0 });
+
+            res.json({ pending_invoices: result.rows[0]?.pending_invoices || 0 })
     
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch win rate data' });
-        console.log("Error occured when fetching win rate data...", error)
+        console.log("Error occurred when fetching win rate data...", error)
     }
 })
 
@@ -252,7 +270,7 @@ app.get('/api/contracts/bidItems', async(req, res) => {
                         bi.description AS desc,
                         bi.unit_price AS unit_price,
                         MIN(CASE WHEN cb.bidder_id != 2 THEN cb.unit_price END) AS competitor_price,
-                        MAX(CASE WHEN cb.bidder_id = 2 THEN cb.unit_price END) AS our_price,
+                        AVG(CASE WHEN cb.bidder_id = 2 THEN cb.unit_price END) AS our_price,
                         MAX(cb.unit_price) AS max_price,
                         MAX(CASE WHEN cb.bidder_id = 2 THEN cb.total_price END) AS total,
                         bi.quantity AS quantity
