@@ -43,17 +43,29 @@ async function getTotalContractValue(year, month, contractId) {
 }
 
 async function getTotalRevenue() {
-    const { averageContractValue } = appState;
+    const { averageContractValue, contractDropdown, monthDropdown, dateRangeDropdown } = appState;
+    let month = monthDropdown.value;
+    let year = dateRangeDropdown.value;
+    let contractId = contractDropdown.value;
+
+    console.log(month,year,contractId)
   try {
-        const res = await fetch(`/api/contracts/revenue`);
+        const res = await fetch(`/api/contracts/revenue?year=${year}&month=${month}&contractId=${contractId}`);
         if(!res.ok) {
             throw new Error("API Error:", res.status)
         }
 
         const data = await res.json();
-        // console.log("total revenue", data.total_revenue)
 
-        averageContractValue.textContent = formatCurrency(data.total_revenue) || "$0.00";
+        if (contractDropdown.value === 'all') {
+            const totalRevenue = data.reduce((sum, row) => sum + parseFloat(row.total_revenue), 0);
+            console.log("total revenue:", totalRevenue)
+            averageContractValue.textContent = formatCurrency(totalRevenue) || "$0.00";
+        } else {
+            console.log("total revenue for this contract is: ", data[0].total_revenue)
+            averageContractValue.textContent = formatCurrency(data[0].total_revenue) || "$0.00";
+        }
+        
 
     } catch(error) {
         console.log("Error fetching data!", error.message);
@@ -283,6 +295,7 @@ function applyFilters() {
     getTotalContractValue(year, month, contractId);
     getWinRatePercentage(year, month, contractId);
     getTopBidItems(year, month, contractId);
+    getTotalRevenue();
     
 
 

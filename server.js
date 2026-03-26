@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const { path } = require('d3');
 require('dotenv').config();
 
 const app = express();
@@ -111,7 +112,8 @@ app.get('/api/contracts/perMonth', async(req, res) => {
     let query = 
     `SELECT 
         count(*),
-        EXTRACT(MONTH FROM date_awarded) as month
+        EXTRACT(MONTH FROM date_awarded) as month,
+        EXTRACT(YEAR FROM date_awarded) as year
     FROM contracts
     WHERE 1=1
         AND status = 'active'
@@ -128,9 +130,11 @@ app.get('/api/contracts/perMonth', async(req, res) => {
         params.push(month);
     }
 
-    query += ` GROUP BY EXTRACT(MONTH FROM date_awarded)`;
+    query += ` GROUP BY EXTRACT(MONTH FROM date_awarded), EXTRACT(YEAR FROM date_awarded)`;
 
     const result = await pool.query(query, params)
+
+    console.log( "contracts per month:", result.rows)
     res.json(result.rows)
     
 })
@@ -451,40 +455,37 @@ app.get('/api/contracts/average', async(req, res) => {
     }
 })
 
+// Revenue By Customers
 app.get('/api/contracts/revenue/customer', async(req, res) => {
     
         const { year, month, contractId } = req.query;
        
         let query = `
-            SELECT 
-                cl.name AS customer_name,
-                c.contract_name AS project,
-                CAST(SUM(i.amount_paid) AS NUMERIC(10,2)) AS total_revenue
-            FROM contracts c
-            JOIN invoices i ON i.contract_id = c.id
-            JOIN clients cl ON i.client_id = cl.id
-            WHERE 1=1 AND i.payment_status = 'paid'
-            
-            
+            select cl.name, SUM(i.amount_paid) as total_revenue
+            FROM invoices i
+            JOIN clients cl ON cl.id = i.client_id
+    
         `;
 
         const params = [];
 
         if (year && year !== 'all') {
-            query += ' AND EXTRACT(YEAR FROM c.date_awarded) = $' + (params.length + 1)
+            query += ' AND EXTRACT(YEAR FROM i.invoice_date) = $' + (params.length + 1)
             params.push(year)
         }
 
         if (month && month !== 'all') {
-            query += ' AND EXTRACT(MONTH FROM c.date_awarded) = $' + (params.length + 1)
+            query += ' AND EXTRACT(MONTH FROM i.invoice_date) = $' + (params.length + 1)
             params.push(month)
         }
         if (contractId && contractId !== 'all') {
-            query += ' AND c.id = $' + (params.length + 1)
+            query += ' AND i.contract_id = $' + (params.length + 1)
             params.push(contractId)
         }
 
-        query += `GROUP BY cl.name, c.contract_name ORDER BY total_revenue DESC`;
+        query += `GROUP BY cl.name`;
+
+        // console.log(query);
 
     try {
         const results = await pool.query(query, params);
@@ -498,34 +499,59 @@ app.get('/api/contracts/revenue/customer', async(req, res) => {
         res.json(results.rows)
 
     } catch (error) {
-        console.error("Error occured when fetching revenue by customer...", error.message);
+        console.error("Error occurred when fetching revenue by customer...", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 })
 
 app.get('/api/contracts/revenue', async(req, res) => {
+    const { year, month, contractId } = req.query;
+    console.log("contractID:", contractId)
     try {
 
         let query = `
-            SELECT  SUM(i.amount_paid) as total_revenue
-                FROM invoices i
-            WHERE 1=1 AND i.payment_status = 'paid'
-            GROUP BY i.payment_status
+            SELECT  
+                i.contract_id,
+                SUM(i.amount_paid) as total_revenue
+            FROM invoices i
+            JOIN contracts c ON c.id = i.contract_id
+            WHERE i.payment_status = 'paid'
         `;
 
+        const params = [];
+
+        if (contractId && contractId !== 'all') {
+            query += ' AND i.contract_id = $' + (params.length + 1);
+            params.push(contractId);
+        }
+
+        if (year && year !== 'all') {
+            query += ' AND EXTRACT(YEAR FROM i.invoice_date) = $' + (params.length + 1);
+            params.push(year)
+        }
+
+        if (month && month !== 'all') {
+            query += ' AND EXTRACT(MONTH FROM i.invoice_date) = $' + (params.length + 1);
+            params.push(month);
+        }
+
+        query += ' GROUP BY i.contract_id'
+
     
-        const results = await pool.query(query);
+        const results = await pool.query(query, params);
+
+        console.log(results.rows);
 
         if (results.rows.length === 0) {
-            return res.status(404).json({ error: "No data found for the given contract ID" });
+            return res.status(200).json([{ contract_id: null, total_revenue: 0 }]);
         }
         
-        res.json(results.rows[0])
+        res.json(results.rows)
 
-        // console.log("revenue returned:",results.rows[0])
+        console.log("revenue returned:",results.rows)
 
     } catch (error) {
-        console.error("Error occured when fetching average contract value...", error.message);
+        console.error("Error occurred when fetching average contract value...", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 })
@@ -627,7 +653,7 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
         res.json(results.rows);
 
     } catch (error) {
-        console.log("Error occured when fetching...", error)
+        console.log("Error occurred when fetching...", error)
     }
 })
 

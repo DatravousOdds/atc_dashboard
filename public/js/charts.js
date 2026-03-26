@@ -1,5 +1,13 @@
+const { response } = require("express");
 
-
+const {
+        contractDropdown,
+        monthDropdown,
+        dateRangeDropdown,
+        searchInput,
+        searchResults,
+        searchResultsDropdown,
+    } = appState;
 
 
 function initCharts() {
@@ -108,7 +116,7 @@ function initContractsPerMonth() {
     const ctx = document.getElementById("contractsPerMonthChart");
 
     // data
-    fetch(`api/contracts/perMonth`)
+    fetch(`api/contracts/perMonth?month=${month}&year=${year}`)
     .then(res => res.json())
     .then(data => {
         // console.log( "Contracts Per Month Data:",data)
@@ -189,9 +197,10 @@ function initRevenueByCustomer() {
     .then(data => {
 
         console.log("Revenue by Customer Data:", data);
-        const customers = data.map(customer => customer.customer_name);
+        const customers = data.map(customer => customer.name);
         const revenue = data.map(customer => parseFloat(customer.total_revenue));
-        // console.log("Customers:", customers);
+        console.log("Customers:", customers);
+        console.log("Revenue:", revenue)
         if (revenueByCustomerChart) {
             revenueByCustomerChart.destroy();
         }
@@ -375,5 +384,22 @@ initCharts();
 
 
 
+ async function updateContractsPerMonth() {
+    // get the year
+    const month = monthDropdown.value;
+    const year = dateRangeDropdown.value;
+    // fetch data with params
+    const request =  await fetch(`api/contracts/perMonth?month=${month}&year=${year}`);
 
+    if (!request.ok) {
+        console.log(request.status);
+    }
+
+    const result = await request.json();
+    console.log(result);
+    // update table 
+    
+
+
+}
 

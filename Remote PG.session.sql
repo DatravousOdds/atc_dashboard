@@ -269,3 +269,9 @@
 -- ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
 -- WHERE 1=1
 -- ORDER BY period ASC;
+
+
+SELECT  SUM(i.amount_paid) as total_revenue
+                FROM invoices i
+            WHERE 1=1 AND i.payment_status = 'paid'
+            GROUP BY i.payment_status;
