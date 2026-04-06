@@ -1,5 +1,3 @@
-const { response } = require("express");
-
 const {
         contractDropdown,
         monthDropdown,
@@ -10,7 +8,12 @@ const {
     } = appState;
 
 
+let chartsInitialized = false;
+
 function initCharts() {
+    if (chartsInitialized) return;
+    chartsInitialized = true;
+    
     initRevenueVsExpenseChart();
     initContractsPerMonth();
     initAverageContractValue();
@@ -23,23 +26,41 @@ function initCharts() {
 //  UPDATE LABELS & VALUE 
 //  TO SHOW YEAR & REVENUE 
 // ==============================
+
+let revenueVsExpenseChart;
 function initRevenueVsExpenseChart() {
     const ctx = document.getElementById("revenueVsExpenseChart");
+    // filter
+    const { dateRangeDropdown, monthDropdown, contractDropdown } = appState;
+    const year = dateRangeDropdown.value;
+    const month = monthDropdown.value;
+    const contractId = contractDropdown.value;
+
+    console.log("Filters - Year:", year, "Month:", month, "Contract ID:", contractId);
     // fetch api
-    fetch('/api/contracts/finance/revenue-vs-expense')
+    fetch(`/api/contracts/finance/revenue-vs-expense?year=${year}&month=${month}&contractId=${contractId}`)
     .then(res => res.json())
     .then(data => {
         
-        console.log("Revenue vs Expense Data:",data)
-        console.log("Revenue:",data.revenue);
+        
         const revenue = data.revenue;
         const expense = data.expense;
-        // const labels = data.labels;
+        const monthYearLabels = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
+        const labels = data.labels.map(item => {
+            const [dataMonth, dataYear] = item.split('/');
+            return `${monthYearLabels[parseInt(dataMonth) - 1]} ${dataYear}`;
+        })
+        
+        console.log("Labels:", labels);
+
+        if (revenueVsExpenseChart) {
+            revenueVsExpenseChart.destroy();
+        }
     
-        new Chart(ctx, {
+        revenueVsExpenseChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'], // YEAR
+                labels: labels,// replace with month
                 datasets: 
                 [
                     {
@@ -112,81 +133,73 @@ function initRevenueVsExpenseChart() {
       
 }
 
+
+let contractsPerMonthChart = null;
+
 function initContractsPerMonth() {
     const ctx = document.getElementById("contractsPerMonthChart");
-
-    // data
-    fetch(`api/contracts/perMonth?month=${month}&year=${year}`)
-    .then(res => res.json())
-    .then(data => {
-        // console.log( "Contracts Per Month Data:",data)
-        ;
-        const labels = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
-        // console.log(labels)
-        const contractCount = data.map(item => item.count);
-        
-
-        new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Number of Contracts Per Month',
-            data: contractCount,
-            borderWidth:2,
-            borderRadius: 8,
-            borderColor: '#DC143C',
-            backgroundColor: '#DC143C',
-            hoverBackgroundColor: '#ee244cff',
-            
-            
-            
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-            x: {
-                ticks: {
-                    color: '#7c8a99'
-                },
-                grid: {
-                    color: '#334155'
-                }
-            },
-            y: {beginAtZero: true,
-                max: Math.max(...contractCount) + 5, // Add some padding to the max value
-                ticks: { 
-                    
-                    color: '#55687E'},
-                    
-                grid: {
-                    color: '#334155'
-                }
-            }
-        },
-        labels: {
-            color: '#E8E8E8'
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    usePointStyle: true,
-                }
-            }
-        }
-    }
-        })
-    })
-    .catch(error => {
-        console.error(error)
-    })
-
+    const labels = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
     
+    
+    
+    // define the chart with no initial data
+    contractsPerMonthChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Contracts Per Month',
+                    data: [],
+                    borderWidth:2,
+                    borderRadius: 8,
+                    borderColor: '#DC143C',
+                    backgroundColor: '#DC143C',
+                    hoverBackgroundColor: '#ee244cff',
+                    
+                    
+                    
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#7c8a99'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
 
+                        ticks: { 
+                            
+                            color: '#55687E'},
+                            
+                        grid: {
+                            color: '#334155'
+                        }
+                    }
+                },
+                labels: {
+                    color: '#E8E8E8'
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                        }
+                    }
+                }
+            }
+    })
+
+    // 1. call update function
+    updateContractsPerMonth();
 }
-
 
 function initRevenueByCustomer() {
     let revenueByCustomerChart;
@@ -283,15 +296,16 @@ function initAverageContractValue() {
 let laborVsProfitChart;
 function initMostQuotedVendors() {
     const ctx = document.getElementById("laborVsProfitChart");
+    // Get filters
+    const contractId = contractDropdown.value;
     // api fetch
-    fetch('api/contracts/labor-vs-profit')
+    fetch(`api/contracts/labor-vs-profit?contractId=${contractId}`)
     .then(res => res.json())
     .then(data => {
-        // console.log("Labor vs Profit Data:", data);
         const laborCost = data.map(item => parseFloat(item.labor_cost));
         const profit = data.map(item => parseFloat(item.profit));
-        // console.log("Labor Cost:", laborCost);
-        // console.log("Profit:", profit);
+        const labels = data.map(item => item.project);
+        
         // draw chart
 
         if (laborVsProfitChart) {
@@ -301,7 +315,7 @@ function initMostQuotedVendors() {
         laborVsProfitChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'], // REPLACE WITH MONTHS
+                labels: labels,
                 datasets: 
                 [
                     {
@@ -379,15 +393,11 @@ function initMostQuotedVendors() {
 }
 
 
-
-initCharts();
-
-
-
  async function updateContractsPerMonth() {
     // get the year
     const month = monthDropdown.value;
     const year = dateRangeDropdown.value;
+    console.log("Current year:",year)
     // fetch data with params
     const request =  await fetch(`api/contracts/perMonth?month=${month}&year=${year}`);
 
@@ -396,10 +406,45 @@ initCharts();
     }
 
     const result = await request.json();
-    console.log(result);
+    console.log("API results for CPM",result);
     // update table 
+    let contractCount = new Array(12).fill(0);
+    // console.log(contractCount);
     
+    result.map(item => {
+        const monthIndex = parseInt(item.month - 1);
+        if (monthIndex > -1) {
+           contractCount[monthIndex] = item.count; 
+        }
+        
+    })
 
 
+    contractsPerMonthChart.data.datasets[0].data = contractCount;
+    contractsPerMonthChart.options.scales.y.max = Math.max(...contractCount) + 5;
+    contractsPerMonthChart.update();
+
+    console.log("dataset", contractsPerMonthChart.data.datasets);
+    
+    
 }
+
+
+
+dateRangeDropdown.addEventListener('change', () => {
+    updateContractsPerMonth();
+    initRevenueVsExpenseChart();
+})
+
+monthDropdown.addEventListener('change', () => {
+    updateContractsPerMonth();
+    initRevenueVsExpenseChart();
+})
+
+contractDropdown.addEventListener('change', () => {
+    initMostQuotedVendors();
+    initRevenueByCustomer();
+    initRevenueVsExpenseChart();
+    // initLaborVsProfit();
+})
 

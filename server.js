@@ -38,7 +38,8 @@ app.get('/api/contracts', async(req, res) => {
         const {year, month, contract, status } = req.query;
         // console.log(contract,year,month)
 
-        let query = 'SELECT * FROM contracts WHERE 1=1';
+        let query = `SELECT * FROM contracts WHERE 1=1`;
+
         const params = []
 
         if (year && year !== 'all') {
@@ -134,7 +135,7 @@ app.get('/api/contracts/perMonth', async(req, res) => {
 
     const result = await pool.query(query, params)
 
-    console.log( "contracts per month:", result.rows)
+    // console.log( "contracts per month:", result.rows)
     res.json(result.rows)
     
 })
@@ -172,7 +173,7 @@ app.get('/api/contracts/win-rate', async(req, res) => {
 
             const result = await pool.query(query, params)
 
-            console.log("results: ", { pending_invoices: result.rows[0]?.pending_invoices || 0 });
+            // console.log("results: ", { pending_invoices: result.rows[0]?.pending_invoices || 0 });
 
             res.json({ pending_invoices: result.rows[0]?.pending_invoices || 0 })
     
@@ -198,60 +199,65 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
 
     let query = `
             SELECT 
-                TO_CHAR(te.month, 'Mon YYYY') as period,
-                COALESCE(i.amount_paid, 0) AS total_revenue,
+                c.contract_name AS project,
+                te.month,
+                te.year,
+                COALESCE(i.total_revenue, 0) AS total_revenue,
                 te.total_expense
             FROM contracts c
             JOIN (
-            SELECT 
-                e.contract_id,
-                DATE_TRUNC('month', t.date_worked) AS month,
-                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
-            FROM time_entries t
-            JOIN employees e ON t.employee_id = e.id
-            GROUP BY e.contract_id, DATE_TRUNC('month', t.date_worked)
+                SELECT 
+                    e.contract_id,
+                    EXTRACT(MONTH FROM t.date_worked) AS month,
+                    EXTRACT(YEAR FROM t.date_worked) AS year,
+                    CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+                FROM time_entries t
+                JOIN employees e ON t.employee_id = e.id
+                GROUP BY e.contract_id, EXTRACT(MONTH FROM t.date_worked), EXTRACT(YEAR FROM t.date_worked)
             ) te ON te.contract_id = c.id
             LEFT JOIN (
-            SELECT contract_id, invoice_date, MAX(amount_paid) AS amount_paid
-            FROM invoices
-            GROUP BY contract_id, invoice_date
-            ) i ON i.contract_id = c.id AND DATE_TRUNC('month', i.invoice_date) = te.month
+                SELECT contract_id, EXTRACT(MONTH FROM invoice_date) AS invoice_month, EXTRACT(YEAR FROM invoice_date) AS invoice_year, SUM(amount_paid) AS total_revenue
+                FROM invoices
+                GROUP BY contract_id, EXTRACT(MONTH FROM invoice_date), EXTRACT(YEAR FROM invoice_date)
+            ) i ON i.contract_id = c.id AND i.invoice_month = te.month AND i.invoice_year = te.year
             WHERE 1=1
     `;
 
     const params = [];
 
     if (year && year !== 'all') {
-        query += ' AND EXTRACT(YEAR FROM i.invoice_date) = $' + (params.length + 1)
-        params.push(year)
+        query += ' AND te.year = $' + (params.length + 1)
+        params.push(parseInt(year))
     }
 
     if (month && month !== 'all') {
-        query += ' AND EXTRACT(MONTH FROM i.invoice_date) = $' + (params.length + 1)
-        params.push(month)
+        query += ' AND te.month = $' + (params.length + 1)
+        params.push(parseInt(month))
     }
     if (contractId && contractId !== 'all') {
         query += ' AND c.id = $' + (params.length + 1)
-        params.push(contractId)
+        params.push(parseInt(contractId))
     }
 
-    query += ` GROUP BY period, i.invoice_date, i.amount_paid, te.total_expense ORDER BY i.invoice_date ASC`;
 
     try {
         const results = await pool.query(query, params);
 
+        console.log("Revenue vs Expense:", results.rows);
+
         const response = {
             revenue: results.rows.map(row => row.total_revenue),
             expense: results.rows.map(row => row.total_expense),
-            labels: results.rows.map(row => row.period)
+            labels: results.rows.map(row => `${row.month}/${row.year}`),
+            project: results.rows.map(row => row.project)
         }
 
-        console.log("Revenue vs Expense results:",response);
+        // console.log("Revenue vs Expense results:",response);
         res.json(response);
 
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch revenue vs expense data' });
-        console.log("Error occured when fetching revenue vs expense data...", error)
+        console.log("Error occurred when fetching revenue vs expense data...", error)
     }
 })
 
@@ -270,13 +276,13 @@ app.get('/api/contracts/bidItems', async(req, res) => {
 
         let query = `SELECT 
                         c.contract_name AS project,
-                        bi.specification_section_no AS spec,
+                        bi.unit_of_measure AS uom,
                         bi.description AS desc,
-                        bi.unit_price AS unit_price,
-                        MIN(CASE WHEN cb.bidder_id != 2 THEN cb.unit_price END) AS competitor_price,
+                        AVG(CASE WHEN cb.bidder_id = 5 THEN cb.unit_price END) AS txdot_price,
+                        MIN(CASE WHEN cb.bidder_id != 2 AND cb.bidder_id != 5 THEN cb.unit_price END) AS competitor_price,
                         AVG(CASE WHEN cb.bidder_id = 2 THEN cb.unit_price END) AS our_price,
                         MAX(cb.unit_price) AS max_price,
-                        MAX(CASE WHEN cb.bidder_id = 2 THEN cb.total_price END) AS total,
+                        MAX(CASE WHEN cb.bidder_id IN (2, 5) THEN cb.total_price ELSE 0 END) AS total,
                         bi.quantity AS quantity
                     FROM contracts c
                     INNER JOIN bid_items bi ON c.id = bi.contract_id
@@ -295,8 +301,8 @@ app.get('/api/contracts/bidItems', async(req, res) => {
                         bi.description, 
                         bi.unit_price, 
                         bi.quantity, 
-                        bi.specification_section_no 
-                    ORDER BY c.contract_name, bi.specification_section_no`;
+                        bi.unit_of_measure 
+                    ORDER BY c.contract_name, bi.unit_of_measure`;
 
     try {
 
@@ -307,7 +313,51 @@ app.get('/api/contracts/bidItems', async(req, res) => {
 
     } catch(error) {
         res.status(500).json({ error: 'Failed to fetch bid items' });
-        console.log("Error occured when fetching bid items...", error)
+        console.log("Error occurred when fetching bid items...", error)
+    }
+})
+
+app.get('/api/contracts/item-profit', async(req, res) => {
+    const { contractId } = req.query;
+
+    let query = `
+        SELECT
+            c.contract_name AS project,
+            bi.description AS item,
+            SUM(m.quantity) AS qty,
+            (MAX(m.date_used) - MIN(m.date_used)) AS time,
+            COALESCE(te.cost, 0.00) AS cost
+        FROM bid_items bi
+        JOIN contracts c ON bi.contract_id = c.id
+        LEFT JOIN materials m ON m.bid_item_id = bi.id
+        LEFT JOIN  (
+            SELECT 
+                t.bid_item_id,
+                CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS cost
+            FROM time_entries t
+            JOIN employees e ON t.employee_id = e.id
+            GROUP BY t.bid_item_id
+        ) te ON te.bid_item_id = bi.id
+        WHERE 1=1
+     `;
+
+    const params = [];
+
+    if (contractId && contractId !== 'all') {
+        query += ' AND c.id = $' + (params.length + 1);
+        params.push(contractId);
+    }
+
+    query += ` GROUP BY c.contract_name, bi.description, te.cost ORDER BY c.contract_name, bi.description`;
+        
+    try {
+
+        const results = await pool.query(query, params);
+        // console.log("Item Profit results:", results.rows);
+        res.json(results.rows);
+
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching item profits' });
     }
 })
 
@@ -506,7 +556,7 @@ app.get('/api/contracts/revenue/customer', async(req, res) => {
 
 app.get('/api/contracts/revenue', async(req, res) => {
     const { year, month, contractId } = req.query;
-    console.log("contractID:", contractId)
+    // console.log("contractID:", contractId)
     try {
 
         let query = `
@@ -540,7 +590,7 @@ app.get('/api/contracts/revenue', async(req, res) => {
     
         const results = await pool.query(query, params);
 
-        console.log(results.rows);
+        // console.log(results.rows);
 
         if (results.rows.length === 0) {
             return res.status(200).json([{ contract_id: null, total_revenue: 0 }]);
@@ -548,7 +598,7 @@ app.get('/api/contracts/revenue', async(req, res) => {
         
         res.json(results.rows)
 
-        console.log("revenue returned:",results.rows)
+        // console.log("revenue returned:",results.rows)
 
     } catch (error) {
         console.error("Error occurred when fetching average contract value...", error.message);
@@ -600,14 +650,16 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
 })
 
 app.get('/api/contracts/labor-vs-profit', async(req, res) => {
-    
+    const { contractId, month, year } = req.query;
+    console.log("Received labor vs profit request with filters - Contract ID:", contractId, "Year:", year, "Month:", month);
+    const params = [];
 
     try {
-        const { contractId, month, year } = req.query;
-        const params = [];
+        
 
         let query = `
-                SELECT 
+                SELECT
+                    c.contract_name AS project,
                     CAST(
                         i.total_amount - 
                         SUM(EXTRACT(EPOCH FROM t.hours_worked)
@@ -645,7 +697,7 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
             params.push(month);
         }
 
-        query += ` GROUP BY i.total_amount ORDER BY profit DESC`;
+        query += ` GROUP BY i.total_amount, c.contract_name ORDER BY profit DESC`;
 
         const results = await pool.query(query, params);
 

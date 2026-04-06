@@ -177,13 +177,32 @@
                 <thead>
                     <tr>
                         <th>Project</th>
-                        <th>Spec</th>
+                        <th>UOM</th>
                         <th>Description</th>
-                        <th>Unit Price</th>
+                        <th>TxDOT Price</th>
+                        <th>Quantity</th>
                         <th>Competitor Price</th>
                         <th>Our Price</th>
                         <th>Max Price</th>
                         <th>Total Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be populated here dynamically -->
+                </tbody>
+            </table>  
+            </div>
+            <!-- Item Profitability Table-->
+            <div class="data-table-container">
+              <h2>Item Profitability</h2>
+            <table id="item-profit-table" class="data-table-container ">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Time</th>
+                        <th>Cost</th>
+                        <th>Project</th>
+                        <th>Qty</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -219,9 +238,10 @@
     
     <script src="js/theme.js"></script>
     <script src="js/shared.js"></script>
+    <script src="js/charts.js"></script>
     <script src="js/main.js"></script>
     <script src="js/dataTables.js"></script>
-    <script src="js/charts.js"></script>
+    
     
     
 </body>

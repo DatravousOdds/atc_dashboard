@@ -43,8 +43,8 @@ const bidItemsTable = $('#bid-items-table').DataTable({
             defaultContent: '-'
         },
         { 
-            data: 'spec', 
-            title: 'Spec',
+            data: 'uom', 
+            title: 'UOM',
             defaultContent: '-'
         },
         { 
@@ -53,13 +53,18 @@ const bidItemsTable = $('#bid-items-table').DataTable({
             defaultContent: '-'
         },
         { 
-            data: 'unit_price', 
-            title: 'Unit Price',
+            data: 'txdot_price', 
+            title: 'TxDOT Price',
             defaultContent: '$0.00',
             render: function(data) {
                 if (!data) return '$0.00';
                 return '$' + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
             }
+        },
+        { 
+            data: 'quantity', 
+            title: 'Quantity',
+            defaultContent: '0'
         },
         { 
             data: 'competitor_price', 
@@ -198,5 +203,41 @@ const vendorPerformanceTable = $('#vendor-performance-table').DataTable({
     ]
 })
 
-
 appState.vendorPerformanceTable = vendorPerformanceTable;
+
+const itemProfitabilityTable =  $('#item-profit-table').DataTable({
+    processing: true,
+    serverSide: false,
+    pageLength: 10,
+    ajax: {
+        url: '/api/contracts/item-profit',
+        type: 'GET',
+        dataSrc: function(json) {
+            console.log("API Response item profit:", json)
+            if(Array.isArray(json)) {
+                return json;
+            }
+            return json.data || [];
+        },
+        data: function(data) {
+            const { contractDropdown } = appState;
+            const selectedContract = contractDropdown ? contractDropdown.value : 'all';
+            if (selectedContract && selectedContract !== 'all') {
+                data.contractId = selectedContract;
+            }
+            console.log('Sending to API for item profit:', data);
+            return data;
+        },
+        
+
+    },
+    columns: [
+            { data: 'item', title: 'Item', defaultContent: '_'},
+            { data: 'time', title: 'Time', defaultContent: '_'},
+            { data: 'cost', title: 'Cost', defaultContent: '0.00'},
+            { data: 'project', title: 'Project', defaultContent: '_'},
+            { data: 'qty', title: 'Qty', defaultContent: '0.00'},
+        ]
+});
+
+appState.itemProfitabilityTable = itemProfitabilityTable;

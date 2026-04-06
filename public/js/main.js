@@ -73,6 +73,34 @@ async function getTotalRevenue() {
     }  
 }
 
+// Get item profitability based on filters
+function getItemProfitability(year, month, contractId) {
+    const params = new URLSearchParams();   
+    const { itemProfitabilityTable } = appState;
+    
+    if( year && year !=='all') params.append('year', year);
+    if( month && month !=='all') params.append('month', month);
+    if( contractId && contractId !=='all') params.append('contractId', contractId);
+
+    // console.log("Fetching item profitability with params:", params.toString());
+
+    fetch(`/api/contracts/item-profit?${params.toString()}`)
+    .then(res => res.json())
+    .then(data => { 
+        console.log("Item Profitability data:", data);
+        if (itemProfitabilityTable) {
+            itemProfitabilityTable.clear();
+            itemProfitabilityTable.rows.add(data);
+            itemProfitabilityTable.draw();
+        }
+    })
+    .catch(err => {
+        console.error(err)
+    });
+
+}
+
+// Get top bid items based on filters
 function getTopBidItems(year, month, contractId) {
     const params = new URLSearchParams();   
 
@@ -183,28 +211,33 @@ function loadContracts() {
     })
 }
 
-function loadDateRange() {
+async function loadDateRange() {
     const { dateRangeDropdown } = appState;
     const allOption = dateRangeDropdown.options[0];
     // console.log(allOption);
     // Load year dropdown
-    fetch(`/api/contracts/year/dropdown`)
-    .then(res => res.json())
-    .then(data => {
-        // console.log(data)
-        data.forEach(d => {
-            const year = d.extract;
-            const op = document.createElement('option');
-            op.value = year;
-            op.innerHTML = year;
-            dateRangeDropdown.insertBefore(op, allOption.nextSibling)
-            
+    return fetch(`/api/contracts/year/dropdown`)
+        .then(res => res.json())
+        .then(data => {
+            // console.log(data)
+            data.forEach(d => {
+                const year = d.extract;
+                const op = document.createElement('option');
+                op.value = year;
+                op.innerHTML = year;
+                dateRangeDropdown.insertBefore(op, allOption.nextSibling)
+                
 
+            })
+
+            const currentYear = new Date().getFullYear().toString();
+            dateRangeDropdown.value = currentYear;
+
+            initCharts();
         })
-    })
-    .catch(error => {
-        console.error('Search error:', error)
-    })
+        .catch(error => {
+            console.error('Search error:', error)
+        })
 }
 
 // Display 
@@ -296,6 +329,7 @@ function applyFilters() {
     getWinRatePercentage(year, month, contractId);
     getTopBidItems(year, month, contractId);
     getTotalRevenue();
+    getItemProfitability(year, month, contractId);
     
 
 
@@ -354,7 +388,7 @@ function performSearch(query) {
 // ============================================
 
 
-$(document).ready(function () {
+$(document).ready( async function () {
     const {
         contractDropdown,
         monthDropdown,
@@ -367,7 +401,7 @@ $(document).ready(function () {
     let searchTimeout;
 
     // Load initial data
-    loadDateRange();
+    await loadDateRange();
     loadContracts();
     applyFilters(); // initial load with default filters
     getTotalRevenue();
