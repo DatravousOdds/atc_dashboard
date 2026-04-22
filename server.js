@@ -606,44 +606,76 @@ app.get('/api/contracts/revenue', async(req, res) => {
 })
 
 // Project Status Route
-// app.get('/api/projects/status', async(req, res) => {
-//     const query = `
-//         SELECT 
-//             c.contract_name AS project,
-//             c.total_bid_amount AS revenue,
-//             (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))) AS expense,
-//             (c.total_bid_amount - (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)))) AS net_profit,
-//             SUM(i.amount_paid) / c.total_bid_amount * 100 AS progress_percent,
-//             c.status,
-//         FROM contracts c
-//         LEFT JOIN materials m ON m.contract_id = c.id
-//         LEFT JOIN employees e ON e.contract_id = c.id
-//         LEFT JOIN time_entries t ON t.employee_id = e.id
-//         LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
-//         GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status
-//         ORDER BY c.contract_name ASC
-//     `;
+app.get('/api/projects/status', async(req, res) => {
+    const query = `
+        SELECT 
+            c.contract_name AS project,
+            c.total_bid_amount AS revenue,
+            (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))) AS expense,
+            (c.total_bid_amount - (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)))) AS net_profit,
+            ROUND(SUM(i.amount_paid) / c.total_bid_amount * 100, 2) AS progress_percent,
+            c.status
+        FROM contracts c
+        LEFT JOIN materials m ON m.contract_id = c.id
+        LEFT JOIN employees e ON e.contract_id = c.id
+        LEFT JOIN time_entries t ON t.employee_id = e.id
+        LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
+        GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status
+        HAVING c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%'
+        ORDER BY c.contract_name ASC
+    `;
+
+    try {
+        const results = await pool.query(query);
+        // console.log("Project Status results:", results.rows);
+        res.json(results.rows);
+    } catch (error) {
+        console.error("Error occurred when fetching project status data...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+})
         
 
-// // Project Budget Utilization Route
-// app.get('/api/projects/budget/utilization', async(req, res) => {
-//     // create query to calculate project budget utilization
-//     const query = `
-//         SELECT c.contract_name AS project,
-//             c.total_bid_amount AS budget,
-//             COALESCE(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate), 0) AS actual_spend,
-//             CASE 
-//                 WHEN c.total_bid_amount = 0 THEN 0
-//                 ELSE ROUND((COALESCE(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate), 0) / c.total_bid_amount) * 100, 2)
-//             END AS utilization_percent
-//         FROM contracts c
-//         LEFT JOIN employees e ON c.id = e.contract_id
-//         LEFT JOIN time_entries t ON t.employee_id = e.id
-//         GROUP BY c.contract_name, c.total_bid_amount
-//         ORDER BY c.contract_name ASC
-//      `;
-//     `
-// })
+// Project Budget Utilization Route
+app.get('/api/projects/budget/utilization', async(req, res) => {
+    // create query to calculate project budget utilization
+    const query = `
+        WITH labor_costs AS (
+            SELECT 
+                t.contract_id,
+                SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS total_labor_cost
+            FROM time_entries t
+            JOIN employees e ON t.employee_id = e.id
+            GROUP BY t.contract_id
+        ),
+        invoice_totals AS (
+            SELECT 
+                contract_id,
+                SUM(amount_paid) AS total_revenue
+            FROM invoices
+            GROUP BY contract_id
+        )
+        SELECT 
+            c.contract_name AS project,
+            c.total_bid_amount AS budget,
+            ROUND(COALESCE(lc.total_labor_cost, 0), 2) AS actual_spend,
+            ROUND((COALESCE(lc.total_labor_cost, 0) / NULLIF(c.total_bid_amount, 0)) * 100, 2) AS utilization
+        FROM contracts c
+        LEFT JOIN labor_costs lc ON c.id = lc.contract_id
+        LEFT JOIN invoice_totals it ON c.id = it.contract_id
+        WHERE c.id = 1
+     `;
+
+    try {
+        const results = await pool.query(query);
+        console.log("Budget Utilization results:", results.rows);
+        res.json(results.rows);
+
+    } catch (error) {
+        console.error("Error occurred when fetching budget utilization data...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+})
 
 // ==================
 //  Vendors Routes

@@ -304,7 +304,7 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
     columns: [
         { data: 'project', title: 'Project', defaultContent: '-' },
         { data: 'budget', title: 'Budget', defaultContent: '$0' },
-        { data: 'utilized', title: 'Actual Spend', defaultContent: '$0' },
-        { data: 'utilization_percent', title: 'Utilization %', defaultContent: '0', render: percentBarRender }
+        { data: 'actual_spend', title: 'Actual Spend', defaultContent: '$0' },
+        { data: 'utilization', title: 'Utilization %', defaultContent: '0', render: percentBarRender }
     ]
 });
