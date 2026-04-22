@@ -24,7 +24,8 @@ const appState = {
     bidItemsTable: null,
     profitabilityTable: null,
     vendorPerformanceTable: null,
-    winLossByContractorTable: null
+    winLossByContractorTable: null,
+    projectStatusTable: null,
 };
 
 // Make globally available to all scripts

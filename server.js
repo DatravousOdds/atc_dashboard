@@ -299,7 +299,6 @@ app.get('/api/contracts/bidItems', async(req, res) => {
         query += ` GROUP BY 
                         c.contract_name, 
                         bi.description, 
-                        bi.unit_price, 
                         bi.quantity, 
                         bi.unit_of_measure 
                     ORDER BY c.contract_name, bi.unit_of_measure`;
@@ -605,6 +604,46 @@ app.get('/api/contracts/revenue', async(req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 })
+
+// Project Status Route
+// app.get('/api/projects/status', async(req, res) => {
+//     const query = `
+//         SELECT 
+//             c.contract_name AS project,
+//             c.total_bid_amount AS revenue,
+//             (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))) AS expense,
+//             (c.total_bid_amount - (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)))) AS net_profit,
+//             SUM(i.amount_paid) / c.total_bid_amount * 100 AS progress_percent,
+//             c.status,
+//         FROM contracts c
+//         LEFT JOIN materials m ON m.contract_id = c.id
+//         LEFT JOIN employees e ON e.contract_id = c.id
+//         LEFT JOIN time_entries t ON t.employee_id = e.id
+//         LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
+//         GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status
+//         ORDER BY c.contract_name ASC
+//     `;
+        
+
+// // Project Budget Utilization Route
+// app.get('/api/projects/budget/utilization', async(req, res) => {
+//     // create query to calculate project budget utilization
+//     const query = `
+//         SELECT c.contract_name AS project,
+//             c.total_bid_amount AS budget,
+//             COALESCE(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate), 0) AS actual_spend,
+//             CASE 
+//                 WHEN c.total_bid_amount = 0 THEN 0
+//                 ELSE ROUND((COALESCE(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate), 0) / c.total_bid_amount) * 100, 2)
+//             END AS utilization_percent
+//         FROM contracts c
+//         LEFT JOIN employees e ON c.id = e.contract_id
+//         LEFT JOIN time_entries t ON t.employee_id = e.id
+//         GROUP BY c.contract_name, c.total_bid_amount
+//         ORDER BY c.contract_name ASC
+//      `;
+//     `
+// })
 
 // ==================
 //  Vendors Routes

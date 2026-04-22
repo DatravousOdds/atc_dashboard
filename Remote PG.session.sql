@@ -1,24 +1,26 @@
- SELECT 
-                c.contract_name AS project,
-                te.month,
-                te.year,
-                COALESCE(i.total_revenue, 0) AS total_revenue,
-                te.total_expense
-            FROM contracts c
-            JOIN (
-                SELECT 
-                    e.contract_id,
-                    EXTRACT(MONTH FROM t.date_worked) AS month,
-                    EXTRACT(YEAR FROM t.date_worked) AS year,
-                    CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
-                FROM time_entries t
-                JOIN employees e ON t.employee_id = e.id
-                GROUP BY e.contract_id, EXTRACT(MONTH FROM t.date_worked), EXTRACT(YEAR FROM t.date_worked)
-            ) te ON te.contract_id = c.id
-            LEFT JOIN (
-                SELECT contract_id, EXTRACT(MONTH FROM invoice_date) AS invoice_month, EXTRACT(YEAR FROM invoice_date) AS invoice_year, SUM(amount_paid) AS total_revenue
-                FROM invoices
-                GROUP BY contract_id, EXTRACT(MONTH FROM invoice_date), EXTRACT(YEAR FROM invoice_date)
-            ) i ON i.contract_id = c.id AND i.invoice_month = te.month AND i.invoice_year = te.year
-            WHERE 1=1
-            GROUP BY c.contract_name, te.month, te.year, i.total_revenue, te.total_expense ORDER BY te.year, te.month ASC
+--  SELECT 
+--                 c.contract_name AS project,
+--                 te.month,
+--                 te.year,
+--                 COALESCE(i.total_revenue, 0) AS total_revenue,
+--                 te.total_expense
+--             FROM contracts c
+--             JOIN (
+--                 SELECT 
+--                     e.contract_id,
+--                     EXTRACT(MONTH FROM t.date_worked) AS month,
+--                     EXTRACT(YEAR FROM t.date_worked) AS year,
+--                     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
+--                 FROM time_entries t
+--                 JOIN employees e ON t.employee_id = e.id
+--                 GROUP BY e.contract_id, EXTRACT(MONTH FROM t.date_worked), EXTRACT(YEAR FROM t.date_worked)
+--             ) te ON te.contract_id = c.id
+--             LEFT JOIN (
+--                 SELECT contract_id, EXTRACT(MONTH FROM invoice_date) AS invoice_month, EXTRACT(YEAR FROM invoice_date) AS invoice_year, SUM(amount_paid) AS total_revenue
+--                 FROM invoices
+--                 GROUP BY contract_id, EXTRACT(MONTH FROM invoice_date), EXTRACT(YEAR FROM invoice_date)
+--             ) i ON i.contract_id = c.id AND i.invoice_month = te.month AND i.invoice_year = te.year
+--             WHERE 1=1
+--             GROUP BY c.contract_name, te.month, te.year, i.total_revenue, te.total_expense ORDER BY te.year, te.month ASC
+
+-- This SQL query retrieves 

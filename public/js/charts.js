@@ -19,6 +19,7 @@ function initCharts() {
     initAverageContractValue();
     initMostQuotedVendors();
     initRevenueByCustomer();
+    initProjectPerformance();
     
 }
 
@@ -427,6 +428,57 @@ function initMostQuotedVendors() {
     console.log("dataset", contractsPerMonthChart.data.datasets);
     
     
+}
+
+let projectPerformanceChart;
+function initProjectPerformance() {
+    const ctx = document.getElementById("projectPerformanceChart");
+    projectPerformanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // REPLACE WITH PROJECT NAMES
+            datasets: [{
+                label: 'Performance',
+                data: [], // REPLACE WITH PERFORMANCE VALUES
+                borderWidth:2,
+                borderColor: '#DC143C',
+                backgroundColor: '#DC143C',
+                pointStyle: 'circle',
+                tension: 0.1,
+                hoverBackgroundColor: '#DC143C',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#7c8a99'
+                    },
+                    grid: {
+                        color: '#334155'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        color: '#55687E'},
+                        
+                    grid: {
+                        color: '#334155'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                    }
+                }
+            }
+        }
+    })
 }
 
 

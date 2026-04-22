@@ -11,7 +11,48 @@
 // [(Current Proposal Revenue) - Total Proposal Revenue] * 100
 // ==========================================
 
-// Get 
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarOptions = document.querySelectorAll('.sidebar-options li');
+const sidebar = document.querySelector('.sidebar');
+
+sidebar.addEventListener('click', (e) => {
+    if (sidebar.classList.contains('active')) {
+
+       const tab = e.target.closest('li[data-tab]');
+       
+       if (tab) {
+            const targetContent = tab.getAttribute('data-tab');
+            console.log("Switching to tab:", targetContent);
+            document.querySelectorAll(".tab-content").forEach(content => {
+                if (content.id === targetContent) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+       }
+    }
+});
+
+
+
+sidebarOptions.forEach(option => {
+    option.addEventListener("click", () => {
+        sidebarOptions.forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+    })
+});
+   
+    
+
+sidebarToggle.addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+    document.querySelector('.content').classList.toggle('active');
+
+    
+})
+
+
 
     
 async function getTotalContractValue(year, month, contractId) {

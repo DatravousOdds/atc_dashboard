@@ -1,3 +1,20 @@
+const percentBarRender = data => {
+  const pct = parseFloat(data) || 0;
+  let color = '#639922';
+  if (pct > 75) color = '#BA7517';
+  if (pct > 90) color = '#E24B4A';
+  return `
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;background:#e9ecef;border-radius:99px;height:8px;overflow:hidden;min-width:80px;">
+        <div style="width:${Math.min(pct,100)}%;background:${color};height:100%;border-radius:99px;"></div>
+      </div>
+      <span style="font-size:12px;min-width:36px;text-align:right;color:${color};font-weight:500">${pct.toFixed(1)}%</span>
+    </div>`;
+};
+
+
+
+
 
 const bidItemsTable = $('#bid-items-table').DataTable({
     processing: true,
@@ -241,3 +258,53 @@ const itemProfitabilityTable =  $('#item-profit-table').DataTable({
 });
 
 appState.itemProfitabilityTable = itemProfitabilityTable;
+
+const projectStatusTable = $('#projects-status-table').DataTable({
+    processing: true,
+    serverSide: false,
+    pageLength: 10,
+    ajax: {
+        url: '/api/projects/status',
+        type: 'GET',
+        dataSrc: function(json) {
+            console.log("API Response project status:", json)
+            if(Array.isArray(json)) {
+                return json;
+            }
+            return json.data || [];
+        }
+    },
+    columns: [
+        { data: 'project', title: 'Project', defaultContent: '-' },
+        { data: 'revenue', title: 'Revenue', defaultContent: '$0' },
+        { data: 'expense', title: 'Expense', defaultContent: '$0' },
+        { data: 'net_profit', title: 'Net Profit', defaultContent: '$0' },
+        { data: 'progress_percent', title: 'Progress', defaultContent: '0', render: percentBarRender },
+        { data: 'status', title: 'Status', defaultContent: '-' }
+    ]
+});
+
+appState.projectStatusTable = projectStatusTable;
+
+const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
+    processing: true,
+    serverSide: false,
+    pageLength: 10,
+    ajax: {
+        url: '/api/projects/budget/utilization',
+        type: 'GET',
+        dataSrc: function(json) {
+            console.log("API Response project budget utilization:", json)
+            if(Array.isArray(json)) {
+                return json;
+            }
+            return json.data || [];
+        }
+    },
+    columns: [
+        { data: 'project', title: 'Project', defaultContent: '-' },
+        { data: 'budget', title: 'Budget', defaultContent: '$0' },
+        { data: 'utilized', title: 'Actual Spend', defaultContent: '$0' },
+        { data: 'utilization_percent', title: 'Utilization %', defaultContent: '0', render: percentBarRender }
+    ]
+});

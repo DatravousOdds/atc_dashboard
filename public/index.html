@@ -15,6 +15,7 @@
     <!-- Charts.js-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <!--- DataTables **LOAD AFTER JQUERY** -->
+    <script src="https://cdn.datatables.net/plug-ins/2.0.0/dataRender/percentBar.js"></script>
     <script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
 
@@ -22,219 +23,385 @@
 
 </head>
 <body>
-    <header>
-        <h1>ATC Contracts Dashboard</h1>
-        <nav>
-            <li><p>American Traffic Construction Analytics</p></li>
-            <li class="theme-toggle" id="theme-toggle" aria-label="Toggle light mode">
-                <i class="fa-solid fa-sun"></i>
-            </li>
-        </nav>
-        
-
-    </header>
+    
     <main>
-        <!-- Overview & Filters-->
-        <section id="overview" class="overview">
-            <div id="overview-filters" class="overview-filters">
-                <!-- Date Range Filter -->
-                <label for="date-range">Year:</label>
-                <select id="date-range">
-                    <option value="all">All</option>
-                    
-                </select>
-                <!-- Month Filter -->
-                <label for="month">Month:</label>
-                <select id="month">
-                    <option value="all">All</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
-                <!-- Contracts Filter -->
-                <label for="contracts">Contracts:</label>
-                    
-                    <select id="contracts">
-                        <option value="all">All</option>
-                        <!-- Display dynamically-->
-                    </select>
-                
-                <!-- Search Bar Specific Bid Item-->
-                 <div class="search-input-container">
-                   <input type="search" class="search-bid-item" id="search-bid-item" placeholder="Search Specific Contract..."  autocomplete="off" >
-                    <i class="fa-solid fa-magnifying-glass"></i> 
-                    <!-- Search Dropdown -->
-                     <div id="searchDropdown" class="searchDropdown">
-                        <ul class="searchResults">
-                            <!-- Display dynamically-->
-                        </ul>
-                     </div>
-                 </div>
-                
-                
+        <!-- Sidebar-->
+         <section id="sidebar" class="sidebar">
+            <div class="current-user-container">
+                <div class="user-image-container">
+                    <img src="assets/profile_pic.jpg" alt="pic of user" class="user-image" width="50" height="50">
+                </div>
+                <div class="user-information">
+                    <span class="username">Travous Odds</span>
+                </div>
             </div>
-            <div id="kpi" class="kpi-container">
-                <!-- KPI Cards -->
-                <div class="kpi-card">
-                    <div class="kpi-header">
-                        <h3>Total Contract Value (YTD)</h3>
-                        <i class="fa-solid fa-dollar-sign"></i>
+
+            <ul class="sidebar-options" id="sidebarOptions">
+                <li class="sidebar-label">
+                    <span>Overview</span>
+                </li>
+                <li class="active" data-tab="dashboardContent">
+                    <i class="fa-solid fa-tachograph-digital"></i>
+                    Dashboard
+                </li>
+                <li data-tab="projectContent">
+                    <i class="fa-solid fa-folder"></i>
+                    Projects
+                </li>
+                <li data-tab="workOrderContent">
+                    <i class="fa-solid fa-clipboard"></i>
+                    Work Orders
+                </li>
+                <li data-tab="inventoryContent">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    Inventory
+                </li>
+                <li data-tab="invoiceContent">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Invoices
+                </li>
+                <li data-tab="artificialContent">
+                    <i class="fa-brands fa-laravel"></i>
+                    AI Analysis
+                </li>
+                <!-- Tools-->
+                <li class="sidebar-label">
+                    <span>Tools</span>
+                </li>
+                <li data-tab="importContent">
+                    <i class="fa-solid fa-download"></i>
+                    Import/Export
+                </li>
+                <li data-tab="generateInvoiceContent">
+                    <i class="fa-solid fa-file-import"></i>
+                    Generate Invoices
+                </li>
+                <!-- Account -->
+                <li class="sidebar-label">
+                    <span>Account</span>
+                </li>
+                <li id="settingsTab" data-tab="settingsContent">
+                    <i class="fa-solid fa-gear"></i>
+                    Settings
+                </li>
+                <li id="authTab">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </li>
+
+            </ul>
+         </section>
+
+        <div class="content">
+            <div id="dashboardContent" class="tab-content active" data-content="dashboard">
+                <header>
+                <div class="sidebar-navigation">
+                    <i class="fa-solid fa-table-columns" id="sidebarToggle"></i>
+                </div>
+                <h1>ATC Contracts Dashboard</h1>
+                <nav>
+                    <li><p>American Traffic Construction Analytics</p></li>
+                    <li class="theme-toggle" id="theme-toggle" aria-label="Toggle light mode">
+                        <i class="fa-solid fa-sun"></i>
+                    </li>
+                </nav>
+                </header>
+                <!-- Overview & Filters-->
+                <section id="overview" class="overview">
+                    <div id="overview-filters" class="overview-filters">
+                        <!-- Date Range Filter -->
+                        <label for="date-range">Year:</label>
+                        <select id="date-range">
+                            <option value="all">All</option>
+                            
+                        </select>
+                        <!-- Month Filter -->
+                        <label for="month">Month:</label>
+                        <select id="month">
+                            <option value="all">All</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <!-- Contracts Filter -->
+                        <label for="contracts">Contracts:</label>
+                            
+                            <select id="contracts">
+                                <option value="all">All</option>
+                                <!-- Display dynamically-->
+                            </select>
+                        
+                        <!-- Search Bar Specific Bid Item-->
+                        <div class="search-input-container">
+                        <input type="search" class="search-bid-item" id="search-bid-item" placeholder="Search Specific Contract..."  autocomplete="off" >
+                            <i class="fa-solid fa-magnifying-glass"></i> 
+                            <!-- Search Dropdown -->
+                            <div id="searchDropdown" class="searchDropdown">
+                                <ul class="searchResults">
+                                    <!-- Display dynamically-->
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        
+                    </div>
+                    <div id="kpi" class="kpi-container">
+                        <!-- KPI Cards -->
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <h3>Total Contract Value (YTD)</h3>
+                                <i class="fa-solid fa-dollar-sign"></i>
+                            </div>
+                            
+                            <p id="total-contract-value">$0</p>
+                            <p class="kpi-note">Across all contracts</p>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <h3>Number of Active Contracts</h3>
+                                <i class="fa-solid fa-file-contract"></i>
+                            </div>
+                            <p id="price-bid-growth">0</p>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <h3>Pending Invoices</h3>
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            
+                            <p id="total-contracts"></p>
+                            <p class="kpi-note">In selected period</p>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <h3>Total Revenue</h3>
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                            <p id="average-contract-value"></p>
+                            <p class="kpi-note">All paid invoices</p>
+                        </div>
+                        
+                    </div>
+                </section>
+                <!-- Chart Displays-->
+                <section id="charts">
+                    
+                    <div class="charts-container">
+                        <div id="chart1" class="chart-container">
+                        <h3>Revenue vs Expense</h3>
+                        <canvas id="revenueVsExpenseChart"></canvas>
+                        </div>
+                    
+                        <div id="chart3" class="chart-container">
+                            <h3>Contracts Per Month</h3>
+                            <canvas id="contractsPerMonthChart"></canvas>
+                        </div>
+
+                        <div id="chart4" class="chart-container">
+                            <h3>Revenue By Customer</h3>
+                            <canvas id="averageContractValueChart"></canvas>
+                        </div>
+
+                        <div id="chart5" class="chart-container">
+                            <h3>Labor vs. Profit</h3>
+                            <canvas id="laborVsProfitChart"></canvas>
+                        </div> 
                     </div>
                     
-                    <p id="total-contract-value">$0</p>
-                    <p class="kpi-note">Across all contracts</p>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-header">
-                        <h3>Number of Active Contracts</h3>
-                        <i class="fa-solid fa-file-contract"></i>
+
+                </section>
+                <!-- Data Tables -->
+                <section id="data-tables">
+                    <!-- Win/Loss Table-->
+                    <div class="data-table-container">
+                    <h2>Project Labor & Profitability</h2>
+                    <table id="profitability-table" class="data-table-container">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Total Hours</th>
+                                <th>Labor Cost</th>
+                                <th>Revenue</th>
+                                <th>Profit</th>
+                                <th>Profit Margin %</th>
+                            </tr>
+                            
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be populated here dynamically -->
+                            
+                        </tbody>
+                    </table>
                     </div>
-                    <p id="price-bid-growth">0</p>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-header">
-                        <h3>Pending Invoices</h3>
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    <!-- Bid Items Table-->
+                    <div class="data-table-container">
+                    <h2>Top Bid Items</h2>
+                    <table id="bid-items-table" class="data-table-container ">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>UOM</th>
+                                <th>Description</th>
+                                <th>TxDOT Price</th>
+                                <th>Quantity</th>
+                                <th>Competitor Price</th>
+                                <th>Our Price</th>
+                                <th>Max Price</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be populated here dynamically -->
+                        </tbody>
+                    </table>  
+                    </div>
+                    <!-- Item Profitability Table-->
+                    <div class="data-table-container">
+                    <h2>Item Profitability</h2>
+                    <table id="item-profit-table" class="data-table-container ">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Time</th>
+                                <th>Cost</th>
+                                <th>Project</th>
+                                <th>Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be populated here dynamically -->
+                        </tbody>
+                    </table>  
+                    </div>
+                    <!-- Vendors Table-->
+                    <div class="data-table-container">
+                    <h2>Vendor Price Breakdown</h2>
+                    <table id="vendor-performance-table" class="data-table-container">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Item</th>
+                                <th>Previous Price</th>
+                                <th>Current Price</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be populated here dynamically -->
+                        </tbody>
+                    </table>  
                     </div>
                     
-                    <p id="total-contracts"></p>
-                    <p class="kpi-note">In selected period</p>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-header">
-                        <h3>Total Revenue</h3>
-                        <i class="fa-solid fa-sack-dollar"></i>
-                    </div>
-                    <p id="average-contract-value"></p>
-                    <p class="kpi-note">All paid invoices</p>
-                </div>
-                
+                </section>
+                <!-- Footer-->
+                <footer>
+                    <p>&copy; 2025 Hexxo Services. All rights reserved.</p>
+                </footer>
             </div>
-        </section>
-        <!-- Chart Displays-->
-        <section id="charts">
-            
-            <div class="charts-container">
-               <div id="chart1" class="chart-container">
-                <h3>Revenue vs Expense</h3>
-                <canvas id="revenueVsExpenseChart"></canvas>
-                </div>
-            
-                <div id="chart3" class="chart-container">
-                    <h3>Contracts Per Month</h3>
-                    <canvas id="contractsPerMonthChart"></canvas>
-                </div>
-
-                <div id="chart4" class="chart-container">
-                    <h3>Revenue By Customer</h3>
-                    <canvas id="averageContractValueChart"></canvas>
-                </div>
-
-                <div id="chart5" class="chart-container">
-                    <h3>Labor vs. Profit</h3>
-                    <canvas id="laborVsProfitChart"></canvas>
-                </div> 
-            </div>
-            
-
-        </section>
-        <!-- Data Tables -->
-        <section id="data-tables">
-            <!-- Win/Loss Table-->
-            <div class="data-table-container">
-            <h2>Project Labor & Profitability</h2>
-            <table id="profitability-table" class="data-table-container">
-                <thead>
-                    <tr>
-                        <th>Project</th>
-                        <th>Total Hours</th>
-                        <th>Labor Cost</th>
-                        <th>Revenue</th>
-                        <th>Profit</th>
-                        <th>Profit Margin %</th>
-                    </tr>
+            <div id="projectContent" class="tab-content" data-content="projects">
+                <!-- Content Header -->
+                <header>
+                    <h1>Projects Overview</h1>
+                    <p class="page-subtitle">Detailed insights into project performance and status</p>
+                </header>
+                <!--Project Overview -->
+                <div class="project-overview-wrapper">
+                    <div id="projectsKPI" class="projects-kpi">
+                        <div id="totalProjects" class="total-projects">
+                            <div class="kpi-header">
+                                <h3>Total Projects</h3>
+                                <i class="fa-solid fa-folder"></i>
+                            </div>
+                            <span class="kpi-value">30</span>
+                            <p class="kpi-note">Across all projects</p>
+                        </div>
+                        <div id="overdueProjects" class="overview-projects">
+                            <div class="kpi-header">
+                                <h3>Overdue Projects</h3>
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <span class="kpi-value">12</span>
+                            <p class="kpi-note">12 out of 50 projects</p>
+                        </div>
+                        <div id="completedProjects" class="completed-projects">
+                            <div class="kpi-header">
+                                <h3>Completed Projects</h3>
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <span class="kpi-value">50</span>
+                            <p class="kpi-note">50 out of 100 projects</p>
+                        </div>
+                    </div>
                     
-                </thead>
-                <tbody>
-                    <!-- Data rows will be populated here dynamically -->
+                    <div id="projectPerformance" class="project-performance">
+                    
+                        <div class="chart-container">
+                            <canvas id="projectPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project DataTables-->
+                <div class="project-data-tables">
+                    <!--Project Data Table -->
+                    <div class="data-table-container">
+                        <h2>Project Performance Table</h2>
+                        <table id="projects-status-table" class="data-table-container ">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Revenue</th>
+                                    <th>Expense</th>
+                                    <th>Net Profit</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data rows will be populated here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!--Project Budget Utilization DataTable-->
+                    <div class="data-table-container">
+                        <h2>Project Budget Utilization</h2>
+                        <table id="project-budget-table" class="data-table-container ">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Budget</th>
+                                    <th>Actual Spend</th>
+                                    <th>Utilization %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data rows will be populated here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
                      
-                </tbody>
-            </table>
-            </div>
-            <!-- Bid Items Table-->
-            <div class="data-table-container">
-              <h2>Top Bid Items</h2>
-            <table id="bid-items-table" class="data-table-container ">
-                <thead>
-                    <tr>
-                        <th>Project</th>
-                        <th>UOM</th>
-                        <th>Description</th>
-                        <th>TxDOT Price</th>
-                        <th>Quantity</th>
-                        <th>Competitor Price</th>
-                        <th>Our Price</th>
-                        <th>Max Price</th>
-                        <th>Total Cost</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data rows will be populated here dynamically -->
-                </tbody>
-            </table>  
-            </div>
-            <!-- Item Profitability Table-->
-            <div class="data-table-container">
-              <h2>Item Profitability</h2>
-            <table id="item-profit-table" class="data-table-container ">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Time</th>
-                        <th>Cost</th>
-                        <th>Project</th>
-                        <th>Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data rows will be populated here dynamically -->
-                </tbody>
-            </table>  
-            </div>
-            <!-- Vendors Table-->
-            <div class="data-table-container">
-              <h2>Vendor Price Breakdown</h2>
-            <table id="vendor-performance-table" class="data-table-container">
-                <thead>
-                    <tr>
-                        <th>Vendor</th>
-                        <th>Item</th>
-                        <th>Previous Price</th>
-                        <th>Current Price</th>
-                        <th>Change</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data rows will be populated here dynamically -->
-                </tbody>
-            </table>  
-            </div>
-            
-        </section>
+                </div>
+            </div>  
+            <div id="workOrderContent" class="tab-content" data-content="workOrders" >Work Order Content</div>
+            <div id="inventoryContent" class="tab-content" data-content="inventory">Inventory Content</div>
+            <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>
+            <div id="artificalContent" class="tab-content" data-content="artificial-intelligence" >Artificial Content</div>
+            <div id="importContent" class="tab-content" data-content="import-export" >Import/Export</div>
+            <div id="generateInvoiceContent" class="tab-content" data-content="generate-invoice" >Generate Invoice</div>
+            <div id="settingsContent" class="tab-content" data-content="settings" >Setting Content</div>
+        </div>
+        
     </main>
 
-    <footer>
-        <p>&copy; 2025 Hexxo Services. All rights reserved.</p>
-    </footer>
+   
     
     <script src="js/theme.js"></script>
     <script src="js/shared.js"></script>
