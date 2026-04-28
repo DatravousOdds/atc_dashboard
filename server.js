@@ -186,6 +186,7 @@ app.get('/api/contracts/win-rate', async(req, res) => {
 // ========================
 //  Contracts Routes
 // ========================
+
 app.get('/api/contracts/year/dropdown', async(req,res) => {
     const query = 'SELECT DISTINCT EXTRACT(YEAR FROM date_awarded) FROM contracts WHERE 1=1 ORDER BY EXTRACT(YEAR FROM date_awarded) ASC'
 
@@ -676,6 +677,31 @@ app.get('/api/projects/budget/utilization', async(req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 })
+
+app.get('/api/projects/performance', async(req, res) => {
+
+    let query = `
+        SELECT
+            date_trunc('month', te.date_worked) AS month,
+            COUNT(DISTINCT c.id) AS completed_projects
+        FROM contracts c
+        INNER JOIN time_entries te ON te.contract_id = c.id
+        WHERE c.status = 'completed'
+        GROUP BY date_trunc('month', te.date_worked)
+        ORDER BY month ASC;
+    `;
+
+
+    try {
+        const results = await pool.query(query);
+        console.log("Project Performance results:", results.rows);
+        res.json(results.rows);
+
+    } catch (error) {
+        console.error("Error occurred when fetching project performance data...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 // ==================
 //  Vendors Routes

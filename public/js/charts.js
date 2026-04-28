@@ -433,6 +433,15 @@ function initMostQuotedVendors() {
 let projectPerformanceChart;
 function initProjectPerformance() {
     const ctx = document.getElementById("projectPerformanceChart");
+    // fetch data project completion per month
+    fetch(`/api/projects/performance`)
+    .then(res => res.json())
+    .then(data => {
+        console.log("Project Performance Data:", data);
+    })
+
+
+    
     projectPerformanceChart = new Chart(ctx, {
         type: 'line',
         data: {
