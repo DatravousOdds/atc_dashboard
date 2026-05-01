@@ -208,13 +208,13 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
             FROM contracts c
             JOIN (
                 SELECT 
-                    e.contract_id,
+                    t.contract_id,
                     EXTRACT(MONTH FROM t.date_worked) AS month,
                     EXTRACT(YEAR FROM t.date_worked) AS year,
                     CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS total_expense
                 FROM time_entries t
                 JOIN employees e ON t.employee_id = e.id
-                GROUP BY e.contract_id, EXTRACT(MONTH FROM t.date_worked), EXTRACT(YEAR FROM t.date_worked)
+                GROUP BY t.contract_id, EXTRACT(MONTH FROM t.date_worked), EXTRACT(YEAR FROM t.date_worked)
             ) te ON te.contract_id = c.id
             LEFT JOIN (
                 SELECT contract_id, EXTRACT(MONTH FROM invoice_date) AS invoice_month, EXTRACT(YEAR FROM invoice_date) AS invoice_year, SUM(amount_paid) AS total_revenue
@@ -249,7 +249,8 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
         const response = {
             revenue: results.rows.map(row => row.total_revenue),
             expense: results.rows.map(row => row.total_expense),
-            labels: results.rows.map(row => `${row.month}/${row.year}`),
+            month: results.rows.map(row => row.month),
+            year: results.rows.map(row => row.year),
             project: results.rows.map(row => row.project)
         }
 
@@ -375,8 +376,8 @@ app.get('/api/contracts/winLoss', async(req, res) => {
                 CAST(inv.total_revenue  - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)) AS profit,
                 CAST((inv.total_revenue - SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate)) / NULLIF(inv.total_revenue, 0) * 100 AS NUMERIC(5,2)) AS profit_margin_percent
             FROM contracts c
-            JOIN employees e ON c.id = e.contract_id
-            JOIN time_entries t ON t.employee_id = e.id
+            JOIN time_entries t ON t.contract_id = c.id 
+            JOIN employees e ON t.employee_id = e.id
             JOIN (
                 SELECT contract_id, MAX(total_amount) AS total_revenue
                 FROM invoices
@@ -411,7 +412,7 @@ app.get('/api/contracts/winLoss', async(req, res) => {
             return res.json({ contracts_submitted: 0, bids_won: 0, win_rate: 0 });
         }
 
-        // console.log("Win/Loss results:",results.rows);
+        console.log("Win/Loss results:",results.rows);
         res.json(results.rows)
 
     } catch(error) {
@@ -618,8 +619,8 @@ app.get('/api/projects/status', async(req, res) => {
             c.status
         FROM contracts c
         LEFT JOIN materials m ON m.contract_id = c.id
-        LEFT JOIN employees e ON e.contract_id = c.id
-        LEFT JOIN time_entries t ON t.employee_id = e.id
+        LEFT JOIN time_entries t ON t.contract_id = c.id
+        LEFT JOIN employees e ON t.employee_id = e.id
         LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
         GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status
         HAVING c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%'
@@ -664,7 +665,7 @@ app.get('/api/projects/budget/utilization', async(req, res) => {
         FROM contracts c
         LEFT JOIN labor_costs lc ON c.id = lc.contract_id
         LEFT JOIN invoice_totals it ON c.id = it.contract_id
-        WHERE c.id = 1
+        WHERE c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%'
      `;
 
     try {
@@ -682,12 +683,12 @@ app.get('/api/projects/performance', async(req, res) => {
 
     let query = `
         SELECT
-            date_trunc('month', te.date_worked) AS month,
+            EXTRACT('MONTH' FROM te.date_worked)  AS month,
             COUNT(DISTINCT c.id) AS completed_projects
         FROM contracts c
         INNER JOIN time_entries te ON te.contract_id = c.id
-        WHERE c.status = 'completed'
-        GROUP BY date_trunc('month', te.date_worked)
+        WHERE c.status = 'completed' AND EXTRACT('YEAR' FROM te.date_worked) = '2026'
+        GROUP BY EXTRACT('MONTH' FROM te.date_worked) 
         ORDER BY month ASC;
     `;
 
@@ -767,8 +768,8 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
                         SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)
                     ) AS labor_cost
                 FROM contracts c
-                JOIN employees e ON c.id = e.contract_id
-                JOIN time_entries t ON t.employee_id = e.id
+                JOIN time_entries t ON t.contract_id = c.id
+                JOIN employees e ON e.id = t.employee_id
                 JOIN (
                     SELECT contract_id, MAX(total_amount) AS total_amount
                     FROM invoices

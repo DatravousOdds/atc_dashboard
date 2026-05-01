@@ -1,3 +1,6 @@
+
+
+
 const {
         contractDropdown,
         monthDropdown,
@@ -43,17 +46,16 @@ function initRevenueVsExpenseChart() {
     .then(res => res.json())
     .then(data => {
         
-        
-        const revenue = data.revenue;
-        const expense = data.expense;
+        const revenueByMonth = new Array(12).fill(0);
+        const expenseByMonth = new Array(12).fill(0);
         const monthYearLabels = ['Jan','Feb','Mar','Apr', 'May', 'Jun', 'Jul','Aug', 'Sep','Oct', 'Nov','Dec'];
-        const labels = data.labels.map(item => {
-            const [dataMonth, dataYear] = item.split('/');
-            return `${monthYearLabels[parseInt(dataMonth) - 1]} ${dataYear}`;
-        })
         
-        console.log("Labels:", labels);
-
+        data.month.forEach((m, i)=> {
+            const monthIndex = m - 1;
+            revenueByMonth[monthIndex] = data.revenue[i];
+            expenseByMonth[monthIndex] = data.expense[i];
+        })
+    
         if (revenueVsExpenseChart) {
             revenueVsExpenseChart.destroy();
         }
@@ -61,12 +63,12 @@ function initRevenueVsExpenseChart() {
         revenueVsExpenseChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,// replace with month
+                labels: monthYearLabels,// replace with month
                 datasets: 
                 [
                     {
                     label: 'Revenue',
-                    data: revenue, // revenue per month
+                    data: revenueByMonth, // revenue per month
                     borderWidth:2,
                     borderColor: '#DC143C',
                     backgroundColor: '#DC143C',
@@ -76,7 +78,7 @@ function initRevenueVsExpenseChart() {
                     },
                     {
                     label: 'Expense',
-                    data: expense, // expense per month
+                    data: expenseByMonth, // expense per month
                     borderWidth:2,
                     borderColor: '#92a6bd',
                     backgroundColor: '#92a6bd',
@@ -437,24 +439,29 @@ function initProjectPerformance() {
     fetch(`/api/projects/performance`)
     .then(res => res.json())
     .then(data => {
-        console.log("Project Performance Data:", data);
-    })
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+        const completedProjects = new Array(12).fill(0);
 
-    
-    projectPerformanceChart = new Chart(ctx, {
+        data.forEach(d => {
+            let monthIndex = new Date(d.month).getMonth();
+            completedProjects[monthIndex] = d.completed_projects;
+        })
+        
+        projectPerformanceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: [], // REPLACE WITH PROJECT NAMES
+            labels: months,// REPLACE WITH PROJECT NAMES
             datasets: [{
-                label: 'Performance',
-                data: [], // REPLACE WITH PERFORMANCE VALUES
+                label: 'Completed Projects',
+                data: completedProjects, // REPLACE WITH PERFORMANCE VALUES
                 borderWidth:2,
                 borderColor: '#DC143C',
-                backgroundColor: '#DC143C',
+                backgroundColor: 'rgba(220, 20, 60, 0.1)',
                 pointStyle: 'circle',
                 tension: 0.1,
                 hoverBackgroundColor: '#DC143C',
+                fill: 'origin'
             }]
         },
         options: {
@@ -462,14 +469,19 @@ function initProjectPerformance() {
             maintainAspectRatio: true,
             scales: {
                 x: {
+                    beginAtZero: true,
                     ticks: {
                         color: '#7c8a99'
                     },
+                    
                     grid: {
                         color: '#334155'
                     }
                 },
                 y: {
+                    type: 'linear',
+                    min: 0,
+                    max: 10,
                     beginAtZero: true,
                     ticks: { 
                         color: '#55687E'},
@@ -480,6 +492,11 @@ function initProjectPerformance() {
                 }
             },
             plugins: {
+                title: {
+                    display: true,
+                    text: 'Project completions per month',
+                    color: '#898989ff'
+                },
                 legend: {
                     labels: {
                         usePointStyle: true,
@@ -488,6 +505,12 @@ function initProjectPerformance() {
             }
         }
     })
+
+    })
+
+
+    
+    
 }
 
 

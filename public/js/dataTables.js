@@ -13,6 +13,12 @@ const percentBarRender = data => {
 };
 
 
+const currencyFormatRender = data => {
+    const c = parseFloat(data) || 0;
+    return `$${c.toLocaleString('en-US', { minimumFractionDigits: 2 })} `;
+};
+
+
 
 
 
@@ -133,7 +139,7 @@ const profitabilityTable = $('#profitability-table').DataTable({
             url: '/api/contracts/winLoss',
             type: 'GET',
             dataSrc: function(json) {
-                // console.log('API Response contracts:', json);
+                console.log('API Response contracts:', json);
 
                 if(Array.isArray(json)) {
                     return json;
@@ -145,9 +151,10 @@ const profitabilityTable = $('#profitability-table').DataTable({
             { data: 'project', title: 'Project', defaultContent: '-' },
             { data: 'total_hours', title: 'Total Hours', defaultContent: '0', render: function(data) {
                 if (!data) return '0';
-                const days = data / 24; // Convert hours to days
-                const months = days / 25 // Convert days to months (assuming 25 working days per month)
-                return `${data} hrs (${months.toFixed(1)} months)`;
+                console.log("Total Hours: ", data)
+                const totalWeeks = data / 60; // Hours per week
+                const months = totalWeeks / 4.33 // Average week in a month
+                return `${data} hrs (${Math.ceil(months)} months)`;
             } },
             { data: 'total_labor_cost', title: 'Labor Cost', defaultContent: '$0.00', render: function(data) {
                 if (!data) return '$0.00';
@@ -276,9 +283,9 @@ const projectStatusTable = $('#projects-status-table').DataTable({
     },
     columns: [
         { data: 'project', title: 'Project', defaultContent: '-' },
-        { data: 'revenue', title: 'Revenue', defaultContent: '$0' },
-        { data: 'expense', title: 'Expense', defaultContent: '$0' },
-        { data: 'net_profit', title: 'Net Profit', defaultContent: '$0' },
+        { data: 'revenue', title: 'Revenue', defaultContent: '$0', render: currencyFormatRender },
+        { data: 'expense', title: 'Expense', defaultContent: '$0', render: currencyFormatRender },
+        { data: 'net_profit', title: 'Net Profit', defaultContent: '$0', render: currencyFormatRender },
         { data: 'progress_percent', title: 'Progress', defaultContent: '0', render: percentBarRender },
         { data: 'status', title: 'Status', defaultContent: '-' }
     ]
@@ -303,8 +310,8 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
     },
     columns: [
         { data: 'project', title: 'Project', defaultContent: '-' },
-        { data: 'budget', title: 'Budget', defaultContent: '$0' },
-        { data: 'actual_spend', title: 'Actual Spend', defaultContent: '$0' },
+        { data: 'budget', title: 'Budget', defaultContent: '$0', render: currencyFormatRender },
+        { data: 'actual_spend', title: 'Actual Spend', defaultContent: '$0', render: currencyFormatRender },
         { data: 'utilization', title: 'Utilization %', defaultContent: '0', render: percentBarRender }
     ]
 });

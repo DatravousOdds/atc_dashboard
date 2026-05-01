@@ -8,6 +8,7 @@
     <!-- CSS Files-->
     <link rel="stylesheet" href="./css/variables.css">
     <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/workOrders.css">
     <!-- Font Awesome-->
     <script src="https://kit.fontawesome.com/854f8a6196.js" crossorigin="anonymous"></script>
     <!-- JQuery-->
@@ -390,7 +391,51 @@
                      
                 </div>
             </div>  
-            <div id="workOrderContent" class="tab-content" data-content="workOrders" >Work Order Content</div>
+            <div id="workOrderContent" class="tab-content" data-content="workOrders" >
+                <!--Header -->
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <p>Work Orders / <span>By Project</span></p>
+                        <h1>Work Orders</h1>
+                    </div>
+                    <div class="content-cta">
+                        <button type="button" class="btn export-btn">
+                            <i class="fa-solid fa-download"></i>
+                            Export
+                        </button>
+                        <button type="button" class="btn work-order-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            New Work Order
+                        </button>
+                    </div>
+                </div>
+                <!-- Project -->
+                 <div class="project-wrapper">
+                    <div class="project-container">
+                        <p>Project</p>
+                        <div class="project-select">
+                            <div class="project-select-wrapper">
+                               <div class="project-name">
+                                    <p>Northgate Terminal - HVAC Retrofit</p> 
+                                </div>
+                                <div class="project-active">
+                                    <p>12 active projects</p>
+                                    <i class="fa-solid fa-angle-down"></i>
+                                </div> 
+                            </div>
+
+                            <div class="project-search">
+                                <button type="button" class="search-btn">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Find project
+                                </button>
+                            </div> 
+
+                        </div>
+                    </div>
+                 </div>
+                 <!--Project KPIs -->
+            </div>
             <div id="inventoryContent" class="tab-content" data-content="inventory">Inventory Content</div>
             <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>
             <div id="artificalContent" class="tab-content" data-content="artificial-intelligence" >Artificial Content</div>
