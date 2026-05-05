@@ -65,24 +65,29 @@
 .project-wrapper p {
     color: #7D90A8;
     font-size: 0.75rem;
-    /* margin-bottom: 0.625rem; */
+}
+
+.project-container > p {
+    text-transform: uppercase;
 }
 
 .project-select {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem;
-    background: #163049;
-    border-radius: 8px;
-    border: 1px solid #1F3A57;
     gap: 0.5rem;
 }
+
+
 
 .project-select .project-select-wrapper {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    background: #163049;
+    border-radius: 8px;
+    border: 1px solid #1F3A57;
+    padding: 0.5rem;
 }
 
 .project-name p {
