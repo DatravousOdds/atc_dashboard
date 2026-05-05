@@ -435,6 +435,121 @@
                     </div>
                  </div>
                  <!--Project KPIs -->
+                 <div class="kpi-wrapper">
+                    <div class="kpi-container">
+                        <div class="kpi-head">
+                            <i class="fa-solid fa-check"></i>
+                            <p class="header-text">TOTAL WORK ASSIGNMENTS COMPLETED</p>
+                        </div>
+                        <div class="assignment-wrapper">
+                            <div class="kpi-text">
+                              <p><span id="assigment-completed" class="assigned-completed">142</span> / <span id="total-assigned">196</span></p>  
+                            </div>
+                            <div class="kpi-wrapper">
+                                <div class="kpi-progress-bar"></div>
+                            </div>
+                        </div>
+                        <div class="kpi-stats">
+                            <div class="kpi-assignment-complete-percent">
+                                <p>72.4% completed</p>
+                            </div>
+                            <div class="kpi-trend-indicator">
+                                <i class="fa-solid fa-caret-down"></i>
+                                <p id="kpi-trend-value" class="kpi-trend-value">6.1% vs last week</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-container">
+                        <div class="kpi-head">
+                            <i class="fa-regular fa-rectangle-list"></i>
+                            <p class="header-text">TOTAL ASSIGNED WORK ORDERS</p>
+                        </div>
+                        <div class="assignment-wrapper">
+                            <div class="kpi-text">
+                              <p><span id="assigment-completed" class="assigned-completed">38</span></p>  
+                            </div>
+                            <div class="kpi-wrapper">
+                                <div class="kpi-progress-bar"></div>
+                            </div>
+                        </div>
+                        <div class="kpi-stats">
+                            <div class="kpi-assignment-complete-percent">
+                                <p>21 in progress · 4 behind</p>
+                            </div>
+                            <div class="kpi-trend-indicator">
+                                <i class="fa-solid fa-caret-down"></i>
+                                <p id="kpi-trend-value" class="kpi-trend-value">3 this week</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-container">
+                        <div class="kpi-head">
+                            <i class="fa-regular fa-clock"></i>
+                            <p class="header-text">AVG. CYCLE TIME</p>
+                        </div>
+                        <div class="assignment-wrapper">
+                            <div class="kpi-text">
+                              <p><span id="assigment-completed" class="assigned-completed">4.2</span> <span id="total-assigned">days</span></p>  
+                            </div>
+                            <div class="kpi-wrapper">
+                                <div class="kpi-progress-bar"></div>
+                            </div>
+                        </div>
+                        <div class="kpi-stats">
+                            <div class="kpi-assignment-complete-percent">
+                                <p>Target: <span id="target-cycle-time">3.5</span> days</p>
+                            </div>
+                            <div class="kpi-trend-indicator">
+                                <i class="fa-solid fa-caret-down"></i>
+                                <p id="kpi-trend-value" class="kpi-trend-value trend-down">0.8d slower</p>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+                 <!-- DataTables-->
+                  <div class="dataTables-wrapper">
+                    <!-- Win/Loss Table-->
+                    <div class="data-table-container">
+                        <table id="workOrders-table" class="data-table-container">
+                            <thead>
+                                <tr>
+                                    <th>WO #</th>
+                                    <th>Title</th>
+                                    <th>Assignee</th>
+                                    <th>Status</th>
+                                    <th>Items</th>
+                                    <th>Progress</th>
+                                    <th>Due</th>
+                                    <th>Value</th>
+                                </tr>
+                                
+                            </thead>
+                            <tbody>
+                                <!-- Data rows will be populated here dynamically -->
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Bid Items Table-->
+                    <div class="data-table-container">
+                        <table id="lineItems-table" class="data-table-container ">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Description</th>
+                                    <th>Unit</th>
+                                    <th>Qty</th>
+                                    <th>Qty Completed</th>
+                                    <th>Remaining Qty</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data rows will be populated here dynamically -->
+                            </tbody>
+                        </table>  
+                    </div>
+                  </div>
             </div>
             <div id="inventoryContent" class="tab-content" data-content="inventory">Inventory Content</div>
             <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>

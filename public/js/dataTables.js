@@ -315,3 +315,48 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
         { data: 'utilization', title: 'Utilization %', defaultContent: '0', render: percentBarRender }
     ]
 });
+
+appState.projectBudgetUtilizationTable = projectBudgetUtilizationTable;
+
+
+const workOrdersTable = $('#workOrders-table').DataTable({
+    processing: true,
+    serverSide: false,
+    pageLength: 7,
+    paging: false,
+    ajax: {
+        url: '/api/projects/orders/work',
+        type: 'GET',
+
+    },
+    layout: {
+        topStart: function() {
+            let title = document.createElement("h2");
+            title.innerText = "Work Orders";
+            title.className = 'dt-custom-title';
+            return title;
+
+        },
+        topEnd: [ 'search',
+            function() {
+                let button = document.createElement("button");
+                button.innerText = "Filters";
+                button.className = "btn filter-btn";
+                return button;
+            }
+        ]
+    }
+});
+
+appState.workOrdersTable = workOrdersTable;
+
+const lineItemsTable = $('#lineItems-table').DataTable({
+    processing: true,
+    serverSide: false,
+    pageLength: 8,
+    ajax: {
+        url: '/api/project/items',
+        type: 'GET'
+    }
+
+})

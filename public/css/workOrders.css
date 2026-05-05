@@ -1,3 +1,28 @@
+:root {
+    --color-blue-light: rgb(125, 144, 168);
+    --color-blue-text-light: #7D90A8;
+    --color-blue-card-background: #163049;
+
+    --color-white-primary: rgb(234, 241, 251);
+    --color-white-secondary:#fff;
+
+    --color-border-primary: #1F3A57;
+
+    --color-red-hover-light: #E57373;
+    --color-red-primary: #EF5350;
+
+    --color-green-progress-bar: #4cc9b0;
+    --color-red-progress-bar: #f05350;
+    --color-yellow-progress-bar: #f5b14a;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-base-md: 1.125rem;
+    --font-size-lg: 2rem;
+
+}
+
 .content-header {
     display: flex;
     justify-content: space-between;
@@ -120,3 +145,129 @@
     border-radius: 6px;
 }
 
+/* KPIs */
+
+#workOrderContent .kpi-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#workOrderContent .kpi-container {
+    padding: 1rem;
+    background: #11263D;
+    border: 1px solid #1F3A57;
+    border-radius: 8px;
+    display: flex;
+    align-items: start;
+    flex-direction: column;
+    width: 100%;
+}
+
+#workOrderContent .kpi-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+}
+
+.assignment-wrapper {
+    width: 100%;
+}
+
+.kpi-head {
+    color: #7D90A8;
+    font-size: 0.875rem;
+}
+
+.kpi-text {
+    font-size: 1.125rem;
+    color: #7D90A8;
+}
+
+.assigned-completed {
+    font-size: 2rem;
+    color: #fff;
+}
+
+.kpi-progress-bar {
+    height: 10px;
+    width: 100%;
+    background-color: #15293f;
+    border-radius: 8px;
+}
+
+.kpi-progress-bar::before {
+    content: "";
+    height: 10px;
+    border-radius: 8px;
+    display: block;
+}
+
+.kpi-container:nth-child(1) .kpi-progress-bar::before {
+    background-color: var(--color-green-progress-bar);
+    width: 72%;
+}
+
+.kpi-container:nth-child(2) .kpi-progress-bar::before {
+    background-color: var(--color-red-progress-bar);
+    width: 80%;
+}
+
+.kpi-container:nth-child(1) .kpi-progress-bar::before {
+    background-color: var(--color-green-progress-bar);
+    width: 72%;
+}
+
+.kpi-container:nth-child(3) .kpi-progress-bar::before {
+    background-color: var(--color-yellow-progress-bar);
+    width: 50%;
+}
+
+
+
+.kpi-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.kpi-trend-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.kpi-stats p {
+    font-size: 0.75rem;
+}
+
+.kpi-assignment-complete-percent {
+    color: #7D90A8;
+}
+
+.kpi-trend-indicator .kpi-trend-value, .kpi-trend-indicator i {
+    color: var(--color-green-progress-bar);
+}
+
+
+.red {
+    background-color: var(--color-red-progress-bar)
+}
+
+.green {
+    background-color: var(--color-green-progress-bar);
+}
+
+.trend-down {
+    color: var(--color-red-progress-bar);
+}
+
+
+.filter-btn {
+    background-color: #163049;
+    color: #fff;
+    border: 1px solid var(--color-border-primary);
+}
