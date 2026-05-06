@@ -19,9 +19,6 @@
     <script src="https://cdn.datatables.net/plug-ins/2.0.0/dataRender/percentBar.js"></script>
     <script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
-
-    
-
 </head>
 <body>
     
@@ -439,7 +436,7 @@
                     <div class="kpi-container">
                         <div class="kpi-head">
                             <i class="fa-solid fa-check"></i>
-                            <p class="header-text">TOTAL WORK ASSIGNMENTS COMPLETED</p>
+                            <p class="header-text">TOTAL WORK ORDERS COMPLETED</p>
                         </div>
                         <div class="assignment-wrapper">
                             <div class="kpi-text">
@@ -466,7 +463,7 @@
                         </div>
                         <div class="assignment-wrapper">
                             <div class="kpi-text">
-                              <p><span id="assigment-completed" class="assigned-completed">38</span></p>  
+                              <p><span id="assigned-work-orders" class="assigned-completed">38</span></p>  
                             </div>
                             <div class="kpi-wrapper">
                                 <div class="kpi-progress-bar"></div>
@@ -474,9 +471,9 @@
                         </div>
                         <div class="kpi-stats">
                             <div class="kpi-assignment-complete-percent">
-                                <p>21 in progress · 4 behind</p>
+                                <p><span id="assigned-in-progress">21</span> in progress · <span id="assigned-behind">4 behind</span></p>
                             </div>
-                            <div class="kpi-trend-indicator">
+                            <div class="kpi-trend-indicator" id="total-assigned-trend">
                                 <i class="fa-solid fa-caret-down"></i>
                                 <p id="kpi-trend-value" class="kpi-trend-value">3 this week</p>
                             </div>
@@ -488,15 +485,15 @@
                             <p class="header-text">AVG. CYCLE TIME</p>
                         </div>
                         <div class="assignment-wrapper">
-                            <div class="kpi-text">
-                              <p><span id="assigment-completed" class="assigned-completed">4.2</span> <span id="total-assigned">days</span></p>  
+                            <div class="kpi-text" id="average-cycle-time">
+                              <p><span class="assigned-completed">4.2</span> <span id="total-assigned">days</span></p>  
                             </div>
                             <div class="kpi-wrapper">
                                 <div class="kpi-progress-bar"></div>
                             </div>
                         </div>
                         <div class="kpi-stats">
-                            <div class="kpi-assignment-complete-percent">
+                            <div class="kpi-assignment-complete-percent" id="average-cycle-time-trend">
                                 <p>Target: <span id="target-cycle-time">3.5</span> days</p>
                             </div>
                             <div class="kpi-trend-indicator">
@@ -558,7 +555,6 @@
             <div id="generateInvoiceContent" class="tab-content" data-content="generate-invoice" >Generate Invoice</div>
             <div id="settingsContent" class="tab-content" data-content="settings" >Setting Content</div>
         </div>
-        
     </main>
 
    

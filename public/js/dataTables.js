@@ -1,3 +1,4 @@
+
 const percentBarRender = data => {
   const pct = parseFloat(data) || 0;
   let color = '#639922';
@@ -325,14 +326,36 @@ const workOrdersTable = $('#workOrders-table').DataTable({
     pageLength: 7,
     paging: false,
     ajax: {
-        url: '/api/projects/orders/work',
+        url: '/api/contracts/work-orders',
         type: 'GET',
+        dataSrc: '',
+        data: function(data) {
+        const { contractDropdown } = appState;
+        const contractId = contractDropdown.value;
+        
+        if (contractId !== 'all') {
+         data.contractId = contractId;   
+        }
+        
+        console.log("Work order data returned:", data)
+        }
 
     },
+    columns: [
+        {data: 'work_order_number', title: 'WO #', defaultContent: '-'},
+        {data: 'title', title: 'TITLE', defaultContent: '-'},
+        {data: 'assignee', title: 'ASSIGNEE', defaultContent: '-'},
+        {data: 'status', title: 'STATUS', defaultContent: '-'},
+        {data: 'items', title: 'ITEMS', defaultContent: '-'},
+        {data: 'progress', title: 'PROGRESS', defaultContent: '-'},
+        {data: 'due', title: 'DUE', defaultContent: '-'},
+        {data: 'value', title: 'VALUE', defaultContent: '-'},
+    ],
     layout: {
         topStart: function() {
             let title = document.createElement("h2");
-            title.innerText = "Work Orders";
+            title.innerHTML = '<i class="fa-solid fa-filter"></i>';
+            title.innerText = `Work Orders`;
             title.className = 'dt-custom-title';
             return title;
 
@@ -355,8 +378,30 @@ const lineItemsTable = $('#lineItems-table').DataTable({
     serverSide: false,
     pageLength: 8,
     ajax: {
-        url: '/api/project/items',
+        url: '/api/contracts/work-orders/:id',
         type: 'GET'
+    },
+    columns: [
+        {data:'item', title: 'ITEM', defaultContent: '-'},
+        {data:'description', title: 'description', defaultContent: '-'},
+        {data:'unit', title: 'unit', defaultContent: '-'},
+        {data:'qty', title: 'qty', defaultContent: '-'},
+        {data:'qty_completed', title: 'qty completed', defaultContent: '-'},
+        {data:'remaining_qty', title: 'remaining qty', defaultContent: '-'},
+        {data:'progress', title: 'progress', defaultContent: '-'}
+    ],
+    layout: {
+        topStart: function() {
+            let title = document.createElement("h2");
+            title.innerHTML = "Line Items";
+            title.className = "dt-custom-title";
+            return title
+        },
+        topEnd: [
+            'search'
+        ]
     }
 
 })
+
+appState.lineItemsTable = lineItemsTable;

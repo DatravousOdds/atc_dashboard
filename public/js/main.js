@@ -281,6 +281,27 @@ async function loadDateRange() {
         })
 }
 
+async function getWorkOrdersMetrics() {
+    const { totalWorkOrdersCompleted, totalAssignedWorkOrders, averageCycleTime, workOrdersCompletedPercent } = appState;
+
+    console.log({
+        completed: totalWorkOrdersCompleted,
+        assigned: totalAssignedWorkOrders,
+        cycleTime: averageCycleTime,
+        completionPercentage: workOrdersCompletedPercent,
+    });
+
+    fetch('/api/contracts/work-orders/stats')
+    .then(res => res.json())
+    .then(data => console.log(data))
+    .catch(error => {
+        console.error("Error fetching work order stats: ", error)
+    })
+};
+
+
+getWorkOrdersMetrics();
+
 // Display 
 
 function displayContracts(contracts) {   

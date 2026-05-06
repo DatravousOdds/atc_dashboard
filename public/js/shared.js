@@ -26,6 +26,26 @@ const appState = {
     vendorPerformanceTable: null,
     winLossByContractorTable: null,
     projectStatusTable: null,
+    workOrdersTable: null,
+    lineItemsTable: null,
+
+    //======== WORK ORDERS ELEMENTS =====
+
+    // TOTAL WORK ASSIGNMENTS COMPLETED
+    totalWorkOrdersCompleted: document.getElementById("assigment-completed"),
+    totalWorkOrdersAssigned: document.getElementById("total-assigned"),
+    workOrdersCompletedPercent: document.querySelector(".kpi-assignment-complete-percent"),
+    workOrderCompletedTrend: document.getElementById("kpi-trend-value"),
+    // TOTAL ASSIGNED WORK ORDERS
+    totalAssignedWorkOrders: document.getElementById("assigned-work-orders"),
+    totalAssignedInProgress: document.getElementById("assigned-in-progress"),
+    totalAssignedBehind: document.getElementById("assigned-behind"),
+    totalAssignedTrend: document.getElementById("total-assigned-trend"),
+    // AVG CYCLE TIME
+    averageCycleTime: document.getElementById("average-cycle-time"),
+    averageCycleTrend: document.getElementById("average-cycle-time-trend")
+
+    
 };
 
 // Make globally available to all scripts

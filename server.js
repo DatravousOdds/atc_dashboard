@@ -745,7 +745,7 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
     } catch (error) {
         console.log("Error occured when fetching...", error)
     }
-})
+});
 
 app.get('/api/contracts/labor-vs-profit', async(req, res) => {
     const { contractId, month, year } = req.query;
@@ -805,7 +805,55 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
     } catch (error) {
         console.log("Error occurred when fetching...", error)
     }
-})
+});
+
+// ===================
+// Work Orders Routes
+
+// Gets stats (Average cycle time, total, total completed work orders, etc)
+app.get('/api/contracts/work-orders/stats', async(req, res) => {
+    let q = `
+        SELECT 
+            COUNT(*) as total_work_orders,
+            COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+            AVG(due_date - start_date) FILTER(WHERE status = 'completed') as avg_cycle_time,
+            ((COUNT(*) FILTER(WHERE status = 'completed') / COUNT(*)) * 100) as completion_percent,
+            
+        FROM work_orders
+    `;
+
+    try {
+        const result = await pool.query(q);
+        return res.json(( result).rows)
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+// Gets line items for a specific work order
+app.get('/api/contracts/work-orders/:id', async(req, res) => {
+
+});
+
+// Gets work for a specific contract
+app.get('/api/contracts/work-orders', async(req, res) => {
+    const { contractId } = req.query;
+    console.log(contractId);
+    let query = `SELECT * FROM work_orders WHERE 1=1`;
+    const params = [];
+
+    if (contractId && contractId !=='all') {
+            query += ' AND contract_id = $' + (params.length + 1)
+            params.push(contractId);
+    };
+
+    try {
+       const results = await pool.query(query, params);
+       console.log(res.json(results.rows))
+    } catch (error) {
+        console.log(error)
+    }
+});
 
 const PORT = process.env.PORT || 3300;
 
