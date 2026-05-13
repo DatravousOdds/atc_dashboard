@@ -180,37 +180,7 @@ function getTotalActiveContracts(year, month, contractId) {
     .catch(error => {
         console.error("Error fetching active contracts:", error);
     })
-}
-
-// function getAverageContractValue(year, month, contractId) {
-//     const { averageContractValue } = appState;
-    
-//     const params = new URLSearchParams();
-
-//     if( year && year !=='all') params.append('year', year);
-//     if( month && month !=='all') params.append('month', month);
-//     if( contractId && contractId !=='all') params.append('contractId', contractId);
-
-//     try{
-//         // ask api
-//         fetch(`/api/contracts/average?${params.toString()}`)
-//         .then(res => res.json())
-//         .then(data => {
-        
-//             // display average to client
-//             averageContractValue.textContent = formatCurrency(data.average_contract_value) || "$0.00";
-//         })
-//         .catch(error => {
-//             console.error("Error fetching average:", error);
-//             averageContractValue.textContent = "Error";
-//         })
-
-//     } catch(error) {
-//         console.log("Error fetching average contract value!", error)
-//     }
-        
-    
-// }
+};
 
 function getWinRatePercentage(year, month, contractId) {
     const { winRate } = appState;
@@ -231,6 +201,26 @@ function getWinRatePercentage(year, month, contractId) {
 }
 
 // Load 
+
+async function getProjectKPIs() {
+    let response;
+    try {
+        response = await fetch(`/api/projects/kpis`);        
+    } catch (err) {
+        throw new Error(`Error when fetching project KPIs: ${err.message}`)
+    }
+
+    if (!response.ok) {
+            throw new (`Error when fetching project KPIs: ${response.statusText}`);
+        }
+
+        return response.json();
+}
+
+const projectKPIs = await getProjectKPIs();
+
+
+
 
 function loadContracts() {
     const { contractDropdown } = appState;
@@ -374,6 +364,26 @@ function displayWinRate(rate) {
     })
 }
 
+function displayProjectKPIs(data) {
+    const { 
+        completedProjects, completedProjectsNote,
+         totalProjects, overdueProjects, overdueProjectsNote
+    } = appState;
+
+   if (!data) return;
+
+   const cp = parseInt(data.completed_projects);
+   const tp = parseInt(data.total_projects);
+   const odp = parseInt(data.overdue_projects);
+
+   completedProjects.innerText = parseInt(cp);
+   completedProjectsNote.innerText = `${cp} out of ${tp} projects`;
+   totalProjects.innerText = tp;
+   overdueProjects.innerText = odp;
+   overdueProjectsNote.innerText = `${odp} out of ${tp} projects`;
+}
+
+
 function applyFilters() {
     const { monthDropdown, dateRangeDropdown, contractDropdown } = appState;
 
@@ -414,6 +424,8 @@ function selectContract(contract) {
         
     
 }
+
+
 
 
 
@@ -467,6 +479,9 @@ $(document).ready( async function () {
     loadContracts();
     applyFilters(); // initial load with default filters
     getTotalRevenue();
+    displayProjectKPIs(projectKPIs);
+    
+
 
     // Click outside to close search dropdown
     document.addEventListener('click', function(event) {

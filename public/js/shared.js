@@ -43,7 +43,14 @@ const appState = {
     totalAssignedTrend: document.getElementById("total-assigned-trend"),
     // AVG CYCLE TIME
     averageCycleTime: document.getElementById("average-cycle-time"),
-    averageCycleTrend: document.getElementById("average-cycle-time-trend")
+    averageCycleTrend: document.getElementById("average-cycle-time-trend"),
+
+     //======== PROJECT ELEMENTS =====
+    completedProjects: document.querySelector(".completed-projects .kpi-value"),
+    completedProjectsNote: document.querySelector(".completed-projects .kpi-note"),
+    totalProjects: document.querySelector(".total-projects .kpi-value"),
+    overdueProjects: document.querySelector("#overdueProjects .kpi-value"),
+    overdueProjectsNote: document.querySelector("#overdueProjects .kpi-note")
 
     
 };

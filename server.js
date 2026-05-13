@@ -687,7 +687,7 @@ app.get('/api/projects/performance', async(req, res) => {
             COUNT(DISTINCT c.id) AS completed_projects
         FROM contracts c
         INNER JOIN time_entries te ON te.contract_id = c.id
-        WHERE c.status = 'completed' AND EXTRACT('YEAR' FROM te.date_worked) = '2026'
+        WHERE c.status = 'completed' AND EXTRACT('YEAR' FROM te.date_worked) = '2025'
         GROUP BY EXTRACT('MONTH' FROM te.date_worked) 
         ORDER BY month ASC;
     `;
@@ -808,7 +808,32 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
 });
 
 // ===================
+// Project Routes
+//====================
+
+app.get('/api/projects/kpis', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                COUNT(*) as total_projects,
+                COUNT(*) FILTER (WHERE status = 'completed' ) as completed_projects,
+                COUNT(*) FILTER (WHERE status = 'overdue') as overdue_projects
+            FROM contracts`
+        );
+        res.json(result.rows[0])
+        
+    } catch (error) {
+        res.status(500).json({success: false, message: error.message})
+    }
+});
+
+
+
+
+
+// ===================
 // Work Orders Routes
+//====================
 
 // Gets stats (Average cycle time, total, total completed work orders, etc)
 app.get('/api/contracts/work-orders/stats', async(req, res) => {
@@ -818,7 +843,7 @@ app.get('/api/contracts/work-orders/stats', async(req, res) => {
             COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
             AVG(due_date - start_date) FILTER(WHERE status = 'completed') as avg_cycle_time,
             ((COUNT(*) FILTER(WHERE status = 'completed') / COUNT(*)) * 100) as completion_percent,
-            
+
         FROM work_orders
     `;
 
@@ -832,7 +857,34 @@ app.get('/api/contracts/work-orders/stats', async(req, res) => {
 
 // Gets line items for a specific work order
 app.get('/api/contracts/work-orders/:id', async(req, res) => {
+    const contractId = req.params.id;
+    console.log("Contract id selected: ", contractId);
 
+    if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
+
+    let query = `SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure, 
+                    bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
+                    ((li.qty_completed / li.qty_assigned) * 100) as progress
+                FROM bid_items bi
+                JOIN lines_items li ON bi.id = bid_item_id
+                JOIN contracts c ON bi.contract_id = c.id 
+                AND WHERE 1=1
+        `;
+
+
+    const params = [];
+
+    if (contractId !== "all" && contractId) {
+        query += ` AND c.id = $` + (params.length + 1)
+        params.push(contractId);
+    }
+
+    try {
+        const result =  await pool.query(query, params);
+        return res.json(result.rows)
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message })
+    }
 });
 
 // Gets work for a specific contract
