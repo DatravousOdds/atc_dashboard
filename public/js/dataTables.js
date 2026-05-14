@@ -378,7 +378,7 @@ const lineItemsTable = $('#lineItems-table').DataTable({
     serverSide: false,
     pageLength: 8,
     ajax: {
-        url: `/api/contracts/work-orders/contract?=${contractId}`,
+        url: `/api/contracts/work-orders`,
         type: 'GET'
     },
     columns: [

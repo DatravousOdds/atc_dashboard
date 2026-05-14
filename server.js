@@ -430,7 +430,7 @@ app.get('/api/contract/search', async(req, res) => {
     try {
         
         const { query } = req.query;
-        // console.log(query)
+        console.log(query)
 
         if (!query) {
             return res.json([])
@@ -623,7 +623,7 @@ app.get('/api/projects/status', async(req, res) => {
         LEFT JOIN employees e ON t.employee_id = e.id
         LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
         GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status
-        HAVING c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%'
+        HAVING c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%' AND c.status <> 'completed'
         ORDER BY c.contract_name ASC
     `;
 
@@ -827,36 +827,52 @@ app.get('/api/projects/kpis', async (req, res) => {
     }
 });
 
-
-
-
-
 // ===================
 // Work Orders Routes
 //====================
 
 // Gets stats (Average cycle time, total, total completed work orders, etc)
-app.get('/api/contracts/work-orders/stats', async(req, res) => {
+app.get('/api/contracts/work-orders/kpis', async(req, res) => {
     let q = `
-        SELECT 
-            COUNT(*) as total_work_orders,
-            COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
-            AVG(due_date - start_date) FILTER(WHERE status = 'completed') as avg_cycle_time,
-            ((COUNT(*) FILTER(WHERE status = 'completed') / COUNT(*)) * 100) as completion_percent,
+    WITH last_week_completed_work_orders AS (
+    SELECT 
+    COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+    COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+    FROM work_orders
+    WHERE start_date >= NOW() - INTERVAL '2 week'
+        AND start_date < NOW() - INTERVAL '1 week'  
+    )
 
-        FROM work_orders
+    SELECT 
+        COUNT(*) as total_work_orders,
+        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+        ROUND(
+            COALESCE(COUNT(*) FILTER(WHERE status = 'completed')::numeric
+            / NULLIF(COUNT(*),0),0)
+            * 100,2) as completion_percent,
+
+        (COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
+        / NULLIF(MAX(lw.total_completed),0) * 100 as wow_completed_percent,
+
+        COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
+        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
+        COALESCE(COUNT(*) FILTER(WHERE status = 'in-progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
+        COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
+    FROM work_orders
+    CROSS JOIN last_week_completed_work_orders lw
+    WHERE start_date >= NOW() - INTERVAL '1 week'
     `;
 
     try {
         const result = await pool.query(q);
-        return res.json(( result).rows)
+        return res.json(result.rows[0])
     } catch (error) {
         console.log(error);
     }
 });
 
 // Gets line items for a specific work order
-app.get('/api/contracts/work-orders/:id', async(req, res) => {
+app.get('/api/contracts/work-orders', async(req, res) => {
     const contractId = req.params.id;
     console.log("Contract id selected: ", contractId);
 
@@ -869,8 +885,7 @@ app.get('/api/contracts/work-orders/:id', async(req, res) => {
                 JOIN lines_items li ON bi.id = bid_item_id
                 JOIN contracts c ON bi.contract_id = c.id 
                 AND WHERE 1=1
-        `;
-
+    `;
 
     const params = [];
 

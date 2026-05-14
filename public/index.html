@@ -407,19 +407,27 @@
                     </div>
                 </div>
                 <!-- Project -->
-                 <div class="project-wrapper">
+                <div class="project-wrapper">
                     <div class="project-container">
-                        <p>Project</p>
+                        <span class="project-label">Project</span>
                         <div class="project-select">
                             <div class="project-select-wrapper">
-                               <div class="project-name">
-                                    <p>Northgate Terminal - HVAC Retrofit</p> 
-                                </div>
+                               <span class="project-name">
+                                    Northgate Terminal - HVAC Retrofit
+                               </span>
                                 <div class="project-active">
-                                    <p>12 active projects</p>
+                                    12 active projects
                                     <i class="fa-solid fa-angle-down"></i>
                                 </div> 
                             </div>
+                            <!-- Project Dropdown Menu-->
+                             <ul class="wo-project-dropdown"
+                                id="wo-project-dropdown"
+                                aria-label="Select a project"
+                            
+                                >
+                                <!--data filled from database-->
+                             </ul>
 
                             <div class="project-search">
                                 <button type="button" class="search-btn">
@@ -430,9 +438,9 @@
 
                         </div>
                     </div>
-                 </div>
-                 <!--Project KPIs -->
-                 <div class="kpi-wrapper">
+                </div>
+                <!--Project KPIs -->
+                <div class="kpi-wrapper">
                     <div class="kpi-container">
                         <div class="kpi-head">
                             <i class="fa-solid fa-check"></i>
@@ -471,7 +479,7 @@
                         </div>
                         <div class="kpi-stats">
                             <div class="kpi-assignment-complete-percent">
-                                <p><span id="assigned-in-progress">21</span> in progress · <span id="assigned-behind">4 behind</span></p>
+                                <p><span id="assigned-in-progress"></span></p>
                             </div>
                             <div class="kpi-trend-indicator" id="total-assigned-trend">
                                 <i class="fa-solid fa-caret-down"></i>
@@ -502,9 +510,9 @@
                             </div>
                         </div>
                     </div>
-                 </div>
-                 <!-- DataTables-->
-                  <div class="dataTables-wrapper">
+                </div>
+                <!-- DataTables-->
+                <div class="dataTables-wrapper">
                     <!-- Win/Loss Table-->
                     <div class="data-table-container">
                         <table id="workOrders-table" class="data-table-container">
@@ -546,7 +554,7 @@
                             </tbody>
                         </table>  
                     </div>
-                  </div>
+                </div>
             </div>
             <div id="inventoryContent" class="tab-content" data-content="inventory">Inventory Content</div>
             <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>
@@ -562,6 +570,7 @@
     <script src="js/theme.js"></script>
     <script src="js/shared.js"></script>
     <script src="js/charts.js"></script>
+    <script src="js/workOrders.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/dataTables.js"></script>
     
