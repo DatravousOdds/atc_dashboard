@@ -108,6 +108,61 @@
     gap: 0.5rem;
 }
 
+.project-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 140px;
+    height: 40px;
+    background-color: #163049;
+    border: 1px solid #1F3A57;
+    overflow: hidden;
+    transition: width 0.3s ease-in-out;
+    border-radius: 8px;
+}
+
+.project-search.active {
+    width: 1800px;
+    cursor: pointer;
+}
+
+.project-search.active .search-btn span {
+    display: none;
+}
+
+.project-search.active .search-btn {
+    background: transparent;
+    border: none;
+}
+
+.project-search .search-input {
+    position: absolute;
+    left: 30px;
+    width: 700px;
+    padding: 0.5rem;
+    background: transparent;
+    outline: none;
+    border: none;
+    opacity: 0;
+    pointer-events: none;
+    font-size: 0.875rem;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.search-input[type="search"] {
+    color: #eaf1ea;
+}
+
+.project-search .search-input.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.project-search .search-input.active::placeholder {
+    color: var(--color-blue-text-light);
+}
+
 
 
 .project-select .project-select-wrapper {
@@ -147,11 +202,14 @@
     width: 130px;
     gap: 0.5rem;
     background: #163049;
-    border: 1px solid #1F3A57;
+    border: 1px solid transparent;
     color: #eaf1ea;
     padding: 0.5rem 1rem;
     border-radius: 6px;
+    white-space: nowrap;
 }
+
+
 
 /* Work Order Project Menu */
 .wo-project-dropdown {
@@ -162,12 +220,28 @@
     border: 1px solid #1E3B57;
     width: 100%;
     height: 100%;
+    min-height: 300px;
+    padding: 0.5rem;
     top: 3rem;
     bottom: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    list-style: none;
 }
 
 .wo-project-dropdown.active {
     display: block;
+}
+
+.wo-project-dropdown li {
+    padding: 0.5rem;
+    color: #eaf1ea;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.wo-project-dropdown li:hover {
+    background-color: #1E3B57;
 }
 
 /* KPIs */

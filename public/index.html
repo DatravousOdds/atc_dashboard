@@ -416,7 +416,7 @@
                                     Northgate Terminal - HVAC Retrofit
                                </span>
                                 <div class="project-active">
-                                    12 active projects
+                                    <span id="active-count">12 active projects</span>
                                     <i class="fa-solid fa-angle-down"></i>
                                 </div> 
                             </div>
@@ -430,10 +430,16 @@
                              </ul>
 
                             <div class="project-search">
-                                <button type="button" class="search-btn">
+                                <button type="button" class="search-btn" id="searchBtn">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    Find project
+                                    <span>Find project</span>
                                 </button>
+                                <input type="search" class="search-input" placeholder="Search projects...">
+                                <div id="projectSearchDropdown" class="project-search-dropdown">
+                                    <ul class="project-search-results">
+                                        <!-- Search results will be populated here dynamically -->
+                                    </ul>
+                                </div>
                             </div> 
 
                         </div>

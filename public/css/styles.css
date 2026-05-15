@@ -1,3 +1,13 @@
+:root {
+    /* Secondary Colors */
+    --main-background-color-dark: #0A1929;
+    /* Container Backgrounds */
+    --container-background-light: #f0f4f8;
+    --container-background-dark: #11263D;
+    --sidebar-background: #0D1F33;
+    --text-color-dark: #fff;
+}
+
 
 
 /* ================================
@@ -12,7 +22,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: var(--background-prime);
+    background: var(--main-background-color-dark);
     color: #333;
     line-height: 1.6;
     padding: 0 20px;
@@ -261,7 +271,7 @@ border-bottom-right-radius: 0;
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--shadow-color);
-    background-color: var(--background-prime);
+    background-color: var(--container-background-dark);
     text-align: left;
     width: 100%;
     transition: all 0.3s ease-in-out;
@@ -567,6 +577,7 @@ table.dataTable tbody td {
     border-bottom: 1px solid var(--border-color);
     color: var(--main-text-color);
     word-wrap: break-word;
+    background-color: var(--container-background-dark);
 }
 
 table.dataTable tbody td.is-positive {
@@ -686,7 +697,7 @@ footer {
     top: 0;
     width: 0;
     height: 100%;
-    background-color: #00192e;
+    background-color: var(--sidebar-background);
     display: none;
     flex-direction: column;
     transition: width 0.3s ease-in-out;
@@ -827,7 +838,7 @@ footer {
 .kpi-value {
     font-size: 2.25rem;
     font-weight: 700;
-    color: var(--color-prime);
+    color: var(--text-color-dark);
 }
 
 .overview-projects {
@@ -843,6 +854,7 @@ footer {
     /* height: 350px; */
     border-radius: 8px;
     border: 2px solid var(--border-color);
+    background-color: var(--container-background-dark);
 }
 
 .completed-projects {

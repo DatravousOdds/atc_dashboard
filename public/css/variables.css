@@ -9,7 +9,11 @@
     --border-color: #334155;
     --shadow-color: rgba(220, 20, 60, 0.3);
 
-
+    /* Secondary Colors */
+    --main-background-color-dark: #0A1929;
+    /* Container Backgrounds */
+    --container-background-light: #f0f4f8;
+    --container-background-dark: #11263D;
 
 
 
