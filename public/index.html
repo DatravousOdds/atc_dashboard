@@ -19,6 +19,10 @@
     <script src="https://cdn.datatables.net/plug-ins/2.0.0/dataRender/percentBar.js"></script>
     <script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 </head>
 <body>
     
@@ -434,12 +438,12 @@
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                     <span>Find project</span>
                                 </button>
-                                <input type="search" class="search-input" placeholder="Search projects...">
-                                <div id="projectSearchDropdown" class="project-search-dropdown">
+                                <input type="search" class="search-input" id="searchInput" placeholder="Search projects...">
+                            </div>
+                            <div id="projectSearchDropdown" class="project-search-dropdown">
                                     <ul class="project-search-results">
                                         <!-- Search results will be populated here dynamically -->
                                     </ul>
-                                </div>
                             </div> 
 
                         </div>
@@ -579,8 +583,207 @@
     <script src="js/workOrders.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/dataTables.js"></script>
+    <script src="js/flatpickr.js"></script>
     
-    
+    <!-- Modals -->
+     <div id="workOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close-button" id="closeWorkOrderModal">&times;</span>
+                <div class="modal-header-text">
+                    <div class="workOrder-title">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Work Orders</span>
+                    </div>
+                    <h2>Work Order Details</h2>
+                    <p>Create a work order, schedule its date range, and add line items.</p>
+                </div>  
+            </div>
+            <!-- Step 1 Details-->
+             <div class="form-steps">
+                <!-- Step 1: Work Order Details -->
+                <div class="step active" id="step1">
+                    <div class="step-header">
+                        <div class="step">1</div>
+                        <h4>Details</h4>
+                    </div>
+                    
+                    <form id="workOrderForm">
+                        <div class="form-group">
+                            <label for="workOrderTitle">Work order title</label>
+                            <input type="text" id="workOrderTitle" name="workOrderTitle" required>
+                        </div>
+
+                        <div class="form-group">
+
+                            <div class="form-flex">
+                                <i class="fa-regular fa-user"></i>
+                                <div class="label-wrapper">
+                                    <label for="workOrderCustomer">Customer</label>
+                                    <span class="required">*</span>
+                                </div>
+                                <input type="text" id="workOrderCustomer" name="workOrderCustomer" required>
+                            </div>
+
+                            <div class="form-flex">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <div class="label-wrapper">
+                                    <label for="workOrderLocation">Project location</label>
+                                    <span class="required">*</span>
+                                </div>
+                                <input type="text" id="workOrderLocation" name="workOrderLocation" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+
+                            <div class="form-flex">
+                                <label for="workOrderProject">Priority</label>
+                                <select id="workOrderProject" name="workOrderProject" required>
+                                    <option value="normal">Normal</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                </select> 
+                            </div>
+
+                            <div class="form-flex">
+                                <label for="workOrderProject">Assign to associate</label>
+                                <select id="workOrderProject" name="workOrderProject" required>
+                                    <!-- Dynamically populate with associates from database -->
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!-- Step 2: Schedule -->
+                 <div class="step active" id="step2">
+                    <div class="step-header">
+                        <div class="step">2</div>
+                        <h4>Schedule</h4>
+                    </div>
+                    
+                    <div class="flex-wrapper">
+                        <div class="schedule-date-range">
+
+                            <div class="schedule-col-wrapper">
+                                <label for="scheduleStart">Start date</label>
+                                <span class="schedule-value" id="scheduleStartValue">Jun 09, 2026</span> 
+                            </div>
+                            
+                            <div class="schedule-icon">
+                                <i class="fa-solid fa-arrow-down-long"></i>
+                            </div>
+
+                            <div class="schedule-col-wrapper">
+                                <label for="scheduleEnd">End date</label>
+                                <span class="schedule-value" id="scheduleEndValue">Jun 20, 2026</span>
+                            </div>
+
+                            <div class="tooltip">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span class="tooltiptext">Set the expected start and end dates for the work order. This helps with scheduling and tracking progress.</span>
+                            </div>
+
+                        </div>
+                        <!-- Calendar -->
+                         <div class="date-range-calendar" id="dateRangeCalendar">
+                                <!-- Calendar will be rendered here dynamically -->
+
+                         </div>
+                    </div>
+                </div>
+                <!-- Step 3: Details -->
+                <div class="step active" id="step3">
+                    <div class="step-header">
+                        <div class="step">3</div>
+                        <h4>Line Items</h4>
+                    </div>
+                    <!-- Import Work Orders -->
+                        <div class="import-work-orders">
+                        <div class="flex-wrapper">
+                            <div class="import-icon">
+                                <i class="fa-solid fa-file-import"></i>
+                            </div>
+                            <div class="import-text">
+                                <h3>Import line items</h3>
+                                <p>Drop an .xlsx file here, or browse files. Columns map to the table below. Download template </p>
+                            </div>
+                            <div class="import-btn" id="importBtn">
+                                <i class="fa-solid fa-download"></i>
+                                Import Excel
+                            </div>
+                        </div>
+                        </div>
+                    <!-- Line Items Table -->
+                    <div class="line-items-table">
+                        <table id="lineItemsTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Description</th>
+                                    <th>Unit</th>
+                                    <th>Qty</th>
+                                    <th>MON</th>
+                                    <th>TUE</th>
+                                    <th>THRU</th>
+                                    <th>FRI</th>
+                                    <th>MATERIAL</th>
+                                    <th>EQUIPMENT</th>
+                                </tr>
+                                
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="item" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="description" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <select name="unit" class="line-item-select">
+                                            <option value="ea">ea</option>
+                                            <option value="hr">hr</option>
+                                            <option value="day">day</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="mon" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="tue" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="wed" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="thu" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="fri" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="material" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <select name="equipment" class="line-item-select">
+                                            <option value="none">None</option>
+                                            <option value="excavator">Excavator</option>
+                                            <option value="bulldozer">Bulldozer</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <div id="workOrderDetails">
+                <!-- Work order details will be populated here dynamically -->
+            </div>
+        </div>
     
 </body>
 </html>

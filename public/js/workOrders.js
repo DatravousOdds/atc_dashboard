@@ -1,13 +1,23 @@
 const workOrderDropdown = document.getElementById("wo-project-dropdown");
 const searchBtn = document.getElementById("searchBtn");
 const workOrderProjectDropdown = document.querySelector(".wo-project-dropdown");
-const searchInput = document.querySelector(".search-input");
+const searchInput = document.getElementById("searchInput");
 const projectSearch = document.querySelector(".project-search");
 const projectSelectContainer = document.querySelector(".project-select-wrapper");
 const projectNameDisplay = document.querySelector(".project-name");
 const activeCount = document.getElementById("active-count");
+const activeProjects = document.querySelectorAll(".wo-project-dropdown li");
+const projectSearchDropdown = document.getElementById("projectSearchDropdown");
 
 
+
+
+
+const contracts = await getContracts();
+
+console.log("active projects:", contracts.length);
+
+activeCount.textContent = `${contracts.length} active projects`;
 
 projectSelectContainer.addEventListener("click", (e) => {
    workOrderProjectDropdown.classList.toggle("active");
@@ -22,7 +32,6 @@ projectSelectContainer.addEventListener("click", (e) => {
            })
        })
    }
-
 })
 
 document.addEventListener("click", (event) => {
@@ -36,17 +45,29 @@ document.addEventListener("click", (event) => {
         projectSearch.classList.remove("active");
     }
 
+    if (!projectSearchDropdown.contains(event.target) && !projectSearch.contains(event.target)) {
+        projectSearchDropdown.classList.remove("active");
+    };
 });
 
 
 
+searchInput.addEventListener("input", () => {
+    const query = searchInput.value.toLowerCase();
+    console.log("Search query:", query);
 
+    if (query) {
+        projectSearchDropdown.classList.add("active");
+    };
+    
+});
 
 searchBtn.addEventListener("click", () => {
     searchInput.classList.toggle("active");
     projectSearch.classList.toggle("active");
     searchInput.focus();
 });
+
 
 
 async function getContracts() {
@@ -62,9 +83,13 @@ async function getContracts() {
     } catch (err) {
         throw new Error(`Error fetching contracts... ${err.message}`)
     }
-}
+};
 
-const contracts = await getContracts();
+
+
+
+
+console.log("Total contracts:", contracts.length);
 
 contracts.forEach(contract => {
     const li = document.createElement('li');

@@ -35,7 +35,7 @@ pool.query('SELECT NOW()', (err,res) => {
 // Routes
 app.get('/api/contracts', async(req, res) => {
     try {
-        const {year, month, contract, status } = req.query;
+        const { year, month, contract, status } = req.query;
         // console.log(contract,year,month)
 
         let query = `SELECT * FROM contracts WHERE 1=1`;
@@ -64,7 +64,7 @@ app.get('/api/contracts', async(req, res) => {
 
         const result = await pool.query(query, params)
         res.json(result.rows)
-        // console.log(result.rows)
+        console.log(result.rows)
 
     } catch (err) {
         console.log(err.message)

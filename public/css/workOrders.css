@@ -113,17 +113,18 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    width: 140px;
+    width: 100%;
+    max-width: 140px;
     height: 40px;
     background-color: #163049;
     border: 1px solid #1F3A57;
     overflow: hidden;
-    transition: width 0.3s ease-in-out;
+    transition: max-width 0.3s ease-in-out;
     border-radius: 8px;
 }
 
 .project-search.active {
-    width: 1800px;
+    max-width: 1800px;
     cursor: pointer;
 }
 
@@ -174,6 +175,36 @@
     border-radius: 8px;
     border: 1px solid #1F3A57;
     padding: 0.5rem;
+}
+
+
+/* Search Bar Dropdown Menu */
+.project-search-dropdown {
+    position: absolute;
+    display: none;
+    background-color: #163049;
+    border-radius: 8px;
+    border: 1px solid #1E3B57;
+    width: 100%;
+    max-width: 680px;
+    padding: 0.5rem;
+    top: 3rem;
+    right: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    transition: max-width 0.3s ease-in-out;
+}
+
+.project-search-dropdown.active {
+    display: block;
+}
+
+.project-search-results {
+    padding: 0.5rem;
+    color: #eaf1ea;
+    cursor: pointer;
+    border-radius: 6px;
+    height: 500px;
 }
 
 .project-name  {
