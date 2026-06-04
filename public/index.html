@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
     <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
 
 </head>
 <body>
@@ -575,21 +575,11 @@
         </div>
     </main>
 
-   
-    
-    <script src="js/theme.js"></script>
-    <script src="js/shared.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/workOrders.js" type="module"></script>
-    <script src="js/main.js" type="module"></script>
-    <script src="js/dataTables.js"></script>
-    <script src="js/flatpickr.js"></script>
-    
     <!-- Modals -->
-     <div id="workOrderModal" class="modal">
+     <div class="modal-ovelay">
+        <div id="workOrderModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="close-button" id="closeWorkOrderModal">&times;</span>
                 <div class="modal-header-text">
                     <div class="workOrder-title">
                         <i class="fa-solid fa-file-lines"></i>
@@ -597,21 +587,24 @@
                     </div>
                     <h2>Work Order Details</h2>
                     <p>Create a work order, schedule its date range, and add line items.</p>
-                </div>  
+                </div> 
+                <span class="close-button" id="closeWorkOrderModal">&times;</span>
             </div>
             <!-- Step 1 Details-->
-             <div class="form-steps">
+            <div class="form-steps">
                 <!-- Step 1: Work Order Details -->
                 <div class="step active" id="step1">
                     <div class="step-header">
-                        <div class="step">1</div>
+                        <div class="step">
+                            <span class="step-number">1</span>
+                        </div>
                         <h4>Details</h4>
                     </div>
                     
                     <form id="workOrderForm">
-                        <div class="form-group">
+                        <div class="form-flex">
                             <label for="workOrderTitle">Work order title</label>
-                            <input type="text" id="workOrderTitle" name="workOrderTitle" required>
+                            <input type="text" id="workOrderTitle" name="workOrderTitle" placeholder="Please enter a work order title..." required>
                         </div>
 
                         <div class="form-group">
@@ -658,7 +651,9 @@
                 <!-- Step 2: Schedule -->
                  <div class="step active" id="step2">
                     <div class="step-header">
-                        <div class="step">2</div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                        </div>
                         <h4>Schedule</h4>
                     </div>
                     
@@ -695,19 +690,24 @@
                 <!-- Step 3: Details -->
                 <div class="step active" id="step3">
                     <div class="step-header">
-                        <div class="step">3</div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                        </div>
                         <h4>Line Items</h4>
                     </div>
                     <!-- Import Work Orders -->
                         <div class="import-work-orders">
                         <div class="flex-wrapper">
-                            <div class="import-icon">
-                                <i class="fa-solid fa-file-import"></i>
+                            <div class="flex-wrapper">
+                                <div class="import-icon">
+                                    <i class="fa-solid fa-file-import"></i>
+                                </div>
+                                <div class="import-text">
+                                    <h3>Import line items</h3>
+                                    <p>Drop an .xlsx file here, or browse files. Columns map to the table below. Download template </p>
+                                </div>  
                             </div>
-                            <div class="import-text">
-                                <h3>Import line items</h3>
-                                <p>Drop an .xlsx file here, or browse files. Columns map to the table below. Download template </p>
-                            </div>
+                            
                             <div class="import-btn" id="importBtn">
                                 <i class="fa-solid fa-download"></i>
                                 Import Excel
@@ -716,6 +716,15 @@
                         </div>
                     <!-- Line Items Table -->
                     <div class="line-items-table">
+                        <div class="line-item-table-header">
+                            <div class="header-text">
+                               <p><span>3</span> line items weekday cells = scheduled qty per day</p> 
+                            </div>
+                            <div class="header-icon">
+                                <i class="fa-solid fa-table-columns"></i>
+                                <p>Columns</p>
+                            </div>
+                        </div>
                         <table id="lineItemsTable" class="data-table">
                             <thead>
                                 <tr>
@@ -741,32 +750,70 @@
                                         <input type="text" name="description" class="line-item-input">
                                     </td>
                                     <td>
-                                        <select name="unit" class="line-item-select">
+                                        <select name="unit" class="line-item-select" id="unitSelect">
                                             <option value="ea">ea</option>
                                             <option value="hr">hr</option>
                                             <option value="day">day</option>
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="number" name="quantity" class="line-item-input">
+                                        <input type="number" name="quantity" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="mon" class="line-item-input">
+                                        <input type="number" name="mon" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="tue" class="line-item-input">
+                                        <input type="number" name="tue" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="wed" class="line-item-input">
+                                        <input type="number" name="wed" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="thu" class="line-item-input">
+                                        <input type="number" name="thu" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="fri" class="line-item-input">
+                                        <input type="number" name="fri" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
-                                        <input type="number" name="material" class="line-item-input">
+                                        <select name="equipment" class="line-item-select">
+                                            <option value="none">None</option>
+                                            <option value="excavator">Excavator</option>
+                                            <option value="bulldozer">Bulldozer</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                
+                                 <tr>
+                                    <td>
+                                        <input type="text" name="item" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="description" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <select name="unit" class="line-item-select" id="unitSelect">
+                                            <option value="ea">ea</option>
+                                            <option value="hr">hr</option>
+                                            <option value="day">day</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" placeholder="0" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="mon" placeholder="0" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="tue" placeholder="0" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="wed" placeholder="0" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="thu" placeholder="0" class="line-item-input">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="fri" placeholder="0" class="line-item-input">
                                     </td>
                                     <td>
                                         <select name="equipment" class="line-item-select">
@@ -778,12 +825,31 @@
                                 </tr>
                             </tbody>
                         </table>
+                        <button type="button" id="addLineItem">
+                            <i class="fa-solid fa-plus"></i>
+                            Add Line Item
+                        </button>
                     </div>
                 </div>
+            </div>
             <div id="workOrderDetails">
                 <!-- Work order details will be populated here dynamically -->
             </div>
         </div>
+        </div> 
+     </div>
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="js/flatpickr.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/workOrders.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+    <script src="js/dataTables.js"></script>
+    
+    
     
 </body>
 </html>

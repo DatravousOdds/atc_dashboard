@@ -1,14 +1,47 @@
-const { default: flatpickr } = require("flatpickr");
 
+const element = document.querySelector('#workOrderDetails');
+
+console.log('Element exists:', !!element);
+console.log('Element visible:', element?.offsetHeight);
+
+
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+});
 
 const configOptions = {
     mode: "range",
     dateFormat: "m-d-Y",
     showMonths: 2,
-    onClose: function(selectedDates, dateStr, instance) {
-        console.log("Selected dates:", selectedDates);
-        console.log("Formatted date string:", dateStr);
+    inline: true,
+    onChange: function(selectedDates, dateStr, instance) {
+        const [startDate, endDate] = dateStr.split(" to ");
+        console.log("Selected Start Date:", startDate);
+        console.log("Selected End Date:", endDate);
+
+        if (!startDate || !endDate) {
+            console.warn("Please select both start and end dates.");
+            return;
+        };
+
+        const dateRange = {
+            start: dateFormatter.format(new Date(startDate.replace(/-/g, "/"))),
+            end: dateFormatter.format(new Date(endDate.replace(/-/g, "/")))
+        };
+        console.log("Date Range:", dateRange);
+        const scheduleStartValue = document.getElementById("scheduleStartValue");
+        const scheduleEndValue = document.getElementById("scheduleEndValue");
+        if (scheduleStartValue && scheduleEndValue) {
+            scheduleStartValue.textContent = dateRange.start;
+            scheduleEndValue.textContent = dateRange.end;
+        } else {
+            console.warn("Schedule start or end input elements not found.");
+        }
     }
-}
+};
 
 flatpickr(".date-range-calendar", configOptions);
