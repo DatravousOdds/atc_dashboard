@@ -212,13 +212,14 @@
 --
 
 
---Last week completed work orders
+-- Last week completed work orders
 -- WITH last_week_completed_work_orders AS (
 --     SELECT 
---     COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
---     COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
---     FROM work_orders
---     WHERE start_date >= NOW() - INTERVAL '2 week'
+--         COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+--         COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+--         FROM work_orders
+--         WHERE contract_id = 1 
+--         AND start_date >= NOW() - INTERVAL '2 week'
 --         AND start_date < NOW() - INTERVAL '1 week'  
 -- )
 -- SELECT 
@@ -238,5 +239,96 @@
 --     COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
 -- FROM work_orders
 -- CROSS JOIN last_week_completed_work_orders lw
--- WHERE start_date >= NOW() - INTERVAL '1 week'
+-- WHERE contract_id = 1 
+-- AND start_date >= NOW() - INTERVAL '1 week'
 
+
+
+-- SELECT * FROM work_orders WHERE 1=1 AND contract_id = 1;
+
+-- SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure, 
+--         bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
+--         ((li.qty_completed / li.qty_assigned) * 100) as progress
+-- FROM bid_items bi
+-- JOIN line_items li ON bi.id = li.bid_item_id
+-- JOIN contracts c ON bi.contract_id = c.id
+
+-- SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure, 
+--     bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
+--     ((li.qty_completed / li.qty_assigned) * 100) as progress
+-- FROM bid_items bi
+-- JOIN line_items li ON bi.id = li.bid_item_id
+-- JOIN contracts c ON bi.contract_id = c.id 
+-- WHERE 1=1 AND c.id = 5;
+
+
+-- INSERT INTO line_items (work_order_id, item, description, unit, qty, qty_completed, remaining_qty)
+-- VALUES
+--     ('WO-2024-014', 'Coil Unit', 'AHU-3 replacement coil unit', 'EA', 1, 1, 0),
+--     ('WO-2024-014', 'Refrigerant R-410A', 'Refrigerant recharge after coil swap', 'LB', 10, 10, 0),
+--     ('WO-2024-014', 'Copper Tubing', '3/4 inch copper tubing for connections', 'FT', 20, 20, 0),
+--     ('WO-2024-014', 'Insulation Wrap', 'Foam insulation for piping', 'FT', 15, 15, 0),
+--     ('WO-2024-014', 'Brazing Rod', 'Silver brazing rods for connections', 'EA', 5, 5, 0),
+--     ('WO-2024-014', 'Filter', '20x20x1 MERV-8 air filter', 'EA', 4, 4, 0),
+--     ('WO-2024-014', 'Labor - Tech', 'HVAC technician labor hours', 'HR', 8, 8, 0),
+--     ('WO-2024-014', 'Labor - Helper', 'Helper labor hours', 'HR', 4, 4, 0),
+--     ('WO-2024-014', 'Vacuum Pump Usage', 'System evacuation service', 'HR', 2, 2, 0),
+--     ('WO-2024-014', 'Nitrogen', 'Nitrogen for pressure testing', 'CF', 50, 50, 0),
+--     ('WO-2024-014', 'Sheet Metal Screws', 'Misc fasteners for panel reinstall', 'EA', 12, 12, 0),
+--     ('WO-2024-014', 'Condensate Pan Treatment', 'Pan treatment tablets', 'EA', 2, 2, 0);
+
+
+-- SELECT 
+--     work_order_id,
+--     title,
+--     assignee,
+--     status,
+--     total_items,
+--     due_date - start_date as progress,
+--     due_date,
+--     value
+-- FROM work_orders WHERE 1=1;
+
+-- ALTER TABLE work_orders ADD items_completed NUMERIC(4,2)
+
+-- SELECT * FROM work_orders;
+
+-- SELECT 
+--     total_items, 
+--     items_completed, 
+--     ROUND( 
+--         COALESCE(
+--         (items_completed * 100.0) / NULLIF(total_items, 0),
+--                 0)
+--         , 2) AS percentage_completed
+-- FROM work_orders;
+
+WITH last_week_completed_work_orders AS (
+    SELECT 
+        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+        FROM work_orders
+        WHERE contract_id = 1 
+        AND start_date >= NOW() - INTERVAL '2 week'
+        AND start_date < NOW() - INTERVAL '1 week'  
+    )
+
+    SELECT 
+        COUNT(*) as total_work_orders,
+        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+        ROUND(
+            COALESCE(COUNT(*) FILTER(WHERE status = 'completed')::numeric
+            / NULLIF(COUNT(*),0),0)
+            * 100,2) as completion_percent,
+
+        COALESCE((COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
+        / NULLIF(MAX(lw.total_completed),0) * 100, 0) as wow_completed_percent,
+
+        COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
+        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
+        COALESCE(COUNT(*) FILTER(WHERE status = 'in-progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
+        COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
+    FROM work_orders
+    CROSS JOIN last_week_completed_work_orders lw
+    WHERE contract_id = 1
+    AND start_date >= NOW() - INTERVAL '1 week';

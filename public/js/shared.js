@@ -30,7 +30,7 @@ const appState = {
     lineItemsTable: null,
 
     //======== WORK ORDERS ELEMENTS =====
-
+    contractId: null,
     // TOTAL WORK ASSIGNMENTS COMPLETED
     totalWorkOrdersCompleted: document.getElementById("assigment-completed"),
     totalWorkOrdersAssigned: document.getElementById("total-assigned"),

@@ -271,24 +271,7 @@ async function loadDateRange() {
         })
 }
 
-async function getWorkOrdersKPIs() {
-    try {
-        const res = await fetch('/api/contracts/work-orders/kpis')
 
-        if (!res.ok) {
-            throw new Error(`HTTP status error: ${res.status}`)
-        }
-
-        const data = await res.json();
-        return data;
-
-    } catch (err) {
-        throw new Error(`Failed fetching from server ${err.message}`)
-    }
-};
-
-
-const workOrderKPIs = await getWorkOrdersKPIs();
 
 // Display 
 
@@ -381,40 +364,7 @@ function displayProjectKPIs(data) {
    overdueProjectsNote.innerText = `${odp} out of ${tp} projects`;
 }
 
-function displayWorkOrdersKPIs(data) {
-    const 
-    {   totalAssignedWorkOrders,workOrdersCompletedPercent,
-        totalAssignedInProgress, workOrderCompletedTrend,
-        totalWorkOrdersCompleted,totalAssignedTrend,
-        averageCycleTime,averageCycleTrend,
-        totalWorkOrdersAssigned
-    } = appState;
 
-    const root = document.documentElement;
-    root.style.setProperty('--total-completed-work_orders-percent', `${Math.floor(parseInt(data.completion_percent))}%`);
-    root.style.setProperty('--total-assigned-work-orders-percent', `${Math.floor(parseInt(data.completion_percent))}%`);
-    root.style.setProperty('--total-avg-cycle-time-percent', `${Math.floor(parseInt(data.completion_percent))}%`);
-    
-    totalWorkOrdersCompleted.innerText = data.total_completed;
-    totalWorkOrdersAssigned.innerText = data.total_work_orders;
-    workOrdersCompletedPercent.innerHTML = `<p>${data.completion_percent}% completed</p>`;
-    workOrderCompletedTrend.innerHTML = `
-    <i class"fa-solid fa-caret-${parseFloat(data.wow_completed_percent) > 0 ? "down" : "up"}></i>
-    <p>${data.wow_completed_percent}</p>
-    `;
-
-    totalAssignedWorkOrders.innerText = data.total_assigned;
-    totalAssignedInProgress.innerHTML = `<p>${data.total_in_progress} in progress</p>`;
-    totalAssignedTrend.innerHTML = 
-    `<i class"fa-solid fa-caret-${parseInt(data.wow_assigned_count) > 0 ? "down" : "up"}></i>
-    <p class="kpi-trend-value">${data.wow_assigned_count} this week</p>`
-    
-
-    averageCycleTime.innerHTML = `
-        <span class="assigned-completed">${data.avg_cycle_time}</span>
-        <span>days</span>
-    `;    
-}
 
 
 
@@ -509,7 +459,7 @@ $(document).ready( async function () {
     applyFilters(); // initial load with default filters
     getTotalRevenue();
     displayProjectKPIs(projectKPIs);
-    displayWorkOrdersKPIs(workOrderKPIs);
+    // displayWorkOrdersKPIs(workOrderKPIs);
     
 
 

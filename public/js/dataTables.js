@@ -1,15 +1,16 @@
 
+
 const percentBarRender = data => {
   const pct = parseFloat(data) || 0;
-  let color = '#639922';
-  if (pct > 75) color = '#BA7517';
-  if (pct > 90) color = '#E24B4A';
+  let color = '#4DC9B0';
+  if (pct > 75) color = '#E57373';
+  if (pct > 90) color = '#EF5350';
   return `
     <div style="display:flex;align-items:center;gap:8px;">
-      <div style="flex:1;background:#e9ecef;border-radius:99px;height:8px;overflow:hidden;min-width:80px;">
+      <div style="flex:1;background:#1f3b5a;border-radius:99px;height:8px;overflow:hidden;min-width:80px;">
         <div style="width:${Math.min(pct,100)}%;background:${color};height:100%;border-radius:99px;"></div>
       </div>
-      <span style="font-size:12px;min-width:36px;text-align:right;color:${color};font-weight:500">${pct.toFixed(1)}%</span>
+      <span style="font-size:12px;min-width:36px;text-align:right;color:${color};font-weight:500">${pct.toFixed(0)}%</span>
     </div>`;
 };
 
@@ -325,31 +326,57 @@ const workOrdersTable = $('#workOrders-table').DataTable({
     serverSide: false,
     pageLength: 7,
     paging: false,
-    ajax: {
-        url: '/api/contracts/work-orders',
-        type: 'GET',
-        dataSrc: '',
-        data: function(data) {
-        const { contractDropdown } = appState;
-        const contractId = contractDropdown.value;
-        
-        if (contractId !== 'all') {
-         data.contractId = contractId;   
-        }
-        
-        console.log("Work order data returned:", data)
-        }
+    ajax: function(data, callback, settings) {
+        const { contractId } = appState;
 
+        const id = contractId || 'all';
+
+        $.getJSON(`/api/contracts/work-orders/${id}`, function(json) {
+        const result = Array.isArray(json) ? json : (json.data || []);
+        console.log("Results returned from work orders:", result)
+        callback({ data: result });
+        });
     },
+
+    type: 'GET',
     columns: [
-        {data: 'work_order_number', title: 'WO #', defaultContent: '-'},
+        {data: 'work_order_id', title: 'WO #', defaultContent: '-'},
         {data: 'title', title: 'TITLE', defaultContent: '-'},
-        {data: 'assignee', title: 'ASSIGNEE', defaultContent: '-'},
-        {data: 'status', title: 'STATUS', defaultContent: '-'},
-        {data: 'items', title: 'ITEMS', defaultContent: '-'},
-        {data: 'progress', title: 'PROGRESS', defaultContent: '-'},
-        {data: 'due', title: 'DUE', defaultContent: '-'},
-        {data: 'value', title: 'VALUE', defaultContent: '-'},
+        {data: 'assignee', title: 'ASSIGNEE', 
+            render: function(data) {
+                return `<span class="assignee">${data}</span>`
+            }, 
+        defaultContent: '-'},
+        {data: 'status', title: 'STATUS',
+            render: function(data) {
+                if(!data) return '-';
+
+                const statusMap = {
+                    'completed': 'completed',
+                    'pending': 'pending',
+                    'behind': 'behind',
+                    'in progress': 'progress'
+                };
+
+                const status = statusMap[data] || '';
+                return `<span class='cap ${status}'>${data}</td>`;
+
+            } , defaultContent: '-'},
+        {data: 'total_items', title: 'ITEMS', defaultContent: '-'},
+        {data: 'progress',
+            render: percentBarRender,
+            title: 'PROGRESS', defaultContent: '-'},
+        {data: 'due_date',
+            render: function(data) {
+                const date = new Date(data);
+                return Intl.DateTimeFormat("en-US").format(date);
+            }, title: 'DUE', defaultContent: '-'},
+        {data: 'value',
+            render: function(data) {
+                return "$" + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            },
+            
+            title: 'VALUE', defaultContent: '-'},
     ],
     layout: {
         topStart: function() {
@@ -377,10 +404,16 @@ const lineItemsTable = $('#lineItems-table').DataTable({
     processing: true,
     serverSide: false,
     pageLength: 8,
-    ajax: {
-        url: `/api/contracts/work-orders`,
-        type: 'GET'
+    ajax: function(data, callback, settings) {
+        const { contractId } = appState;
+
+        const id = contractId || 'all';
+        $.getJSON(`/api/contracts/work-orders/${id}/line-items`,function(json) {
+            const results = Array.isArray(json) ? json : (json.data || []);
+            callback({ data: results })
+        });
     },
+    type: 'GET',
     columns: [
         {data:'item', title: 'ITEM', defaultContent: '-'},
         {data:'description', title: 'description', defaultContent: '-'},

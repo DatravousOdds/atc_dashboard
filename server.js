@@ -64,7 +64,7 @@ app.get('/api/contracts', async(req, res) => {
 
         const result = await pool.query(query, params)
         res.json(result.rows)
-        console.log(result.rows)
+        // console.log(result.rows)
 
     } catch (err) {
         console.log(err.message)
@@ -244,7 +244,7 @@ app.get('/api/contracts/finance/revenue-vs-expense', async(req,res) => {
     try {
         const results = await pool.query(query, params);
 
-        console.log("Revenue vs Expense:", results.rows);
+        // console.log("Revenue vs Expense:", results.rows);
 
         const response = {
             revenue: results.rows.map(row => row.total_revenue),
@@ -412,7 +412,7 @@ app.get('/api/contracts/winLoss', async(req, res) => {
             return res.json({ contracts_submitted: 0, bids_won: 0, win_rate: 0 });
         }
 
-        console.log("Win/Loss results:",results.rows);
+        // console.log("Win/Loss results:",results.rows);
         res.json(results.rows)
 
     } catch(error) {
@@ -670,7 +670,7 @@ app.get('/api/projects/budget/utilization', async(req, res) => {
 
     try {
         const results = await pool.query(query);
-        console.log("Budget Utilization results:", results.rows);
+        // console.log("Budget Utilization results:", results.rows);
         res.json(results.rows);
 
     } catch (error) {
@@ -695,7 +695,7 @@ app.get('/api/projects/performance', async(req, res) => {
 
     try {
         const results = await pool.query(query);
-        console.log("Project Performance results:", results.rows);
+        // console.log("Project Performance results:", results.rows);
         res.json(results.rows);
 
     } catch (error) {
@@ -749,7 +749,7 @@ app.get('/api/contracts/vendor/performance', async(req, res) => {
 
 app.get('/api/contracts/labor-vs-profit', async(req, res) => {
     const { contractId, month, year } = req.query;
-    console.log("Received labor vs profit request with filters - Contract ID:", contractId, "Year:", year, "Month:", month);
+    // console.log("Received labor vs profit request with filters - Contract ID:", contractId, "Year:", year, "Month:", month);
     const params = [];
 
     try {
@@ -799,7 +799,7 @@ app.get('/api/contracts/labor-vs-profit', async(req, res) => {
 
         const results = await pool.query(query, params);
 
-        console.log("Labor vs Profit results:",results.rows);
+        // console.log("Labor vs Profit results:",results.rows);
         res.json(results.rows);
 
     } catch (error) {
@@ -832,14 +832,19 @@ app.get('/api/projects/kpis', async (req, res) => {
 //====================
 
 // Gets stats (Average cycle time, total, total completed work orders, etc)
-app.get('/api/contracts/work-orders/kpis', async(req, res) => {
+app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
+    const contractId = req.params.id;
+
+    // console.log(contractId);
+
     let q = `
     WITH last_week_completed_work_orders AS (
     SELECT 
-    COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
-    COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
-    FROM work_orders
-    WHERE start_date >= NOW() - INTERVAL '2 week'
+        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+        FROM work_orders
+        WHERE contract_id = $1 
+        AND start_date >= NOW() - INTERVAL '2 week'
         AND start_date < NOW() - INTERVAL '1 week'  
     )
 
@@ -851,8 +856,8 @@ app.get('/api/contracts/work-orders/kpis', async(req, res) => {
             / NULLIF(COUNT(*),0),0)
             * 100,2) as completion_percent,
 
-        (COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
-        / NULLIF(MAX(lw.total_completed),0) * 100 as wow_completed_percent,
+        COALESCE((COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
+        / NULLIF(MAX(lw.total_completed),0) * 100, 0) as wow_completed_percent,
 
         COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
         COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
@@ -860,11 +865,13 @@ app.get('/api/contracts/work-orders/kpis', async(req, res) => {
         COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
     FROM work_orders
     CROSS JOIN last_week_completed_work_orders lw
-    WHERE start_date >= NOW() - INTERVAL '1 week'
+    WHERE contract_id = $1
+    AND start_date >= NOW() - INTERVAL '1 week'
     `;
 
     try {
-        const result = await pool.query(q);
+        const result = await pool.query(q,[contractId]);
+        // console.log("KPI results: ", result.rows[0]);
         return res.json(result.rows[0])
     } catch (error) {
         console.log(error);
@@ -872,9 +879,9 @@ app.get('/api/contracts/work-orders/kpis', async(req, res) => {
 });
 
 // Gets line items for a specific work order
-app.get('/api/contracts/work-orders', async(req, res) => {
+app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
     const contractId = req.params.id;
-    console.log("Contract id selected: ", contractId);
+    console.log("Select lines for contract: ", contractId);
 
     if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
 
@@ -882,9 +889,10 @@ app.get('/api/contracts/work-orders', async(req, res) => {
                     bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
                     ((li.qty_completed / li.qty_assigned) * 100) as progress
                 FROM bid_items bi
-                JOIN lines_items li ON bi.id = bid_item_id
+                JOIN line_items li ON bi.id = li.bid_item_id
                 JOIN contracts c ON bi.contract_id = c.id 
-                AND WHERE 1=1
+                WHERE 1=1
+
     `;
 
     const params = [];
@@ -894,19 +902,36 @@ app.get('/api/contracts/work-orders', async(req, res) => {
         params.push(contractId);
     }
 
+    console.log(query)
+
     try {
         const result =  await pool.query(query, params);
-        return res.json(result.rows)
+        console.log("line items returned: ",result.rows)
+        res.json(result.rows)
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message })
     }
 });
 
 // Gets work for a specific contract
-app.get('/api/contracts/work-orders', async(req, res) => {
-    const { contractId } = req.query;
-    console.log(contractId);
-    let query = `SELECT * FROM work_orders WHERE 1=1`;
+app.get('/api/contracts/work-orders/:id', async (req, res) => {
+    const contractId  = req.params.id;
+    console.log("WO ID:",contractId);
+
+    let query = `SELECT 
+                    work_order_id,
+                    title,
+                    assignee,
+                    status,
+                    total_items,
+                    ROUND( 
+                        COALESCE(
+                        (items_completed * 100.0) / NULLIF(total_items, 0),
+                                0)
+                        , 0) AS progress,
+                    due_date,
+                    value
+                FROM work_orders WHERE 1=1`;
     const params = [];
 
     if (contractId && contractId !=='all') {
@@ -916,7 +941,7 @@ app.get('/api/contracts/work-orders', async(req, res) => {
 
     try {
        const results = await pool.query(query, params);
-       console.log(res.json(results.rows))
+       res.json(results.rows)
     } catch (error) {
         console.log(error)
     }

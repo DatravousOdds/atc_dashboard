@@ -26,6 +26,10 @@
     --total-avg-cycle-time-percent: 0;
 }
 
+.download-link {
+    color: var(--color-red-primary);
+}
+
 .content-header {
     display: flex;
     justify-content: space-between;
@@ -302,7 +306,9 @@
     
 }
 
-.modal-ovelay {
+/* Work Order Modal */
+
+.modal-overlay {
     align-items: center;
     justify-content: center;
     top: 50%;
@@ -314,6 +320,24 @@
     transform: translate(-50%, -50%);
     background: rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    z-index: 9999;
+    
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-overlay.active .modal {
+    transform: scale(1);
+}
+
+.workOrderCustomer, .workOrderLocation {
+    padding: 0.75rem 2rem !important;
 }
 
 .modal {
@@ -325,10 +349,13 @@
     width: 100%;
     max-width: 90%;
     overflow-y: auto;
-    box-shadow: rgba(0, 0, 0, 0.1);
+    transform: scale(0.7);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    
 }
 
- .modal-header {
+.modal-header {
     padding:1rem;
 }
 
@@ -436,6 +463,10 @@
     transform: translateY(-50%);
 }
 
+#workOrderForm input::placeholder {
+    color: #eaf1ea;
+}
+
 #workOrderForm input[type="text"],
 #workOrderForm input[type="date"],
 #workOrderForm select {
@@ -532,9 +563,33 @@ input, select {
     width: 100%;
 }
 
+.assignee {
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    font-weight: 600;
+}
+
+.cap {
+    text-transform: capitalize;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+}
+
+.pending {
+    background-color: #163749;
+    color: #7D90A8;
+}
+
+.completed {
+    background-color: #163749;
+    color: #4DC9B0;
+    border: 1px solid #4DC9B0;
+}
+
 .import-work-orders {
     background-color: #11263D;
-    border: 1px solid #1F3A57;
+    border: 2px dotted #1F3A57;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     color: #fff;
     padding: 0.75rem 1.5rem;
@@ -623,6 +678,8 @@ input, select {
   overflow: hidden;
   font-size: 13px;
 }
+
+
 
 
 /* ── Header row ── */
@@ -937,3 +994,56 @@ span.flatpickr-weekday {
     color: #fff;
     border: 1px solid var(--color-border-primary);
 }
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: #0D1F33;
+    border-top: 1px solid #a4a4a4;
+    position: sticky;
+    bottom: 0;
+}
+
+.footer-note {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: #7d90a8;
+    font-size: 0.75rem;
+    
+}
+
+.footer-cta {
+    gap: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-cta button {
+    font-weight: 500;
+    padding: 10px 9px;
+    background-color: #0D1F33;
+    border: 1px solid #798CA4;
+    border-radius: 6px;
+    color: #8292A6;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+}
+
+.footer-cta button:hover {
+    transform: translateX(1.2px);
+}
+
+.footer-cta button:nth-child(3) {
+    background-color: #EF5350;
+    color: #fff;
+    border: 1px solid transparent;
+    box-shadow: 0 2px 4px rgba(239, 77, 77, 0.1);
+
+}
+
