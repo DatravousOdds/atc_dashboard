@@ -20,10 +20,12 @@ const realFileUpload = document.querySelector('.file-upload');
 
 
 
+
 const createWorkOrderBtn = document.getElementById('createWorkOrderBtn');
 const cancelWorkOrderBtn = document.getElementById('cancelWorkOrderBtn');
 const draftWorkOrderBtn = document.getElementById('draftWorkOrderBtn');
 const workOrderForm = document.getElementById('workOrderForm');
+const importBtn = document.getElementById('importBtn');
 
 init();
 
@@ -49,8 +51,73 @@ fileUpload.addEventListener('click', () => {
     realFileUpload.click();
 })
 
+let f;
+
 realFileUpload.addEventListener('change', (e) => {
-    console.log(e.target.files);
+    const file = e.target.files[0];
+    if (file.type.includes('spreadsheetml.sheet')) {
+        if (file.size > 50 * 1024 *1024) {
+            console.log("file is too large", file.size);
+        }
+
+        const importText = document.querySelector('.import-text');
+        f = file
+        importText.textContent = e.target.files[0].name;
+
+    } else {
+        console.log("Invalid format, only accepts .xlsx");
+        return;
+    }
+})
+
+importBtn.addEventListener('click', (e) => {
+    importBtn.style.display = 'none';
+    const spinner = document.querySelector('.spinner');
+    spinner.style.display = 'flex';
+
+
+    if (!f) {
+        console.log("File has not been selected!");
+        return;
+    }
+
+    
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(f);
+
+    reader.onload = function(e) {
+
+        const data = new Uint8Array(e.target.result);
+
+        const work_book = XLSX.read(data, {type:'array'});
+
+        const sheet_name = work_book.SheetNames;
+
+        const sheet_data = XLSX.utils.sheet_to_json(work_book.Sheets[sheet_name[0]], {header:1})
+
+        console.log("Sheet Data:", sheet_data);
+
+        if (sheet_data.length > 0) {
+            const headers = sheet_data[3];
+            headers.length = headers.length - 1;
+            
+            const workOrderHeaders = document.querySelectorAll('#lineItemsTable thead tr th');
+            const wkHeaders = Array.from(workOrderHeaders, (header) => header.innerText);
+
+            const newHeaders = headers.filter(header => header !== "Labor" && header !== "Unit Price" && header !== "Extension");
+
+            console.group(newHeaders.toLowerCase(),wkHeaders.toLowerCase())
+            const match = newHeaders.every((h, i) => {
+                h.toLowerCase() === wkHeaders[i].toLowerCase();
+            })
+
+            
+            
+        }
+
+    }
+
+    
 })
 
 const allProjects = document.querySelectorAll(".wo-project-dropdown li");

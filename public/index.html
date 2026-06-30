@@ -16,6 +16,7 @@
     <!-- Charts.js-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <!--- DataTables **LOAD AFTER JQUERY** -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.datatables.net/plug-ins/2.0.0/dataRender/percentBar.js"></script>
     <script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.1/css/autoFill.dataTables.min.css">
@@ -712,9 +713,12 @@
                                     </div>  
                                 </div>
                                 
-                                <div class="import-btn" id="importBtn">
-                                    <i class="fa-solid fa-download"></i>
-                                    Import Excel
+                                <div class="import-wrapper">
+                                    <button type="button" class="import-btn" id="importBtn">
+                                        <i class="fa-solid fa-download"></i>
+                                        Import Excel
+                                    </button>
+                                    <div class="spinner"></div>
                                 </div>
                             </div>
                             </div>
