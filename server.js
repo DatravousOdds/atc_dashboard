@@ -454,7 +454,32 @@ app.get('/api/contract/search', async(req, res) => {
 
     } catch (err) {
         res.status(500).json({ error: 'Search query failed' });
-        console.log("Error occured during search...", err.message); 
+        console.log("Error occured during search...", err.message);
+    }
+})
+
+// Client/customer search (clients table is the source of truth for customers)
+app.get('/api/clients/search', async(req, res) => {
+    try {
+        const { query } = req.query;
+
+        if (!query) {
+            return res.json([])
+        }
+
+        const searchQuery = `
+            SELECT id, name, city
+            FROM clients
+            WHERE name ILIKE $1
+            ORDER BY name ASC
+            LIMIT 10
+        `;
+
+        const result = await pool.query(searchQuery, [`%${query}%`])
+        res.json(result.rows)
+
+    } catch (err) {
+        console.log(err.message);
     }
 })
 

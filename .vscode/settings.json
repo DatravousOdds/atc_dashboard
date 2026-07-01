@@ -10,6 +10,28 @@
             "username": "postgres",
             "name": "Remote PG",
             "password": "postgres"
+        },
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "172.20.8.197",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "HCONNET",
+            "database": "atc_contracts",
+            "username": "postgres",
+            "password": "postgres"
+        },
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "172.20.8.239",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "HCONNET",
+            "database": "atc_contracts",
+            "username": "postgres",
+            "password": "postgres"
         }
     ],
     "postman.settings.dotenv-detection-notification-visibility": false

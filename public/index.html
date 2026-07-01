@@ -616,7 +616,9 @@
                                         <label for="workOrderCustomer">Customer</label>
                                         <span class="required">*</span>
                                     </div>
-                                    <input type="text" class="workOrderCustomer" id="workOrderCustomer" name="workOrderCustomer" required>
+                                    <input type="text" class="workOrderCustomer" id="workOrderCustomer" name="workOrderCustomer" placeholder="Start typing a customer name..." autocomplete="off" required>
+                                    <input type="hidden" id="workOrderClientId" name="workOrderClientId">
+                                    <ul id="workOrderCustomerResults" class="autocomplete-results"></ul>
                                 </div>
 
                                 <div class="form-flex">
@@ -625,7 +627,9 @@
                                         <label for="workOrderLocation">Project location</label>
                                         <span class="required">*</span>
                                     </div>
-                                    <input type="text" class="workOrderLocation" id="workOrderLocation" name="workOrderLocation" required>
+                                    <input type="text" class="workOrderLocation" id="workOrderLocation" name="workOrderLocation" placeholder="Start typing a project name..." autocomplete="off" required>
+                                    <input type="hidden" id="workOrderContractId" name="workOrderContractId">
+                                    <ul id="workOrderLocationResults" class="autocomplete-results"></ul>
                                 </div>
                             </div>
 
@@ -708,11 +712,12 @@
                                     </div>
                                     <div class="import-text">
                                         <h3>Import line items</h3>
-                                        <p>Drop an .xlsx / .csv file here, or <a class="download-link" id="fileUpload">browse files</a>. Columns map to the table below. <a class="download-link">Download template</a> </p>
-                                        <input type="file" class="file-upload" style="display: none;">
-                                    </div>  
+                                        <p>Drop an .xlsx file here, or <a class="download-link" id="fileUpload">browse files</a>. Columns map to the table below. <a class="download-link">Download template</a> </p>
+                                        <input type="file" class="file-upload" accept=".xlsx" style="display: none;">
+                                        <p class="selected-file-name"></p>
+                                    </div>
                                 </div>
-                                
+
                                 <div class="import-wrapper">
                                     <button type="button" class="import-btn" id="importBtn">
                                         <i class="fa-solid fa-download"></i>
@@ -721,6 +726,7 @@
                                     <div class="spinner"></div>
                                 </div>
                             </div>
+                            <p class="import-status"></p>
                             </div>
                         <!-- Line Items Table -->
                         <div class="line-items-table">

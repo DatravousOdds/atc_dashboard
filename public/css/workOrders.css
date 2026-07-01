@@ -467,6 +467,47 @@
     color: #eaf1ea;
 }
 
+.autocomplete-results {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background-color: #163049;
+    border: 1px solid #1F3A57;
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    padding: 0.25rem;
+}
+
+.autocomplete-results.active {
+    display: block;
+}
+
+.autocomplete-results li {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    color: #eaf1ea;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.autocomplete-results li:hover {
+    background-color: #1F3A57;
+}
+
+.autocomplete-results .no-results {
+    color: #7D90A8;
+    cursor: default;
+}
+
+.autocomplete-results .no-results:hover {
+    background-color: transparent;
+}
+
 #workOrderForm input[type="text"],
 #workOrderForm input[type="date"],
 #workOrderForm select {
@@ -839,6 +880,27 @@ input, select {
 .import-text p {
     color: #7D90A8;
     font-size: 0.875rem;
+}
+
+.selected-file-name {
+    color: #4DC9B0;
+    font-size: 0.8125rem;
+    margin-top: 0.25rem;
+}
+
+.import-status {
+    display: none;
+    font-size: 0.8125rem;
+    margin: 0.5rem 0 0;
+    min-height: 1em;
+}
+
+.import-status.success {
+    color: #4DC9B0;
+}
+
+.import-status.error {
+    color: #EF5350;
 }
 
 /* .flatpickr-day {
