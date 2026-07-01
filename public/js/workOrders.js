@@ -23,15 +23,20 @@ const workOrderCustomerInput = document.getElementById('workOrderCustomer');
 const workOrderCustomerResults = document.getElementById('workOrderCustomerResults');
 const workOrderClientId = document.getElementById('workOrderClientId');
 
-
-
-
-
 const createWorkOrderBtn = document.getElementById('createWorkOrderBtn');
 const cancelWorkOrderBtn = document.getElementById('cancelWorkOrderBtn');
 const draftWorkOrderBtn = document.getElementById('draftWorkOrderBtn');
 const workOrderForm = document.getElementById('workOrderForm');
 const importBtn = document.getElementById('importBtn');
+
+const defaultLineItemsHtml = document.querySelector('#lineItemsTable tbody').innerHTML;
+const scheduleStartValue = document.getElementById('scheduleStartValue');
+const scheduleEndValue = document.getElementById('scheduleEndValue');
+const defaultScheduleStart = scheduleStartValue.textContent;
+const defaultScheduleEnd = scheduleEndValue.textContent;
+
+const exportBtn = document.getElementById('exportBtn');
+
 
 init();
 
@@ -43,6 +48,66 @@ newWorkOrderBtn.addEventListener('click', () => {
 closeWorkOrderModal.addEventListener('click', () => {
     modal.classList.remove('active');
 })
+
+cancelWorkOrderBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+    resetWorkOrderForm();
+});
+
+draftWorkOrderBtn.addEventListener('click', () => {
+    console.log('Saving work order as draft...');
+    // Implement draft saving logic here
+});
+
+createWorkOrderBtn.addEventListener('click', () => {
+    console.log('Creating work order...');
+    // Implement work order creation logic here
+});
+
+exportBtn.addEventListener('click', async () => {
+    console.log('Exporting work orders...');
+    const workOrdersData = appState.workOrdersTable.rows({ search: 'applied' }).data().toArray();
+    console.log('Exporting the following work orders:', workOrdersData);
+
+    if (workOrdersData.length === 0) {
+        console.log('No work orders to export.');
+        return;
+    }
+
+    const exportRows = workOrdersData.map(order => ({
+        "WO ID:": order.work_order_id,
+        "Work Order Name:": order.title,
+        "Assigned To:": order.assignee_name,
+        "Due Date:": new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(order.due_date)),
+        "Progress:": parseFloat(order.progress),
+        "Status:": order.status,
+        "Total Items:": parseInt(order.total_items),
+        "Work Order Value:": parseFloat(order.value),
+    }));
+
+    const workOrderIds = workOrdersData.map(order => order.id);
+    const lineItemsData = await getLineItemsForExport(workOrderIds);
+    console.log('Exporting the following line items:', lineItemsData);
+
+    const lineItemRows = lineItemsData.map(item => ({
+        "WO ID:": item.work_order_id,
+        "Description:": item.description,
+        "Unit:": item.unit_of_measure,
+        "Qty:": parseFloat(item.quantity),
+        "Qty Completed:": parseFloat(item.qty_completed),
+        "Remaining Qty:": parseFloat(item.remaining_qty),
+        "Progress:": parseFloat(item.progress),
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const workOrdersSheet = XLSX.utils.json_to_sheet(exportRows);
+    const lineItemsSheet = XLSX.utils.json_to_sheet(lineItemRows);
+
+    XLSX.utils.book_append_sheet(workbook, workOrdersSheet, 'Work Orders');
+    XLSX.utils.book_append_sheet(workbook, lineItemsSheet, 'Line Items');
+
+    XLSX.writeFile(workbook, `work-orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
+});
 
 addLineItem.addEventListener('click', () => {
     console.log('Adding new line item row...');
@@ -318,12 +383,13 @@ workOrderForm.addEventListener('submit', (e) => {
     const remainingProps = {
         startDate:  document.getElementById('scheduleStartValue').textContent,
         endDate: document.getElementById('scheduleEndValue').textContent,
-        rows: Array.from(document.querySelectorAll('#lineItemsTable tbody tr'))
     }
 
-    handleDataExtraction(remainingProps.rows);
+    const rows = Array.from(document.querySelectorAll('#lineItemsTable tbody tr'));
+    const lineItems = handleDataExtraction(rows);
 
-    console.log("Here are the remaining props:", remainingProps);
+    remainingProps.lineItems = lineItems;
+    console.log("Remaining props:", remainingProps);
 
     const finalPayload = { ...formProps, ...remainingProps};
     console.log("Final payload", finalPayload);
@@ -375,6 +441,21 @@ async function getContracts() {
 async function searchClients(query) {
     try {
         const res = await fetch(`/api/clients/search?query=${encodeURIComponent(query)}`);
+
+        if (!res.ok) {
+            throw new Error(`HTTP status error: ${res.status}`);
+        }
+
+        return await res.json();
+    } catch (err) {
+        console.log(err.message);
+        return [];
+    }
+};
+
+async function getLineItemsForExport(workOrderIds) {
+    try {
+        const res = await fetch(`/api/contracts/work-orders/line-items/export?workOrderIds=${encodeURIComponent(workOrderIds.join(','))}`);
 
         if (!res.ok) {
             throw new Error(`HTTP status error: ${res.status}`);
@@ -488,7 +569,7 @@ function displayWorkOrdersKPIs(data) {
 }
 
 function handleDataExtraction(rows) {
-    rows.map(row => {
+   return rows.map(row => {
         const cells = row.querySelectorAll('td');
         const rowData = {};
         cells.forEach(cell => {
@@ -503,7 +584,8 @@ function handleDataExtraction(rows) {
 
         })
 
-        console.log("data map:", rowData);
+        console.log("data map:", rowData)
+        return rowData;
     })
 }
 
@@ -643,6 +725,32 @@ function resetImportControls() {
     document.querySelector('.spinner').style.display = 'none';
     f = undefined;
     realFileUpload.value = '';
+}
+
+function resetWorkOrderForm() {
+    workOrderForm.reset();
+
+    document.querySelector('#lineItemsTable tbody').innerHTML = defaultLineItemsHtml;
+
+    document.querySelector('.selected-file-name').textContent = '';
+    showImportMessage('', false);
+    resetImportControls();
+
+    if (window.workOrderDateRangePicker) {
+        window.workOrderDateRangePicker.clear();
+    }
+    scheduleStartValue.textContent = defaultScheduleStart;
+    scheduleEndValue.textContent = defaultScheduleEnd;
+
+    // form.reset() does not clear type="hidden" inputs once their value is set via JS
+    workOrderContractId.value = '';
+    workOrderClientId.value = '';
+
+    workOrderLocationResults.classList.remove('active');
+    workOrderLocationResults.innerHTML = '';
+
+    workOrderCustomerResults.classList.remove('active');
+    workOrderCustomerResults.innerHTML = '';
 }
 
 function init() {

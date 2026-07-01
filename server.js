@@ -938,29 +938,72 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
     }
 });
 
+// Line items for a specific set of work orders (used by the work orders Export button) -
+// unlike the route above, this is scoped by line_items.work_order_id directly rather than
+// by contract, but still needs the same bid_items join since description/unit/quantity
+// live there, not on line_items itself.
+app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
+    try {
+        const { workOrderIds } = req.query;
+
+        if (!workOrderIds) {
+            return res.json([]);
+        }
+
+        const ids = workOrderIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !Number.isNaN(id));
+
+        if (ids.length === 0) {
+            return res.json([]);
+        }
+
+        const query = `
+            SELECT
+                wo.work_order_id,
+                bi.description,
+                bi.unit_of_measure,
+                bi.quantity,
+                li.qty_completed,
+                (li.qty_assigned - li.qty_completed) as remaining_qty,
+                ROUND(COALESCE((li.qty_completed / NULLIF(li.qty_assigned, 0)) * 100, 0), 0) AS progress
+            FROM line_items li
+            LEFT JOIN bid_items bi ON bi.id = li.bid_item_id
+            LEFT JOIN work_orders wo ON wo.id = li.work_order_id
+            WHERE li.work_order_id = ANY($1::int[])
+        `;
+
+        const result = await pool.query(query, [ids]);
+        res.json(result.rows);
+    } catch (err) {
+        console.log(err.message);
+    }
+});
+
 // Gets work for a specific contract
 app.get('/api/contracts/work-orders/:id', async (req, res) => {
     const contractId  = req.params.id;
     console.log("WO ID:",contractId);
 
-    let query = `SELECT 
-                    work_order_id,
-                    title,
-                    assignee,
-                    status,
-                    total_items,
-                    ROUND( 
+    let query = `SELECT
+                    wo.id,
+                    wo.work_order_id,
+                    wo.title,
+                    NULLIF(TRIM(CONCAT(e.first_name, ' ', e.last_name)), '') AS assignee_name,
+                    wo.status,
+                    wo.total_items,
+                    ROUND(
                         COALESCE(
-                        (items_completed * 100.0) / NULLIF(total_items, 0),
+                        (wo.items_completed * 100.0) / NULLIF(wo.total_items, 0),
                                 0)
                         , 0) AS progress,
-                    due_date,
-                    value
-                FROM work_orders WHERE 1=1`;
+                    wo.due_date,
+                    wo.value
+                FROM work_orders wo
+                LEFT JOIN employees e ON e.id = wo.assignee
+                WHERE 1=1`;
     const params = [];
 
     if (contractId && contractId !=='all') {
-            query += ' AND contract_id = $' + (params.length + 1)
+            query += ' AND wo.contract_id = $' + (params.length + 1)
             params.push(contractId);
     };
 

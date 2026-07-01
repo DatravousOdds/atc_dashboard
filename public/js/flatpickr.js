@@ -44,4 +44,6 @@ const configOptions = {
     }
 };
 
-flatpickr(".date-range-calendar", configOptions);
+// Exposed on window since workOrders.js runs as a separate module scope and needs
+// to call .clear() on this instance when the work order form is reset/cancelled.
+window.workOrderDateRangePicker = flatpickr(".date-range-calendar", configOptions);

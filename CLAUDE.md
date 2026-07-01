@@ -98,6 +98,10 @@ be a hand-tuned query for it.
   explicitly wants to introduce a build step.
 - `.env` holds `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME` — never commit
   real values, never print `.env` contents back.
+- Default is to write the code directly, as with most features so far. If the user says
+  something like "walk me through it" for a specific task, switch to a teaching mode for
+  that task only: explain the steps/reasoning and let them write or approve the code,
+  rather than writing it for them. This is opt-in per task, not a standing default.
 
 ## Known Gaps / Things Not to Assume Exist
 

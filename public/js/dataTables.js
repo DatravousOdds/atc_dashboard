@@ -342,10 +342,10 @@ const workOrdersTable = $('#workOrders-table').DataTable({
     columns: [
         {data: 'work_order_id', title: 'WO #', defaultContent: '-'},
         {data: 'title', title: 'TITLE', defaultContent: '-'},
-        {data: 'assignee', title: 'ASSIGNEE', 
+        {data: 'assignee_name', title: 'ASSIGNEE',
             render: function(data) {
                 return `<span class="assignee">${data}</span>`
-            }, 
+            },
         defaultContent: '-'},
         {data: 'status', title: 'STATUS',
             render: function(data) {
