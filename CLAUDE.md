@@ -64,6 +64,7 @@ inconsistent patterns in the same codebase.
 
 ## Database Notes
 
+No data should be expose, to any unless authorized 
 No formal schema file exists in-repo — infer table shapes from queries in `server.js` and
 `Remote PG.session.sql`. Known tables referenced in queries:
 
