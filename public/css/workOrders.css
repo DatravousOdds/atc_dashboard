@@ -510,6 +510,7 @@
 
 #workOrderForm input[type="text"],
 #workOrderForm input[type="date"],
+#workOrderForm input[type="number"],
 #workOrderForm select {
     background-color: #11263D;
     border: 1px solid #1F3A57;

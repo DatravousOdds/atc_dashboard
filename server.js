@@ -483,6 +483,23 @@ app.get('/api/clients/search', async(req, res) => {
     }
 })
 
+// Employees, for populating the "Assign to associate" dropdown on the work order modal
+app.get('/api/employees', async(req, res) => {
+    try {
+        const query = `
+            SELECT id, first_name, last_name
+            FROM employees
+            ORDER BY first_name ASC, last_name ASC
+        `;
+
+        const result = await pool.query(query)
+        res.json(result.rows)
+
+    } catch (err) {
+        console.log(err.message);
+    }
+})
+
 // Average Contract Value
 app.get('/api/contracts/average', async(req, res) => {
     try {
@@ -1023,6 +1040,8 @@ app.post('/api/contracts/work-orders', async(req, res) => {
         workOrderTitle,
         workOrderContractId,
         workOrderClientId,
+        workOrderValue,
+        workOrderProject,
         startDate,
         endDate,
         lineItems,
@@ -1035,6 +1054,8 @@ app.post('/api/contracts/work-orders', async(req, res) => {
 
         const year = new Date().getFullYear();
         const totalItems = Array.isArray(lineItems) ? lineItems.length : 0;
+        const value = workOrderValue ? parseFloat(workOrderValue) : null;
+        const assignee = workOrderProject ? parseInt(workOrderProject, 10) : null;
 
         // nextval() is called once in the CTE so the same generated id can be reused
         // both as the primary key and inside the formatted work_order_id string -
@@ -1045,11 +1066,11 @@ app.post('/api/contracts/work-orders', async(req, res) => {
             )
             INSERT INTO work_orders (
                 id, contract_id, client_id, work_order_id, title, status,
-                total_items, start_date, due_date, items_completed, created_at, updated_at
+                total_items, start_date, due_date, value, assignee, items_completed, created_at, updated_at
             )
             SELECT
                 id, $1, $2, 'WO-' || $3 || '-' || LPAD(id::text, 3, '0'), $4, 'pending',
-                $5, $6, $7, 0, NOW(), NOW()
+                $5, $6, $7, $8, $9, 0, NOW(), NOW()
             FROM new_id
             RETURNING id, work_order_id
         `;
@@ -1062,6 +1083,8 @@ app.post('/api/contracts/work-orders', async(req, res) => {
             totalItems,
             new Date(startDate),
             new Date(endDate),
+            value,
+            assignee,
         ]);
 
         await client.query('COMMIT');

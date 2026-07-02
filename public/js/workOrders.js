@@ -14,6 +14,8 @@ const closeWorkOrderModal = document.getElementById('closeWorkOrderModal');
 const addLineItem = document.getElementById('addLineItem');
 const contracts = await getContracts();
 const KPIs = await getWorkOrdersKPIs(contracts[0].id);
+const employees = await getEmployees();
+const associateSelect = document.getElementById('workOrderProject');
 const fileUpload = document.getElementById('fileUpload');
 const realFileUpload = document.querySelector('.file-upload');
 const workOrderLocationInput = document.getElementById('workOrderLocation');
@@ -440,6 +442,21 @@ async function getContracts() {
     }
 };
 
+async function getEmployees() {
+    try {
+        const response = await fetch('/api/employees')
+
+        if (!response.ok) {
+            throw new Error(`HTTP status error: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.log(err.message);
+        return [];
+    }
+};
+
 async function searchClients(query) {
     try {
         const res = await fetch(`/api/clients/search?query=${encodeURIComponent(query)}`);
@@ -498,6 +515,15 @@ function setActiveContractsCount(data) {
 
 function setDefaultProject(data) {
     projectNameDisplay.innerText = data[0].contract_name; 
+}
+
+function displayAssociates(data) {
+    data.forEach(employee => {
+        const option = document.createElement('option');
+        option.value = employee.id;
+        option.innerText = `${employee.first_name} ${employee.last_name}`;
+        associateSelect.append(option);
+    })
 }
 
 function displayContracts(data) {
@@ -778,7 +804,8 @@ function init() {
     setDefaultProject(contracts);
     setActiveContractsCount(contracts);
     displayContracts(contracts);
-    displayWorkOrdersKPIs(KPIs); 
+    displayWorkOrdersKPIs(KPIs);
+    displayAssociates(employees);
 }
 
 

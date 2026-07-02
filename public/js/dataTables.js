@@ -344,6 +344,7 @@ const workOrdersTable = $('#workOrders-table').DataTable({
         {data: 'title', title: 'TITLE', defaultContent: '-'},
         {data: 'assignee_name', title: 'ASSIGNEE',
             render: function(data) {
+                if (!data) return '-';
                 return `<span class="assignee">${data}</span>`
             },
         defaultContent: '-'},
@@ -373,6 +374,7 @@ const workOrdersTable = $('#workOrders-table').DataTable({
             }, title: 'DUE', defaultContent: '-'},
         {data: 'value',
             render: function(data) {
+                if (data === null || data === undefined) return '-';
                 return "$" + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
             },
             

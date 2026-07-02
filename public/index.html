@@ -55,9 +55,9 @@
                     <i class="fa-solid fa-clipboard"></i>
                     Work Orders
                 </li>
-                <li data-tab="inventoryContent">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                    Inventory
+                <li data-tab="reportsContent">
+                    <i class="fa-solid fa-chart-column"></i>
+                    Reports
                 </li>
                 <li data-tab="invoiceContent">
                     <i class="fa-solid fa-file-lines"></i>
@@ -572,7 +572,7 @@
                     </div>
                 </div>
             </div>
-            <div id="inventoryContent" class="tab-content" data-content="reports">Reports Content</div>
+            <div id="reportsContent" class="tab-content" data-content="reports">Reports Content</div>
             <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>
             <div id="artificalContent" class="tab-content" data-content="artificial-intelligence" >Artificial Content</div>
             <div id="importContent" class="tab-content" data-content="import-export" >Import/Export</div>
@@ -652,12 +652,14 @@
                                 <div class="form-flex">
                                     <label for="workOrderProject">Assign to associate</label>
                                     <select id="workOrderProject" name="workOrderProject" required>
-                                        <option value="jesse">Jesse</option>
-                                        <option value="cristian">Cristian</option>
-                                        <option value="juan">Juan</option>
-                                        <!-- Dynamically populate with associates from database -->
+                                        <!-- Populated dynamically from /api/employees -->
                                     </select>
                                 </div>
+                            </div>
+
+                            <div class="form-flex">
+                                <label for="workOrderValue">Work order value</label>
+                                <input type="number" id="workOrderValue" name="workOrderValue" min="0" step="0.01" placeholder="0.00">
                             </div>
                         </form>
                     </div>
