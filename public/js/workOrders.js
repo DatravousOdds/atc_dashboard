@@ -23,7 +23,6 @@ const workOrderCustomerInput = document.getElementById('workOrderCustomer');
 const workOrderCustomerResults = document.getElementById('workOrderCustomerResults');
 const workOrderClientId = document.getElementById('workOrderClientId');
 
-const createWorkOrderBtn = document.getElementById('createWorkOrderBtn');
 const cancelWorkOrderBtn = document.getElementById('cancelWorkOrderBtn');
 const draftWorkOrderBtn = document.getElementById('draftWorkOrderBtn');
 const workOrderForm = document.getElementById('workOrderForm');
@@ -47,6 +46,7 @@ newWorkOrderBtn.addEventListener('click', () => {
 
 closeWorkOrderModal.addEventListener('click', () => {
     modal.classList.remove('active');
+    resetWorkOrderForm();
 })
 
 cancelWorkOrderBtn.addEventListener('click', () => {
@@ -57,11 +57,6 @@ cancelWorkOrderBtn.addEventListener('click', () => {
 draftWorkOrderBtn.addEventListener('click', () => {
     console.log('Saving work order as draft...');
     // Implement draft saving logic here
-});
-
-createWorkOrderBtn.addEventListener('click', () => {
-    console.log('Creating work order...');
-    // Implement work order creation logic here
 });
 
 exportBtn.addEventListener('click', async () => {
@@ -372,7 +367,7 @@ searchBtn.addEventListener("click", () => {
     searchInput.focus();
 });
 
-workOrderForm.addEventListener('submit', (e) => {
+workOrderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
@@ -394,7 +389,14 @@ workOrderForm.addEventListener('submit', (e) => {
     const finalPayload = { ...formProps, ...remainingProps};
     console.log("Final payload", finalPayload);
 
+    const result = await createWorkOrder(finalPayload);
 
+    if (!result) return;
+
+    console.log("Work order created:", result.workOrder);
+    modal.classList.remove('active');
+    resetWorkOrderForm();
+    appState.workOrdersTable.ajax.reload();
 });
 
 
@@ -465,6 +467,25 @@ async function getLineItemsForExport(workOrderIds) {
     } catch (err) {
         console.log(err.message);
         return [];
+    }
+};
+
+async function createWorkOrder(payload) {
+    try {
+        const res = await fetch('/api/contracts/work-orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP status error: ${res.status}`);
+        }
+
+        return await res.json();
+    } catch (err) {
+        console.log(err.message);
+        return null;
     }
 };
 

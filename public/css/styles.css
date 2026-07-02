@@ -39,49 +39,8 @@ body {
     outline-offset: 2px;
 }
 
-/* ================================
-   HEADER STYLES
-   ================================ */
-
-header {
-    
-    color:var(--color-prime);
-    padding: var(--spacing-md) 0;
-    margin-bottom: var(--spacing-lg);
-    border-bottom: 3px solid var(--color-prime);
-}
-
-header p {
-    color: var(--text-color);
-}
-
-
 main {
     display: flex;
-}
-
-
-/* ================================
-   NAVIGATION STYLES
-   ================================ */
-
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-}
-
-nav ul {
-    display: flex;
-    gap: var(--spacing-md);
-    list-style: none;
-    flex-wrap: wrap;
-}
-
-nav li {
-    list-style: none;
 }
 
 
@@ -156,7 +115,7 @@ nav li {
     border: 2px solid var(--color-prime);
     font-size: 1rem;
     font-weight: 500;
-    background-color: var(--navy-light-light);
+    background-color: var(--navy-light);
     width: 100%;
     color: var(--text-color);
     transition: var(--transition);
@@ -165,7 +124,7 @@ nav li {
 
 .overview-filters select:hover,
 .overview-filters input:hover {
-    background-color: var(--navy-medium-light);
+    background-color: var(--navy-medium);
     border-color: var(--color-prime);
     cursor: pointer;
 
@@ -190,7 +149,7 @@ nav li {
  color: var(--text-color);
  padding-left: 2rem;
  border: 2px solid var(--color-prime);
- background-color: var(--navy-light-light);
+ background-color: var(--navy-light);
  width: 100%;
  transition: all 0.3s ease-in-out;
 }
@@ -238,7 +197,7 @@ border-bottom-right-radius: 0;
 }
 
 .search-input-container input:hover {
-    background-color: var(--navy-medium-light);
+    background-color: var(--navy-medium);
     cursor: pointer;
     border-color: var(--color-prime);
 }
@@ -267,7 +226,7 @@ border-bottom-right-radius: 0;
 }
 
 .kpi-container .kpi-card {
-    border: 2px solid var(--border-color);
+    border: 1px solid #1F3A57;
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--shadow-color);
@@ -279,9 +238,14 @@ border-bottom-right-radius: 0;
 
 .kpi-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+}
+
+.kpi-header i {
+    color: #7D90A8;
 }
 
 .kpi-header h3 {
@@ -293,7 +257,7 @@ border-bottom-right-radius: 0;
 }
 
 .fa-triangle-exclamation {
-    color: var(--color-danger);
+    color: #f5b14a;
     font-size: 1.25rem;
 }
 
@@ -376,8 +340,21 @@ border-bottom-right-radius: 0;
 
 /* Table Headers */
 
+div.data-table-container {
+    background-color: #11263D;
+    border: 1px solid #1F3A57;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+div.data-table-container:last-child {
+    margin-bottom: 0;
+}
+
 .data-table-container h2 {
     color: var(--color-prime);
+    margin-bottom: 0.75rem;
 }
 
 
@@ -799,13 +776,9 @@ footer {
 
 #projectContent h1 {
     font-size: 1.875rem;
-    color: var(--text-main);
+    color: var(--main-text-color);
     font-weight: 700;
 
-}
-
-#projectContent nav li {
-    font-size: 0.95rem;
 }
 
 .project-overview-wrapper {
@@ -825,53 +798,32 @@ footer {
     
 }
 
+.total-projects,
 .overview-projects,
 .completed-projects {
     display: flex;
-    /* align-items: center; */
     justify-content: center;
-    border-radius: 8px;
     flex-direction: column;
-    
+    padding: 1rem;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #1F3A57;
+    background-color: #11263D;
 }
 
 .kpi-value {
     font-size: 2.25rem;
     font-weight: 700;
-    color: var(--text-color-dark);
-}
-
-.overview-projects {
-    padding: 1rem;
-    width: 100%;
-    /* height: 350px; */
-    border: 2px solid var(--border-color);
-}
-
-.total-projects {
-    padding: 1rem;
-    width: 100%;
-    /* height: 350px; */
-    border-radius: 8px;
-    border: 2px solid var(--border-color);
-    background-color: var(--container-background-dark);
-}
-
-.completed-projects {
-    padding: 1rem;
-    width: 100%;
-    /* height: 350px; */
-    border: 2px solid var(--border-color);
+    color: #eaf1ea;
 }
 
 .project-performance {
-    width: 500px;
+    width: auto;
     min-height: 300px;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
     flex: 2;
-    /* border: 2px solid var(--border-color); */
 }
 
 /* Projects Data Table */
@@ -891,7 +843,7 @@ footer {
     width: 100%;
     height: 700px;
     border: 2px solid var(--border-color);
-};
+}
 
 
 

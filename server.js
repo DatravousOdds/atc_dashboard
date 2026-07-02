@@ -1015,6 +1015,92 @@ app.get('/api/contracts/work-orders/:id', async (req, res) => {
     }
 });
 
+// Creates the work order itself. Does not touch line_items - bid_item_id isn't
+// collected by the modal yet, so line items are inserted separately via
+// /api/contracts/work-orders/line-items/insert once that gap is closed.
+app.post('/api/contracts/work-orders', async(req, res) => {
+    const {
+        workOrderTitle,
+        workOrderContractId,
+        workOrderClientId,
+        startDate,
+        endDate,
+        lineItems,
+    } = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const year = new Date().getFullYear();
+        const totalItems = Array.isArray(lineItems) ? lineItems.length : 0;
+
+        // nextval() is called once in the CTE so the same generated id can be reused
+        // both as the primary key and inside the formatted work_order_id string -
+        // calling nextval() twice in one INSERT would advance the sequence twice.
+        const insertQuery = `
+            WITH new_id AS (
+                SELECT nextval('work_orders_id_seq') AS id
+            )
+            INSERT INTO work_orders (
+                id, contract_id, client_id, work_order_id, title, status,
+                total_items, start_date, due_date, items_completed, created_at, updated_at
+            )
+            SELECT
+                id, $1, $2, 'WO-' || $3 || '-' || LPAD(id::text, 3, '0'), $4, 'pending',
+                $5, $6, $7, 0, NOW(), NOW()
+            FROM new_id
+            RETURNING id, work_order_id
+        `;
+
+        const result = await client.query(insertQuery, [
+            workOrderContractId,
+            workOrderClientId,
+            year,
+            workOrderTitle,
+            totalItems,
+            new Date(startDate),
+            new Date(endDate),
+        ]);
+
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, workOrder: result.rows[0] });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to create work order' });
+    } finally {
+        client.release();
+    }
+})
+
+app.post('/api/contracts/work-orders/line-items/insert', async(req, res) => {
+    const { workOrderId, lineItems } = req.body;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+        // Insert line items for the specified work orders
+        for (const item of lineItems) {
+            const { bidItemId, qtyAssigned } = item;
+            const insertQuery = `
+                INSERT INTO line_items (work_order_id, bid_item_id, qty_assigned, qty_completed)
+                VALUES ($1, $2, $3, $4)
+            `;
+            await client.query(insertQuery, [workOrderId, bidItemId, qtyAssigned, 0]);
+        }
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, message: 'Line items inserted successfully' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to insert line item' });
+    } finally {
+        client.release();
+    }
+})
+
 const PORT = process.env.PORT || 3300;
 
 app.listen(PORT, () => {
