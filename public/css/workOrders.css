@@ -57,7 +57,7 @@
 
 
 .btn {
-    padding: 0.875rem 1.2rem;
+    padding: 0.75rem 1rem;
     border-radius: 6px;
     color: #fff;
     cursor: pointer;
@@ -628,6 +628,7 @@ input, select {
 .cap {
     display: inline-flex;
     align-items: center;
+    font-size: ;
     gap: 0.4rem;
     text-transform: capitalize;
     padding: 0.5rem 0.75rem;
@@ -645,8 +646,9 @@ input, select {
 }
 
 .pending {
-    background-color: #163749;
-    color: #7D90A8;
+    background-color: #3A3741;
+    color: #F5B14A;
+    border: 1px solid #f5b14a;
 }
 
 .completed {
@@ -662,9 +664,9 @@ input, select {
 }
 
 .progress {
-    background-color: #3a2e1a;
-    color: var(--color-yellow-progress-bar);
-    border: 1px solid var(--color-yellow-progress-bar);
+    background-color: #1C3148;
+    color: #7D90A8;
+    border: 1px solid #7D90A8;
 }
 
 .due-overdue {
@@ -716,6 +718,10 @@ input, select {
     position: relative;
     display: flex;
     align-items: center;
+}
+
+.wo-search-wrapper input::placeholder {
+    color: #B6C5D9;
 }
 
 .wo-search-wrapper i {
@@ -770,10 +776,10 @@ input, select {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: #eaf1ea;
-    color: #11263D;
-    border: none;
-    padding: 0.5rem 1rem;
+    background-color: #11263D;
+    color: #eaf1ea;
+    border: 1px solid #1F3A57;
+    padding: 0.75rem 1rem;
     border-radius: 6px;
     font-size: 0.8125rem;
     font-weight: 600;

@@ -1,10 +1,18 @@
 
 
-const percentBarRender = data => {
-  const pct = parseFloat(data) || 0;
-  let color = '#4DC9B0';
-  if (pct > 75) color = '#E57373';
-  if (pct > 90) color = '#EF5350';
+const percentBarRender = (data, type = "default") => {
+    const pct = parseFloat(data) || 0;
+    let color;
+    if (type === "workOrder") {
+        if (pct > 0) color = '#E57373'
+        if (pct > 50 && pct <= 75) color = '#F5B14A';
+        if (pct >= 80) color = '#4DC9B0';
+    } else {
+        color = '#4DC9B0'
+        if (pct > 75) color = '#E57373';
+        if (pct > 90) color = '#EF5350';
+    }
+
   return `
     <div style="display:flex;align-items:center;gap:8px;">
       <div style="flex:1;background:#1f3b5a;border-radius:99px;height:8px;overflow:hidden;min-width:80px;">
@@ -385,12 +393,12 @@ const workOrdersTable = $('#workOrders-table').DataTable({
             } , defaultContent: '-'},
         {data: 'total_items', title: 'ITEMS', defaultContent: '-'},
         {data: 'progress',
-            render: percentBarRender,
+            render: (data) => percentBarRender(data, 'workOrder'),
             title: 'PROGRESS', defaultContent: '-'},
         {data: 'due_date',
             render: function(data, type, row) {
                 const date = new Date(data);
-                const formatted = Intl.DateTimeFormat("en-US").format(date);
+                const formatted = Intl.DateTimeFormat("en-US", {month: 'long', day: 'numeric'}).format(date);
                 const isOverdue = row.status === 'behind' || (row.status !== 'completed' && date < new Date());
                 return isOverdue ? `<span class="due-overdue">${formatted}</span>` : formatted;
             }, title: 'DUE', defaultContent: '-'},
@@ -554,7 +562,12 @@ const lineItemsTable = $('#lineItems-table').DataTable({
         {data: 'bid_item_no', title: 'ITEM', defaultContent: '-'},
         {data: 'description', title: 'DESCRIPTION', defaultContent: '-'},
         {data: 'unit_of_measure', title: 'UNIT', defaultContent: '-'},
-        {data: 'quantity', title: 'QTY', defaultContent: '-'},
+        {data: 'quantity', title: 'QTY', defaultContent: '-', render:function(data) {
+            if (data === null || data === undefined) return;
+            const qty = parseInt(data);
+            return `<span>${qty}</span>`
+            
+        }},
         {data: 'qty_completed', title: 'QTY COMPLETED', defaultContent: '-',
             render: function(data) {
                 if (data === null || data === undefined) return '-';

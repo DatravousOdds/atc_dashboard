@@ -881,16 +881,16 @@ app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
 
     let q = `
     WITH last_week_completed_work_orders AS (
-    SELECT 
+    SELECT
         COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
-        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+        COUNT(*) FILTER(WHERE status = 'in progress') as total_in_progress
         FROM work_orders
-        WHERE contract_id = $1 
+        WHERE contract_id = $1
         AND start_date >= NOW() - INTERVAL '2 week'
-        AND start_date < NOW() - INTERVAL '1 week'  
+        AND start_date < NOW() - INTERVAL '1 week'
     )
 
-    SELECT 
+    SELECT
         COUNT(*) as total_work_orders,
         COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
         ROUND(
@@ -901,14 +901,13 @@ app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
         COALESCE((COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
         / NULLIF(MAX(lw.total_completed),0) * 100, 0) as wow_completed_percent,
 
-        COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
-        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
-        COALESCE(COUNT(*) FILTER(WHERE status = 'in-progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
+        COUNT(*) as total_assigned,
+        COUNT(*) FILTER(WHERE status = 'in progress') as total_in_progress,
+        COALESCE(COUNT(*) FILTER(WHERE status = 'in progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
         COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
     FROM work_orders
     CROSS JOIN last_week_completed_work_orders lw
     WHERE contract_id = $1
-    AND start_date >= NOW() - INTERVAL '1 week'
     `;
 
     try {
@@ -927,9 +926,9 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
 
     if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
 
-    let query = `SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure, 
+    let query = `SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure,
                     bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
-                    ((li.qty_completed / li.qty_assigned) * 100) as progress
+                    ROUND(COALESCE((li.qty_completed * 100.0) / NULLIF(li.qty_assigned, 0), 0), 0) as progress
                 FROM bid_items bi
                 JOIN line_items li ON bi.id = li.bid_item_id
                 JOIN contracts c ON bi.contract_id = c.id 
@@ -983,7 +982,7 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
                 bi.quantity,
                 li.qty_completed,
                 (li.qty_assigned - li.qty_completed) as remaining_qty,
-                ROUND(COALESCE((li.qty_completed / NULLIF(li.qty_assigned, 0)) * 100, 0), 0) AS progress
+                ROUND(COALESCE((li.qty_completed * 100.0) / NULLIF(li.qty_assigned, 0), 0), 0) AS progress
             FROM line_items li
             LEFT JOIN bid_items bi ON bi.id = li.bid_item_id
             LEFT JOIN work_orders wo ON wo.id = li.work_order_id

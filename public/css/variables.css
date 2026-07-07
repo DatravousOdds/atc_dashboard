@@ -1,12 +1,14 @@
 :root {
     
     --color-prime: #DC143C;
+
     --background-prime: #001f3f;
     --navy-light: #0d2847;
     --navy-medium: #143a52;
     --text-color: #B0BEC5;
     --main-text-color: #E8E8E8;
     --border-color: #334155;
+    --border-color-light: #1F3A57;
     --shadow-color: rgba(220, 20, 60, 0.3);
 
     /* Secondary Colors */
