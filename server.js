@@ -955,10 +955,11 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
     }
 });
 
-// Line items for a specific set of work orders (used by the work orders Export button) -
-// unlike the route above, this is scoped by line_items.work_order_id directly rather than
-// by contract, but still needs the same bid_items join since description/unit/quantity
-// live there, not on line_items itself.
+// Line items for a specific set of work orders - used by both the Export button (a batch
+// of ids) and the Line Items table (a single selected work order's id). Unlike the route
+// above, this is scoped by line_items.work_order_id directly rather than by contract, but
+// still needs the same bid_items join since description/unit/quantity live there, not on
+// line_items itself.
 app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
     try {
         const { workOrderIds } = req.query;
@@ -976,6 +977,7 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
         const query = `
             SELECT
                 wo.work_order_id,
+                bi.bid_item_no,
                 bi.description,
                 bi.unit_of_measure,
                 bi.quantity,

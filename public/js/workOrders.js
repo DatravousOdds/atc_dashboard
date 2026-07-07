@@ -355,10 +355,42 @@ document.addEventListener("click", (event) => {
 
 searchInput.addEventListener("input", () => {
     const query = searchInput.value.toLowerCase();
-    console.log("Search query:", query);
-
+    
     if (query) {
         projectSearchDropdown.classList.add("active");
+        // Filter contracts based on the search query
+        const filteredContracts = contracts.filter(contract => contract.contract_name.toLowerCase().includes(query.slice(0, 3)));
+        console.log("Filtered contracts:", filteredContracts);
+
+        // Clear previous results
+        projectSearchDropdown.innerHTML = '';
+
+        if (filteredContracts.length === 0) {
+            const noResultsItem = document.createElement('li');
+            noResultsItem.textContent = 'No matching projects';
+            noResultsItem.classList.add('no-results');
+            projectSearchDropdown.appendChild(noResultsItem);
+        } else {
+            // Populate the dropdown with filtered results
+            filteredContracts.forEach(contract => {
+                const li = document.createElement('li');
+                li.textContent = contract.contract_name;
+                li.dataset.id = contract.id;
+
+                // Add click event listener to each result item
+                li.addEventListener('click', async () => {
+                    projectSearchDropdown.classList.remove("active");
+                    searchInput.classList.remove("active");
+                    projectSearch.classList.remove("active");
+
+                    // Update the project name display
+                    projectNameDisplay.innerText = contract.contract_name;
+                    // Update the contract ID in the app state
+                    appState.contractId = contract.id;
+                });
+                projectSearchDropdown.appendChild(li);
+            });
+        }
     };
     
 });

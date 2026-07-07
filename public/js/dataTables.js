@@ -321,6 +321,24 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
 appState.projectBudgetUtilizationTable = projectBudgetUtilizationTable;
 
 
+const AVATAR_COLORS = ['#4DC9B0', '#F5B14A', '#7C93C9', '#E57373', '#9575CD', '#4FC3F7', '#81C784', '#F06292'];
+
+function getInitials(name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getAvatarColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+let workOrdersStatusFilter = 'all';
+
 const workOrdersTable = $('#workOrders-table').DataTable({
     processing: true,
     serverSide: false,
@@ -345,7 +363,9 @@ const workOrdersTable = $('#workOrders-table').DataTable({
         {data: 'assignee_name', title: 'ASSIGNEE',
             render: function(data) {
                 if (!data) return '-';
-                return `<span class="assignee">${data}</span>`
+                const initials = getInitials(data);
+                const color = getAvatarColor(data);
+                return `<span class="assignee" style="background-color: ${color};" title="${data}">${initials}</span>`
             },
         defaultContent: '-'},
         {data: 'status', title: 'STATUS',
@@ -360,7 +380,7 @@ const workOrdersTable = $('#workOrders-table').DataTable({
                 };
 
                 const status = statusMap[data] || '';
-                return `<span class='cap ${status}'>${data}</td>`;
+                return `<span class='cap ${status}'>${data}</span>`;
 
             } , defaultContent: '-'},
         {data: 'total_items', title: 'ITEMS', defaultContent: '-'},
@@ -368,75 +388,267 @@ const workOrdersTable = $('#workOrders-table').DataTable({
             render: percentBarRender,
             title: 'PROGRESS', defaultContent: '-'},
         {data: 'due_date',
-            render: function(data) {
+            render: function(data, type, row) {
                 const date = new Date(data);
-                return Intl.DateTimeFormat("en-US").format(date);
+                const formatted = Intl.DateTimeFormat("en-US").format(date);
+                const isOverdue = row.status === 'behind' || (row.status !== 'completed' && date < new Date());
+                return isOverdue ? `<span class="due-overdue">${formatted}</span>` : formatted;
             }, title: 'DUE', defaultContent: '-'},
         {data: 'value',
             render: function(data) {
                 if (data === null || data === undefined) return '-';
                 return "$" + parseFloat(data).toLocaleString('en-US', { minimumFractionDigits: 2 });
             },
-            
+
             title: 'VALUE', defaultContent: '-'},
     ],
     layout: {
         topStart: function() {
-            let title = document.createElement("h2");
-            title.innerHTML = '<i class="fa-solid fa-filter"></i>';
-            title.innerText = `Work Orders`;
-            title.className = 'dt-custom-title';
-            return title;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'wo-table-title-group';
 
+            const title = document.createElement('h2');
+            title.innerText = 'Work Orders';
+
+            const badge = document.createElement('span');
+            badge.className = 'wo-count-badge';
+            badge.id = 'wo-count-badge';
+            badge.innerText = '0 in this project';
+
+            wrapper.append(title, badge);
+            return wrapper;
         },
-        topEnd: [ 'search',
-            function() {
-                let button = document.createElement("button");
-                button.innerText = "Filters";
-                button.className = "btn filter-btn";
-                return button;
-            }
-        ]
+        topEnd: function() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'wo-table-toolbar';
+
+            const searchWrapper = document.createElement('div');
+            searchWrapper.className = 'wo-search-wrapper';
+
+            const searchIcon = document.createElement('i');
+            searchIcon.className = 'fa-solid fa-magnifying-glass';
+
+            const searchInputEl = document.createElement('input');
+            searchInputEl.type = 'search';
+            searchInputEl.placeholder = 'Search WO #, item, assignee...';
+            searchInputEl.addEventListener('input', () => {
+                workOrdersTable.search(searchInputEl.value).draw();
+            });
+
+            searchWrapper.append(searchIcon, searchInputEl);
+
+            const pillsWrapper = document.createElement('div');
+            pillsWrapper.className = 'wo-status-pills';
+
+            const pillDefs = [
+                { label: 'All', value: 'all' },
+                { label: 'Active', value: 'active' },
+                { label: 'Behind', value: 'behind' },
+                { label: 'Done', value: 'done' },
+            ];
+
+            pillDefs.forEach(def => {
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.className = 'wo-status-pill' + (def.value === 'all' ? ' active' : '');
+                pill.innerText = def.label;
+                pill.addEventListener('click', () => {
+                    pillsWrapper.querySelectorAll('.wo-status-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    workOrdersStatusFilter = def.value;
+                    workOrdersTable.draw();
+                });
+                pillsWrapper.append(pill);
+            });
+
+            const filtersBtn = document.createElement('button');
+            filtersBtn.type = 'button';
+            filtersBtn.innerText = 'Filters';
+            filtersBtn.className = 'btn filter-btn';
+
+            wrapper.append(searchWrapper, pillsWrapper, filtersBtn);
+            return wrapper;
+        }
     }
 });
 
+$.fn.dataTable.ext.search.push(function(settings, searchData, dataIndex) {
+    if (settings.nTable.id !== 'workOrders-table') return true;
+    if (workOrdersStatusFilter === 'all') return true;
+
+    const row = workOrdersTable.row(dataIndex).data();
+    if (!row) return true;
+
+    if (workOrdersStatusFilter === 'active') {
+        return row.status === 'in progress' || row.status === 'pending';
+    }
+    if (workOrdersStatusFilter === 'behind') {
+        return row.status === 'behind';
+    }
+    if (workOrdersStatusFilter === 'done') {
+        return row.status === 'completed';
+    }
+    return true;
+});
+
+function selectWorkOrderRow(tr) {
+    $('#workOrders-table tbody tr').removeClass('row-selected');
+    $(tr).addClass('row-selected');
+
+    const rowData = workOrdersTable.row(tr).data();
+    if (!rowData) return;
+
+    appState.selectedWorkOrderId = rowData.id;
+    appState.selectedWorkOrderData = rowData;
+
+    const bannerLabel = document.getElementById('lineItemsBannerLabel');
+    if (bannerLabel) {
+        bannerLabel.innerText = `${rowData.work_order_id} — ${rowData.title}`;
+    }
+
+    if (appState.lineItemsTable) {
+        appState.lineItemsTable.ajax.reload();
+    }
+}
+
+workOrdersTable.on('draw', function() {
+    const badge = document.getElementById('wo-count-badge');
+    if (badge) {
+        const count = workOrdersTable.rows({ search: 'applied' }).count();
+        badge.innerText = `${count} in this project`;
+    }
+
+    if (appState.selectedWorkOrderId === undefined) {
+        const firstRow = workOrdersTable.row(':eq(0)', { page: 'current' }).node();
+        if (firstRow) selectWorkOrderRow(firstRow);
+    }
+});
+
+$('#workOrders-table tbody').on('click', 'tr', function() {
+    selectWorkOrderRow(this);
+});
+
 appState.workOrdersTable = workOrdersTable;
+
+let lineItemsStatusFilter = 'all';
 
 const lineItemsTable = $('#lineItems-table').DataTable({
     processing: true,
     serverSide: false,
     pageLength: 8,
     ajax: function(data, callback, settings) {
-        const { contractId } = appState;
+        const workOrderId = appState.selectedWorkOrderId;
 
-        const id = contractId || 'all';
-        $.getJSON(`/api/contracts/work-orders/${id}/line-items`,function(json) {
+        if (!workOrderId) {
+            callback({ data: [] });
+            return;
+        }
+
+        $.getJSON(`/api/contracts/work-orders/line-items/export?workOrderIds=${workOrderId}`, function(json) {
             const results = Array.isArray(json) ? json : (json.data || []);
             callback({ data: results })
         });
     },
     type: 'GET',
     columns: [
-        {data:'item', title: 'ITEM', defaultContent: '-'},
-        {data:'description', title: 'description', defaultContent: '-'},
-        {data:'unit', title: 'unit', defaultContent: '-'},
-        {data:'qty', title: 'qty', defaultContent: '-'},
-        {data:'qty_completed', title: 'qty completed', defaultContent: '-'},
-        {data:'remaining_qty', title: 'remaining qty', defaultContent: '-'},
-        {data:'progress', title: 'progress', defaultContent: '-'}
+        {data: 'bid_item_no', title: 'ITEM', defaultContent: '-'},
+        {data: 'description', title: 'DESCRIPTION', defaultContent: '-'},
+        {data: 'unit_of_measure', title: 'UNIT', defaultContent: '-'},
+        {data: 'quantity', title: 'QTY', defaultContent: '-'},
+        {data: 'qty_completed', title: 'QTY COMPLETED', defaultContent: '-',
+            render: function(data) {
+                if (data === null || data === undefined) return '-';
+                const value = parseFloat(data);
+                const cls = value > 0 ? 'qty-completed-positive' : 'qty-completed-zero';
+                return `<span class="${cls}">${value}</span>`
+            }},
+        {data: 'remaining_qty', title: 'REMAINING QTY', defaultContent: '-'},
+        {data: 'progress', render: percentBarRender, title: 'PROGRESS', defaultContent: '-'}
     ],
     layout: {
         topStart: function() {
-            let title = document.createElement("h2");
-            title.innerHTML = "Line Items";
-            title.className = "dt-custom-title";
-            return title
+            const wrapper = document.createElement('div');
+            wrapper.className = 'wo-table-title-group';
+
+            const title = document.createElement('h2');
+            title.innerText = 'Line Items';
+
+            const badge = document.createElement('span');
+            badge.className = 'wo-count-badge';
+            badge.id = 'line-items-count-badge';
+            badge.innerText = '0 items';
+
+            wrapper.append(title, badge);
+            return wrapper;
         },
-        topEnd: [
-            'search'
-        ]
+        topEnd: function() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'wo-table-toolbar';
+
+            const pillsWrapper = document.createElement('div');
+            pillsWrapper.className = 'wo-status-pills';
+
+            const pillDefs = [
+                { label: 'All', value: 'all' },
+                { label: 'Outstanding', value: 'outstanding' },
+                { label: 'Closed', value: 'closed' },
+            ];
+
+            pillDefs.forEach(def => {
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.className = 'wo-status-pill' + (def.value === 'all' ? ' active' : '');
+                pill.innerText = def.label;
+                pill.addEventListener('click', () => {
+                    pillsWrapper.querySelectorAll('.wo-status-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    lineItemsStatusFilter = def.value;
+                    lineItemsTable.draw();
+                });
+                pillsWrapper.append(pill);
+            });
+
+            const addLineBtn = document.createElement('button');
+            addLineBtn.type = 'button';
+            addLineBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add line';
+            addLineBtn.className = 'wo-secondary-btn';
+
+            const groupBtn = document.createElement('button');
+            groupBtn.type = 'button';
+            groupBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Group';
+            groupBtn.className = 'btn filter-btn';
+
+            wrapper.append(pillsWrapper, addLineBtn, groupBtn);
+            return wrapper;
+        }
     }
 
 })
+
+$.fn.dataTable.ext.search.push(function(settings, searchData, dataIndex) {
+    if (settings.nTable.id !== 'lineItems-table') return true;
+    if (lineItemsStatusFilter === 'all') return true;
+
+    const row = lineItemsTable.row(dataIndex).data();
+    if (!row) return true;
+
+    const remaining = parseFloat(row.remaining_qty);
+    const isOutstanding = !Number.isNaN(remaining) && remaining > 0;
+
+    if (lineItemsStatusFilter === 'outstanding') return isOutstanding;
+    if (lineItemsStatusFilter === 'closed') return !isOutstanding;
+    return true;
+});
+
+lineItemsTable.on('draw', function() {
+    const badge = document.getElementById('line-items-count-badge');
+    if (badge) {
+        const count = lineItemsTable.rows({ search: 'applied' }).count();
+        const woId = appState.selectedWorkOrderData?.work_order_id;
+        badge.innerText = woId
+            ? `${count} item${count === 1 ? '' : 's'} · ${woId}`
+            : `${count} item${count === 1 ? '' : 's'}`;
+    }
+});
 
 appState.lineItemsTable = lineItemsTable;
