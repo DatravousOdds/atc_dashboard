@@ -229,6 +229,7 @@ const EQUIPMENT_SELECT_OPTIONS = [
     { value: 'bulldozer', label: 'Bulldozer' },
 ];
 
+
 realFileUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -642,7 +643,7 @@ function displayWorkOrdersKPIs(data) {
     
 
     averageCycleTime.innerHTML = `
-        <span class="assigned-completed">${data.avg_cycle_time}</span>
+        <span class="assigned-completed">${data.avg_cycle_time.toFixed(2)}</span>
         <span>days</span>
     `;    
 }
