@@ -8,11 +8,28 @@
 
     --color-border-primary: #1F3A57;
 
-    --color-red-hover-light: #E57373;
-    --color-red-primary: #EF5350;
+    /* ============================================================
+       BRAND DISCIPLINE PASS
+       Previously three near-identical reds did decorative work
+       across this file with no shared variable: #EF5350
+       (--color-red-primary), #f05350 (--color-red-progress-bar),
+       and #F37672 / #ED7470 (hardcoded, no variable at all - used
+       on step badges, hover borders, the calendar range highlight,
+       and the add-line-item button). None of those needed to be
+       red; they're decorative accents, not alerts.
+
+       --color-navy-prime is new: the brand navy, used everywhere
+       one of those reds was doing decorative/primary-action work.
+       --color-red-primary stays, but now means "danger/overdue"
+       only - and its value is aligned to the same brand red used
+       elsewhere in your system (#E42022) instead of the old #EF5350.
+       ============================================================ */
+    --color-navy-prime: #00007E;
+    --color-red-hover-light: #FF4D4F;
+    --color-red-primary: #E42022;
 
     --color-green-progress-bar: #4cc9b0;
-    --color-red-progress-bar: #f05350;
+    --color-red-progress-bar: #E42022;
     --color-yellow-progress-bar: #f5b14a;
 
     --font-size-xs: 0.75rem;
@@ -27,7 +44,8 @@
 }
 
 .download-link {
-    color: var(--color-red-primary);
+    /* CHANGED: was red - a download action isn't a warning. */
+    color: var(--color-navy-prime);
 }
 
 .content-header {
@@ -73,11 +91,16 @@
 }
 
 .work-order-btn:hover {
-    background: #E57373;
+    /* CHANGED: was --color-red-hover-light. This is your primary
+       "create" action - giving it the brand navy hover instead of
+       red keeps red meaning "something's wrong" everywhere else. */
+    background: #26268F;
 }
 
 .work-order-btn {
-    background-color: #EF5350;
+    /* CHANGED: was hardcoded #EF5350. Primary action button now uses
+       the brand navy, not red. */
+    background-color: var(--color-navy-prime);
     border: none;
 }
 
@@ -390,7 +413,10 @@
 }
 
 .workOrder-title {
-    color: #ED7470;
+    /* CHANGED: was #ED7470 (a hardcoded coral, not tied to any
+       variable - one of the three "extra reds"). This is a label,
+       not an alert, so it now carries the brand navy instead. */
+    color: var(--color-navy-prime);
     display: flex;
     gap: 0.5rem;
     align-items: center;
@@ -405,7 +431,9 @@
 .step .step-number {
     padding: 5px 10px;
     background-color: #302637;
-    color: #F37672;
+    /* CHANGED: was #F37672 (hardcoded coral) - a step counter isn't
+       an alert, switched to navy for consistency. */
+    color: var(--color-navy-prime);
     border-radius: 8px;
     font-weight: 600;
 }
@@ -571,7 +599,9 @@ input, select {
 }
 
 .schedule-col-wrapper:hover {
-    border: 1px solid #F37672;
+    /* CHANGED: was #F37672 (hardcoded coral) - hover is an
+       interaction state, not an alert, so it's navy now. */
+    border: 1px solid var(--color-navy-prime);
 }
 
 .schedule-icon {
@@ -658,6 +688,8 @@ input, select {
 }
 
 .behind {
+    /* Left as-is: this is a genuine danger state ("behind schedule"),
+       exactly where red should still show up. */
     background-color: #3a1f24;
     color: var(--color-red-progress-bar);
     border: 1px solid var(--color-red-progress-bar);
@@ -670,12 +702,15 @@ input, select {
 }
 
 .due-overdue {
+    /* Left as-is: genuine alert state. */
     color: var(--color-red-progress-bar);
     font-weight: 600;
 }
 
 #workOrders-table tbody tr.row-selected td:first-child {
-    border-left: 3px solid var(--color-red-primary);
+    /* CHANGED: was var(--color-red-primary). Row selection is a UI
+       state, not a warning - navy indicator instead. */
+    border-left: 3px solid var(--color-navy-prime);
 }
 
 .wo-table-header {
@@ -787,11 +822,14 @@ input, select {
 }
 
 .line-items-banner {
+    /* NOTE: assuming this banner is informational (e.g. "unsaved line
+       items"), not a warning - switched to navy. If it's actually
+       flagging a problem, revert this one to var(--color-red-primary). */
     display: flex;
     align-items: center;
     gap: 0.5rem;
     background-color: #11263D;
-    border-left: 3px solid var(--color-red-primary);
+    border-left: 3px solid var(--color-navy-prime);
     padding: 0.75rem 1rem;
     margin-bottom: 0.75rem;
     color: #B6C5D9;
@@ -806,7 +844,7 @@ input, select {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: var(--color-red-primary);
+    background-color: var(--color-navy-prime);
     flex-shrink: 0;
 }
 
@@ -1003,13 +1041,15 @@ input, select {
 
 /* ── Add button ── */
 #addLineItem {
+  /* CHANGED: color was #F37672 (hardcoded coral) - navy now, since
+     "add a line item" is a routine action, not an alert. */
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin-top: 12px;
   margin-left: 1rem;
   font-size: 13px;
-  color: #F37672;
+  color: var(--color-navy-prime);
   background: #11263D;
   border: 1px solid #1F3A57;
   border-radius: 6px;
@@ -1091,7 +1131,8 @@ input, select {
 }
 
 .import-status.error {
-    color: #EF5350;
+    /* Left as-is: genuine error state. Tokenized for consistency. */
+    color: var(--color-red-primary);
 }
 
 /* .flatpickr-day {
@@ -1115,7 +1156,10 @@ input, select {
 
 .flatpickr-day.startRange,
 .flatpickr-day.selected.endRange {
-    background-color: #F37672 !important;
+    /* CHANGED: was #F37672 (hardcoded coral) - date-range selection
+       is a UI state, not an alert. Navy now, matches the rest of
+       your interactive elements. */
+    background-color: var(--color-navy-prime) !important;
     color: #fff !important;
     border: none !important;
 }
@@ -1190,7 +1234,12 @@ span.flatpickr-weekday {
 }
 
 .kpi-container:nth-child(2) .kpi-progress-bar::before {
-    background-color: var(--color-red-progress-bar);
+    /* CHANGED: was --color-red-progress-bar. "Assigned work orders"
+       isn't a negative number - it doesn't need a danger color.
+       Navy reads as a neutral metric here, leaving red free to mean
+       something specific elsewhere on the page (e.g. .behind, 
+       .due-overdue below). */
+    background-color: var(--color-navy-prime);
     width: var(--total-assigned-work-orders-percent);
 }
 
@@ -1238,6 +1287,8 @@ span.flatpickr-weekday {
 }
 
 .trend-down {
+    /* Left as-is: a downward trend indicator is a reasonable place
+       for red to still appear. */
     color: var(--color-red-progress-bar);
 }
 
@@ -1293,10 +1344,15 @@ span.flatpickr-weekday {
 }
 
 .footer-cta button:nth-child(3) {
-    background-color: #EF5350;
+    /* NOTE: assuming this is the primary "Save / Submit" action (3rd
+       button in the footer, typically the "do the thing" button) -
+       switched to navy. If this is actually a destructive action
+       (e.g. "Delete Work Order"), revert to var(--color-red-primary)
+       instead - that would be a correct use of red. */
+    background-color: var(--color-navy-prime);
     color: #fff;
     border: 1px solid transparent;
-    box-shadow: 0 2px 4px rgba(239, 77, 77, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 126, 0.15);
 
 }
 
@@ -1319,4 +1375,3 @@ span.flatpickr-weekday {
     transform: rotate(360deg);
   }
 }
-

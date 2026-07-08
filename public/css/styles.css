@@ -1,13 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Overpass:wght@700;800&family=Roboto:wght@400;500;700&display=swap');
+
 :root {
-    /* Secondary Colors */
+    /* ============================================================
+       BRAND TOKENS - sampled from the ATC logo file:
+       navy #00007E, signal red #E42022. Light mode is the default
+       surface (CEO-facing / screen-share friendly); dark mode is
+       an explicit opt-in via body[data-theme="dark"].
+       ============================================================ */
+    --color-prime: #00007E;        /* was crimson - now navy: structure, not alarm */
+    --color-danger: #E42022;       /* red, reserved for negative/critical data only */
+    --color-accent: #E42022;       /* red, reserved for the single active/primary state */
+    --color-warning: #C77D12;
+    --color-success: #1E7B4D;
+
+    --font-display: 'Overpass', Arial, sans-serif;   /* headings, KPI figures, table headers */
+    --font-body: 'Roboto', sans-serif;                /* everything else - unchanged from your file */
+
+    /* Light mode (default) */
+    --bg-page: #F4F6F9;
+    --navy-light: #EEF1F6;
+    --navy-medium: #E1E5EC;
+    --text-color: #5B6472;
+    --main-text-color: #10152B;
+    --border-color: #E1E5EC;
+    --shadow-color: rgba(0, 0, 126, 0.12);
+
+    /* Secondary Colors - kept as dark-mode fallback values, see body[data-theme="dark"] below */
     --main-background-color-dark: #0A1929;
-    /* Container Backgrounds */
     --container-background-light: #f0f4f8;
     --container-background-dark: #11263D;
-    --sidebar-background: #0D1F33;
+    --sidebar-background: #00007E;
     --text-color-dark: #fff;
+
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    --border-radius: 6px;
+    --border-radius-lg: 10px;
+
+    --transition: all 0.3s ease-in-out;
 }
 
+/* Dark mode - explicit opt-in, not the default */
+body[data-theme="dark"] {
+    --bg-page: #060B1F;
+    --navy-light: #0D1440;
+    --navy-medium: #121B4F;
+    --text-color: #AEB6CC;
+    --main-text-color: #F2F4F9;
+    --border-color: #1E2A5C;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --container-background-dark: #0D1440;
+}
 
 
 /* ================================
@@ -21,13 +68,21 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: var(--main-background-color-dark);
-    color: #333;
+    font-family: var(--font-body);
+    /* CHANGED: was var(--main-background-color-dark) (a static dark hex
+       with no light counterpart) - now the theme-aware --bg-page, so
+       this actually responds to the light/dark toggle. */
+    background: var(--bg-page);
+    color: var(--main-text-color);
     line-height: 1.6;
     padding: 0 20px;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: var(--transition);
+}
+
+h1, h2, h3, h4 {
+    font-family: var(--font-display);
 }
 
 /* ================================
@@ -48,11 +103,9 @@ main {
     display: flex;
     flex-direction: column;
     margin-left: 0;
-    /* padding: 20px; */
     transition: 0.5s ease-in-out;
     width: 100%;
     min-width: 0;
-    
 }
 
 .content.active {
@@ -88,15 +141,13 @@ main {
     gap: var(--spacing-md);
 }
 
-.overview-filters { 
+.overview-filters {
     margin-bottom: 0.5rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     gap: 0.5rem;
-    
-    
 }
 
 
@@ -112,14 +163,16 @@ main {
 .overview-filter input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 2px solid var(--color-prime);
+    /* CHANGED: border was --color-prime at full 2px everywhere, which
+       made every filter look "selected." Neutral border by default;
+       navy only appears on hover/focus, where it's meaningful. */
+    border: 1.5px solid var(--border-color);
     font-size: 1rem;
     font-weight: 500;
     background-color: var(--navy-light);
     width: 100%;
     color: var(--text-color);
     transition: var(--transition);
-    
 }
 
 .overview-filters select:hover,
@@ -127,28 +180,24 @@ main {
     background-color: var(--navy-medium);
     border-color: var(--color-prime);
     cursor: pointer;
-
 }
 
 .overview-filters input:focus,
 .overview-filters select:focus {
     outline: none;
     border-color: var(--color-prime);
-    box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 0, 126, 0.12);
 }
-
-
-
 
 
 .search-input-container input {
  padding-top: 9px;
- padding-bottom: 0.5rem; 
+ padding-bottom: 0.5rem;
  border-radius: 4px;
  font-size: 1rem;
  color: var(--text-color);
  padding-left: 2rem;
- border: 2px solid #1F3A57;
+ border: 1.5px solid var(--border-color);
  background-color: var(--navy-light);
  width: 100%;
  transition: all 0.3s ease-in-out;
@@ -184,7 +233,6 @@ border-bottom-right-radius: 0;
 .search-input-container input::placeholder {
     color:var(--text-color);
     font-size: 0.95rem;
-    /* padding-left: 0.5rem; */
 }
 
 .search-input-container input:active,
@@ -192,7 +240,7 @@ border-bottom-right-radius: 0;
  {
     outline: none;
     border: 2px solid var(--color-prime);
-    box-shadow: 0px 0px 4px 4px rgba(220, 20, 60, 0.3);
+    box-shadow: 0px 0px 4px 4px rgba(0, 0, 126, 0.1);
 
 }
 
@@ -217,20 +265,21 @@ border-bottom-right-radius: 0;
 
 .kpi-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     margin-top: 1rem;
     margin-bottom: 1rem;
     gap: 1rem;
-   
-
 }
 
 .kpi-container .kpi-card {
-    border: 1px solid #1F3A57;
+    border: 1px solid var(--border-color);
+    /* Signature detail: a thin navy top edge on every KPI card,
+       echoing the frame in the logo without repeating red. */
+    border-top: 3px solid var(--color-prime);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--shadow-color);
-    background-color: var(--container-background-dark);
+    background-color: var(--container-background-dark, var(--navy-light));
     text-align: left;
     width: 100%;
     transition: all 0.3s ease-in-out;
@@ -245,7 +294,8 @@ border-bottom-right-radius: 0;
 }
 
 .kpi-header i {
-    color: #7D90A8;
+    color: var(--text-color);
+    font-size: 1.5rem;
 }
 
 .kpi-header h3 {
@@ -254,24 +304,21 @@ border-bottom-right-radius: 0;
     text-transform: uppercase;
     color: var(--text-color);
     letter-spacing: 0.025rem;
+    font-family: var(--font-body);
 }
 
 .fa-triangle-exclamation {
-    color: #f5b14a;
+    color: var(--color-warning);
     font-size: 1.25rem;
 }
 
-.kpi-header i {
-    font-size: 1.5rem;
-    color: #7D90A8;
-}
-
 .kpi-container .kpi-card:hover {
-    border: 2px solid var(--color-prime);
+    /* CHANGED: hover border/glow was red - now navy, since hover is an
+       interaction state, not an alert. */
+    border-color: var(--color-prime);
     transform: translateY(-3px);
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(220, 20, 60, 0.2);
-   
+    box-shadow: 0 4px 16px var(--shadow-color);
 }
 
 .kpi-card h3 {
@@ -284,9 +331,13 @@ border-bottom-right-radius: 0;
 }
 
 .kpi-card p {
+    font-family: var(--font-display);
     font-weight: 800;
     font-size: 1.8rem;
-    color: var(--color-prime);
+    /* CHANGED: was var(--color-prime) (red) - the headline number on
+       every card doesn't need to be red. Main text color reads calmer
+       at a glance; use .kpi-note.up / .kpi-note.down for the signal. */
+    color: var(--main-text-color);
     margin-bottom: 0.25rem;
     transition: all 0.3s ease-in-out;
 }
@@ -299,50 +350,54 @@ border-bottom-right-radius: 0;
     line-height: 1.4;
 }
 
+.kpi-note.up {
+    color: var(--color-success);
+}
+
+.kpi-note.down {
+    color: var(--color-danger);
+}
+
 .charts-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
     margin: 1rem 0;
-
-    
 }
 
 .chart-container {
     padding: 1rem;
-    border: 2px solid var(--border-color);
-    /* margin-top: 1rem; */
+    border: 1px solid var(--border-color);
     margin-bottom: 1rem;
     border-radius: 8px;
     position: relative;
     width: 100%;
-    min-width: 500px;
-    transition: 0.2 ease-in-out;
-    
+    background-color: var(--container-background-dark, var(--navy-light));
+    transition: 0.2s ease-in-out;
 }
 
 .chart-container:hover {
-    border: 2px solid var(--color-prime);
-    box-shadow: 0 2px 12px 2px rgba(203, 31, 31, 0.92);
-   
+    border: 1px solid var(--color-prime);
+    box-shadow: 0 4px 16px var(--shadow-color);
 }
 
 .chart-container h3 {
     border-bottom: 2px solid var(--color-prime);
-    color: var(--color-prime);
+    /* CHANGED: was red text + red underline - now navy underline only,
+       text in main color so it reads like a section title, not a klaxon. */
+    color: var(--main-text-color);
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     margin-bottom: 0.5rem;
     padding-bottom: 0.25rem;
-   
 }
 
 
 /* Table Headers */
 
 div.data-table-container {
-    background-color: #11263D;
-    border: 1px solid #1F3A57;
+    background-color: var(--container-background-dark, var(--navy-light));
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -353,7 +408,7 @@ div.data-table-container:last-child {
 }
 
 .data-table-container h2 {
-    color: var(--color-prime);
+    color: var(--main-text-color);
     margin-bottom: 0.75rem;
 }
 
@@ -400,7 +455,7 @@ div.data-table-container:last-child {
 
 .dt-length select {
     background-color: var(--navy-light);
-    border: 2px solid var(--color-prime);
+    border: 1.5px solid var(--border-color);
     color: var(--main-text-color);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
@@ -411,13 +466,14 @@ div.data-table-container:last-child {
 
 .dt-length select:hover {
     background-color: var(--navy-medium);
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.2);
+    border-color: var(--color-prime);
 }
 
 
 .dt-length select:focus {
     outline: none;
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.3);
+    border-color: var(--color-prime);
+    box-shadow: 0 0 8px var(--shadow-color);
 }
 
 
@@ -435,8 +491,8 @@ div.data-table-container:last-child {
 
 
 .dt-search input {
-    background-color: #163049;
-    border: 2px solid #203a57;
+    background-color: var(--navy-light);
+    border: 1.5px solid var(--border-color);
     color: var(--main-text-color);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
@@ -450,12 +506,13 @@ div.data-table-container:last-child {
 
 .dt-search input:hover {
     background-color: var(--navy-medium);
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.2);
+    border-color: var(--color-prime);
 }
 
 .dt-search input:focus {
     outline: none;
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.3);
+    border-color: var(--color-prime);
+    box-shadow: 0 0 8px var(--shadow-color);
 }
 
 
@@ -479,7 +536,7 @@ div.data-table-container:last-child {
 
 .dt-paging .dt-paging-button {
     padding: var(--spacing-sm) var(--spacing-md);
-    border: 2px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     background-color: var(--navy-light);
     color: var(--main-text-color);
     border-radius: var(--border-radius);
@@ -513,10 +570,9 @@ div.data-table-container:last-child {
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
-    /* margin: var(--spacing-md) 0; */
     overflow-x: auto;
     display: block;
-    border: 1px solid #203a57;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
 }
 
@@ -530,18 +586,18 @@ table.dataTable tbody {
     display: table;
     width: 100%;
     table-layout: fixed;
-    
 }
 
 
 table.dataTable thead th {
     background-color: var(--navy-light);
-    color: var(--text-color);
+    color: var(--main-text-color);
+    font-family: var(--font-display);
     font-weight: 700;
     border-bottom: 2px solid var(--color-prime);
     padding: var(--spacing-md);
     text-transform: uppercase;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     letter-spacing: 0.5px;
     text-align: left;
     position: sticky;
@@ -554,17 +610,17 @@ table.dataTable tbody td {
     border-bottom: 1px solid var(--border-color);
     color: var(--main-text-color);
     word-wrap: break-word;
-    background-color: var(--container-background-dark);
+    background-color: var(--container-background-dark, var(--navy-light));
 }
 
 table.dataTable tbody td.is-positive {
-    color: #22c55e;
-    background-color: rgba(34, 197, 94, 0.08);
+    color: var(--color-success);
+    background-color: rgba(30, 123, 77, 0.08);
 }
 
 table.dataTable tbody td.is-negative {
-    color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.08);
+    color: var(--color-danger);
+    background-color: rgba(228, 32, 34, 0.08);
 }
 
 
@@ -574,7 +630,9 @@ table.dataTable tbody tr {
 }
 
 table.dataTable tbody tr:hover {
-    background-color: rgba(220, 20, 60, 0.1);
+    /* CHANGED: was a red hover tint on every row - now a quiet navy tint,
+       since hovering a row isn't a warning, it's just focus. */
+    background-color: rgba(0, 0, 126, 0.06);
 }
 
 /* Sorting Indicators */
@@ -629,7 +687,6 @@ table.dt-table thead th.dt-type-numeric {
 .searchDropdown {
     display: none;
     background-color: var(--navy-light);
-    /* padding: 1rem; */
     max-height: 600px;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
@@ -646,7 +703,6 @@ table.dt-table thead th.dt-type-numeric {
 }
 
 .searchDropdown ul li {
-    /* border: 1px solid red; */
     color: var(--main-text-color);
     margin-bottom: 1rem;
     padding: 8px 1rem;
@@ -678,7 +734,6 @@ footer {
     display: none;
     flex-direction: column;
     transition: width 0.3s ease-in-out;
-    /* align-items: center; */
 }
 
 .sidebar.active {
@@ -690,9 +745,7 @@ footer {
    display: flex;
    flex-direction: column;
    gap: 1rem;
-   /* margin-top: 0.5rem; */
    margin: 1rem;
-    
 }
 
 .sidebar-options li {
@@ -701,7 +754,7 @@ footer {
     align-items: center;
     gap: 0.5rem;
     border-radius: 8px;
-    color: #ADBCC3;
+    color: #C7CCE8;
     padding: 0.875rem;
     cursor: pointer;
     font-size: 0.875rem;
@@ -709,17 +762,21 @@ footer {
 }
 
 .sidebar-options li.active {
-    background-color: #ef4444;
+    /* This is the one place red carries real weight: "you are here"
+       against an otherwise all-navy sidebar. */
+    background-color: var(--color-accent);
     color: white;
 }
 
 .sidebar-options li:hover {
-    background-color: #ef4444;
+    /* CHANGED: hover used to preview the same red as .active, so hovering
+       any item looked selected. Hover is now a soft navy tint instead. */
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
 .sidebar-options li:not(.sidebar-label):hover {
-    background-color: #ef4444;
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
@@ -761,7 +818,7 @@ footer {
 }
 
 .user-information .username {
-    color: #ADBCC3;
+    color: #C7CCE8;
     font-size: 1rem;
 }
 
@@ -778,14 +835,12 @@ footer {
     font-size: 1.875rem;
     color: var(--main-text-color);
     font-weight: 700;
-
 }
 
 .project-overview-wrapper {
     display: flex;
     gap: 1.5rem;
     margin-bottom: 2rem;
-
 }
 
 
@@ -795,7 +850,6 @@ footer {
     flex-direction: column;
     gap: 1.5rem;
     flex: 1;
-    
 }
 
 .total-projects,
@@ -807,14 +861,15 @@ footer {
     padding: 1rem;
     width: 100%;
     border-radius: 8px;
-    border: 1px solid #1F3A57;
-    background-color: #11263D;
+    border: 1px solid var(--border-color);
+    background-color: var(--container-background-dark, var(--navy-light));
 }
 
 .kpi-value {
+    font-family: var(--font-display);
     font-size: 2.25rem;
     font-weight: 700;
-    color: #eaf1ea;
+    color: var(--main-text-color);
 }
 
 .project-performance {
@@ -853,7 +908,7 @@ footer {
 /* Tablet (480px and up) */
 @media (min-width: 480px) {
 
-    .charts-container { 
+    .charts-container {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
@@ -861,13 +916,13 @@ footer {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
-  
+
 }
 
 /* Medium devices (768px and up) */
 @media (min-width: 768px) {
 
-    .charts-container { 
+    .charts-container {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
@@ -882,12 +937,10 @@ footer {
 
   .overview-filters input,
   .overview-filters select {
-    /* width: auto; */
     flex: 1;
-    /* min-width: 200px; */
   }
 
-  
+
 
 
   table.dt-table thead th {
@@ -914,7 +967,7 @@ footer {
 /* Larger devices (1024px and up) */
 @media (min-width: 1024px) {
 
-    .charts-container { 
+    .charts-container {
         grid-template-columns: repeat(2, 2fr);
     }
 
@@ -922,7 +975,7 @@ footer {
         grid-template-columns: repeat(4, 1fr);
     }
 
-  
+
 
   .dt-layout-row {
         align-items: center;
@@ -941,7 +994,6 @@ footer {
         width: 100%;
     }
 
-    
 
 
 }
@@ -952,7 +1004,7 @@ footer {
       grid-template-columns: repeat(4, 1fr);
   }
 
-  .charts-container { 
+  .charts-container {
       grid-template-columns: repeat(2, 2fr);
   }
 }
@@ -969,4 +1021,3 @@ footer {
       max-width: 2000px;
   }
 }
-

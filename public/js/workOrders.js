@@ -643,7 +643,7 @@ function displayWorkOrdersKPIs(data) {
     
 
     averageCycleTime.innerHTML = `
-        <span class="assigned-completed">${data.avg_cycle_time.toFixed(2)}</span>
+        <span class="assigned-completed">${parseFloat(data.avg_cycle_time).toFixed(2)}</span>
         <span>days</span>
     `;    
 }

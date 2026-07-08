@@ -1,22 +1,41 @@
 :root {
-    
-    --color-prime: #DC143C;
+    /* ============================================================
+       BRAND TOKENS - sampled directly from the ATC logo file:
+       navy #00007E, signal red #E42022.
 
-    --background-prime: #001f3f;
-    --navy-light: #0d2847;
-    --navy-medium: #143a52;
-    --text-color: #B0BEC5;
-    --main-text-color: #E8E8E8;
-    --border-color: #334155;
-    --border-color-light: #1F3A57;
-    --shadow-color: rgba(220, 20, 60, 0.3);
+       --color-prime now means "structural navy," not "alarm red."
+       Red survives as two narrow, semantic tokens below:
+         --color-danger  -> negative numbers, overdue, destructive actions
+         --color-accent  -> the one "active / you are here" state
+       Nothing else should reach for red.
+       ============================================================ */
+    --color-prime: #00007E;
+    --color-danger: #E42022;
+    --color-accent: #E42022;
+    --color-warning: #C77D12;
+    --color-success: #1E7B4D;
+
+    /* ============================================================
+       LIGHT MODE IS NOW THE DEFAULT (was dark by default before -
+       bare :root had the dark navy background and only flipped
+       light via an explicit attribute or prefers-color-scheme).
+       CEO-facing surfaces read better light in a screen-share or
+       printed export, so that's the base state now.
+       ============================================================ */
+    --background-prime: #F5F7FA;
+    --navy-light: #E8EEF5;
+    --navy-medium: #D4DFE8;
+    --text-color: #4A5568;
+    --main-text-color: #1A202C;
+    --border-color: #CBD5E0;
+    --border-color-light: #E1E7EF;
+    --shadow-color: rgba(0, 0, 126, 0.10);
 
     /* Secondary Colors */
     --main-background-color-dark: #0A1929;
     /* Container Backgrounds */
     --container-background-light: #f0f4f8;
     --container-background-dark: #11263D;
-
 
 
     --spacing-xs: 0.25rem;
@@ -32,43 +51,47 @@
 
     --transition: all 0.3s ease-in-out;
 
-
-
-    
-
 }
 
-body[data-theme="light"] {
-    /* Light mode */
-    --background-prime: #fff;
-    --navy-light: #f0f4f8;
-    --navy-medium: #d9e2ec;
-    --text-color: #334155;
-    --main-text-color: #1e293b;
-    --border-color: #cbd5e1;
-    --shadow-color: rgba(0,31,63,0.1);    
-
-}
 body[data-theme="dark"] {
-    --color-prime: #DC143C;
+    /* Dark mode - explicit opt-in now, not the default.
+
+       NOTE: --color-prime can't just be the logo's navy (#00007E)
+       here - that's nearly invisible as a border/focus color against
+       a dark navy background (navy-on-navy). Using a lighter
+       periwinkle-navy instead so borders, focus rings, and hovers
+       stay legible. Red stays the same in both themes since it
+       already has good contrast on dark backgrounds. */
+    --color-prime: #5C7CFA;
+    --color-danger: #E42022;
+    --color-accent: #E42022;
+
     --background-prime: #001f3f;
     --navy-light: #0d2847;
     --navy-medium: #143a52;
     --text-color: #B0BEC5;
     --main-text-color: #E8E8E8;
     --border-color: #334155;
-    --shadow-color: rgba(220, 20, 60, 0.3);
+    --shadow-color: rgba(92, 124, 250, 0.25);
 }
 
 
-@media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-        --background-prime: #F5F7FA;
-        --navy-light: #E8EEF5;
-        --navy-medium: #D4DFE8;
-        --text-color: #4A5568;
-        --main-text-color: #1A202C;
-        --border-color: #CBD5E0;
-        --shadow-color: rgba(0, 31, 63, 0.1);
-    } 
+@media (prefers-color-scheme: dark) {
+    /* Mirrors body[data-theme="dark"] above, but triggers off the
+       user's OS-level preference when no explicit choice has been
+       made on <body> yet. (Previously this block matched *light*
+       preference, because dark was the default - now that light is
+       the default, this needs to catch dark instead.) */
+    :root:not([data-theme="light"]) {
+        --color-prime: #5C7CFA;
+        --color-danger: #E42022;
+        --color-accent: #E42022;
+        --background-prime: #001f3f;
+        --navy-light: #0d2847;
+        --navy-medium: #143a52;
+        --text-color: #B0BEC5;
+        --main-text-color: #E8E8E8;
+        --border-color: #334155;
+        --shadow-color: rgba(92, 124, 250, 0.25);
+    }
 }
