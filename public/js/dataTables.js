@@ -329,7 +329,9 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
 appState.projectBudgetUtilizationTable = projectBudgetUtilizationTable;
 
 
-const AVATAR_COLORS = ['#4DC9B0', '#F5B14A', '#7C93C9', '#E57373', '#9575CD', '#4FC3F7', '#81C784', '#F06292'];
+// No red here on purpose - red is reserved for danger/overdue states elsewhere in this app,
+// and an avatar's color has no such meaning, so it shouldn't reach for that token.
+const AVATAR_COLORS = ['#4DC9B0', '#F5B14A', '#7C93C9', '#26268F', '#9575CD', '#4FC3F7', '#81C784', '#F06292'];
 
 function getInitials(name) {
     const parts = name.trim().split(/\s+/);
@@ -528,7 +530,16 @@ workOrdersTable.on('draw', function() {
 
     if (appState.selectedWorkOrderId === undefined) {
         const firstRow = workOrdersTable.row(':eq(0)', { page: 'current' }).node();
-        if (firstRow) selectWorkOrderRow(firstRow);
+        if (firstRow) {
+            selectWorkOrderRow(firstRow);
+        } else {
+            appState.selectedWorkOrderData = undefined;
+
+            const bannerLabel = document.getElementById('lineItemsBannerLabel');
+            if (bannerLabel) bannerLabel.innerText = '';
+
+            if (appState.lineItemsTable) appState.lineItemsTable.ajax.reload();
+        }
     }
 });
 
@@ -568,6 +579,7 @@ const lineItemsTable = $('#lineItems-table').DataTable({
             return `<span>${qty}</span>`
             
         }},
+        {data: 'qty_assigned', title: 'QTY ASSIGNED', defaultContent: '-'},
         {data: 'qty_completed', title: 'QTY COMPLETED', defaultContent: '-',
             render: function(data) {
                 if (data === null || data === undefined) return '-';
@@ -576,7 +588,14 @@ const lineItemsTable = $('#lineItems-table').DataTable({
                 return `<span class="${cls}">${value}</span>`
             }},
         {data: 'remaining_qty', title: 'REMAINING QTY', defaultContent: '-'},
-        {data: 'progress', render: percentBarRender, title: 'PROGRESS', defaultContent: '-'}
+        {data: 'progress', render: percentBarRender, title: 'PROGRESS', defaultContent: '-'},
+        {
+            data: null,
+            title: '',
+            orderable: false,
+            defaultContent: '',
+            render: () => `<button type="button" class="edit-line-item-btn" title="Edit qty completed"><i class="fa-solid fa-pen"></i></button>`
+        }
     ],
     layout: {
         topStart: function() {
@@ -665,3 +684,47 @@ lineItemsTable.on('draw', function() {
 });
 
 appState.lineItemsTable = lineItemsTable;
+
+// Event listeners for line items table
+$('#lineItems-table tbody').on('click', '.edit-line-item-btn', function() {
+    const row = lineItemsTable.row($(this).closest('tr'));
+    const data = row.data();
+    if (!data) return;
+
+    const cell = $(row.node()).find('td').eq(4); // QTY COMPLETED column
+    cell.html(`
+        <input type="number" class="qty-edit-input" value="${data.qty_completed}" min="0">
+        <button type="button" class="save-qty-btn" title="Save"><i class="fa-solid fa-check"></i></button>
+        <button type="button" class="cancel-qty-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+    `);
+    cell.find('.qty-edit-input').trigger('focus');
+});
+
+$('#lineItems-table tbody').on('click', '.cancel-qty-btn', function() {
+    lineItemsTable.draw(false);
+});
+
+$('#lineItems-table tbody').on('click', '.save-qty-btn', async function() {
+    const row = lineItemsTable.row($(this).closest('tr'));
+    const data = row.data();
+    if (!data) return;
+
+    const newQty = $(this).siblings('.qty-edit-input').val();
+
+    try {
+        const res = await fetch(`/api/contracts/work-orders/line-items/${data.line_item_id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qtyCompleted: newQty })
+        });
+
+        if (!res.ok) {
+            throw new Error(`Failed to update line item (status ${res.status})`);
+        }
+    } catch (err) {
+        console.log(err.message);
+        
+    }
+
+    lineItemsTable.ajax.reload();
+});

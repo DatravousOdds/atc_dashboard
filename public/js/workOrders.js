@@ -91,6 +91,7 @@ exportBtn.addEventListener('click', async () => {
         "Description:": item.description,
         "Unit:": item.unit_of_measure,
         "Qty:": parseFloat(item.quantity),
+        "Qty Assigned:": parseFloat(item.qty_assigned),
         "Qty Completed:": parseFloat(item.qty_completed),
         "Remaining Qty:": parseFloat(item.remaining_qty),
         "Progress:": parseFloat(item.progress),
@@ -325,6 +326,7 @@ allProjects.forEach(project => {
         displayWorkOrdersKPIs(kpiData);
 
         appState.contractId = contract_id;
+        appState.selectedWorkOrderId = undefined;
         appState.workOrdersTable.ajax.reload();
             
     })

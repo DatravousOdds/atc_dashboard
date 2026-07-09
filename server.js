@@ -975,11 +975,13 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
 
         const query = `
             SELECT
+                li.id AS line_item_id,
                 wo.work_order_id,
                 bi.bid_item_no,
                 bi.description,
                 bi.unit_of_measure,
                 bi.quantity,
+                li.qty_assigned,
                 li.qty_completed,
                 (li.qty_assigned - li.qty_completed) as remaining_qty,
                 ROUND(COALESCE((li.qty_completed * 100.0) / NULLIF(li.qty_assigned, 0), 0), 0) AS progress
@@ -995,6 +997,21 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
         console.log(err.message);
     }
 });
+
+app.patch('/api/contracts/work-orders/line-items/:id', async(req,res) => {
+    const { id } = req.params;
+    const { qtyCompleted } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE line_items SET qty_completed = $1 WHERE id = $2 RETURNING *
+            `,[parseInt(qtyCompleted), id]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.log(error.message)
+    }
+})
 
 // Gets work for a specific contract
 app.get('/api/contracts/work-orders/:id', async (req, res) => {
@@ -1124,6 +1141,22 @@ app.post('/api/contracts/work-orders/line-items/insert', async(req, res) => {
         client.release();
     }
 })
+
+// app.patch('/api/contracts/work-orders/line-items/:id', async (req, res) => {
+//     const { id } = req.params;
+//     const { qtyCompleted } = req.body;
+
+//     try {
+//         const result = await pool.query(
+//             `UPDATE line_items SET qty_completed = $1 WHERE id = $2 RETURNING *`,
+//             [qtyCompleted, id]
+//         );
+//         res.json(result.rows[0]);
+//     } catch (err) {
+//         console.log(err.message);
+//         res.status(500).json({ error: 'Failed to update line item' });
+//     }
+// });
 
 const PORT = process.env.PORT || 3300;
 

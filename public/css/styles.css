@@ -438,6 +438,7 @@ div.data-table-container:last-child {
 .dt-layout-end {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 1rem;
 }
 
@@ -787,6 +788,11 @@ footer {
 
 .sidebar-navigation {
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    color: var(--main-text-color);
+    padding: 1rem 1rem 0;
 }
 
 .tab-content {

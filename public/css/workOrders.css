@@ -1,12 +1,12 @@
 :root {
     --color-blue-light: rgb(125, 144, 168);
     --color-blue-text-light: #7D90A8;
-    --color-blue-card-background: #163049;
+    --color-blue-card-background: #0D1440;
 
     --color-white-primary: rgb(234, 241, 251);
     --color-white-secondary:#fff;
-
-    --color-border-primary: #1F3A57;
+    --border-color: #5C7CFA;
+    --color-border-primary: #00007E;
 
     /* ============================================================
        BRAND DISCIPLINE PASS
@@ -112,7 +112,7 @@
 
 .project-wrapper {
     padding: 1rem;
-    background-color: #11263D;
+    background-color: var(--color-blue-card-background);
     border-radius: 8px;
     border: 1px solid #1F3A57;
 }
@@ -143,7 +143,7 @@
     width: 100%;
     max-width: 140px;
     height: 40px;
-    background-color: #163049;
+    background-color: var(--color-blue-card-background);
     border: 1px solid #1F3A57;
     overflow: hidden;
     transition: max-width 0.3s ease-in-out;
@@ -198,7 +198,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background: #163049;
+    background: var(--color-blue-card-background);
     border-radius: 8px;
     border: 1px solid #1F3A57;
     padding: 0.5rem;
@@ -209,7 +209,7 @@
 .project-search-dropdown {
     position: absolute;
     display: none;
-    background-color: #163049;
+    background-color: var(--color-blue-card-background);
     border-radius: 8px;
     border: 1px solid #1E3B57;
     width: 100%;
@@ -266,7 +266,7 @@
     align-items: center;
     width: 130px;
     gap: 0.5rem;
-    background: #163049;
+    background: var(--color-blue-card-background);
     border: 1px solid transparent;
     color: #eaf1ea;
     padding: 0.5rem 1rem;
@@ -280,7 +280,7 @@
 .wo-project-dropdown {
     position: absolute;
     display: none;
-    background-color: #163049;
+    background-color: var(--color-blue-card-background);
     border-radius: 8px;
     border: 1px solid #1E3B57;
     width: 100%;
@@ -306,7 +306,7 @@
 }
 
 .wo-project-dropdown li:hover {
-    background-color: #1E3B57;
+    background-color: #5C7CFA;
 }
 
 /* KPIs */
@@ -320,7 +320,7 @@
 
 #workOrderContent .kpi-container {
     padding: 1rem;
-    background: #11263D;
+    background: var(--color-blue-card-background);
     border: 1px solid #1F3A57;
     border-radius: 8px;
     display: flex;
@@ -821,6 +821,59 @@ input, select {
     cursor: pointer;
 }
 
+.edit-line-item-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #11263D;
+    color: #B6C5D9;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    width: 1.75rem;
+    height: 1.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.edit-line-item-btn:hover {
+    background-color: rgba(234, 241, 251, 0.08);
+    color: #eaf1ea;
+}
+
+.qty-edit-input {
+    background-color: #163049;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    color: #eaf1ea;
+    padding: 0.25rem 0.5rem;
+    width: 4.5rem;
+    font-size: var(--font-size-sm);
+    margin-right: 0.375rem;
+}
+
+.save-qty-btn,
+.cancel-qty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--color-border-primary);
+    cursor: pointer;
+    margin-right: 0.25rem;
+}
+
+.save-qty-btn {
+    background-color: var(--color-navy-prime);
+    color: #eaf1ea;
+}
+
+.cancel-qty-btn {
+    background-color: #11263D;
+    color: #B6C5D9;
+}
+
 .line-items-banner {
     /* NOTE: assuming this banner is informational (e.g. "unsaved line
        items"), not a warning - switched to navy. If it's actually
@@ -829,7 +882,7 @@ input, select {
     align-items: center;
     gap: 0.5rem;
     background-color: #11263D;
-    border-left: 3px solid var(--color-navy-prime);
+    border-left: 3px solid #5C7CFA;
     padding: 0.75rem 1rem;
     margin-bottom: 0.75rem;
     color: #B6C5D9;
@@ -844,7 +897,7 @@ input, select {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: var(--color-navy-prime);
+    background-color: #5C7CFA;
     flex-shrink: 0;
 }
 
@@ -1210,6 +1263,8 @@ span.flatpickr-weekday {
 }
 
 .assigned-completed {
+    font-family: var(--font-display);
+    font-weight: 800;
     font-size: 2rem;
     color: #fff;
 }
@@ -1239,7 +1294,7 @@ span.flatpickr-weekday {
        Navy reads as a neutral metric here, leaving red free to mean
        something specific elsewhere on the page (e.g. .behind, 
        .due-overdue below). */
-    background-color: var(--color-navy-prime);
+    background-color: #5C7CFA;
     width: var(--total-assigned-work-orders-percent);
 }
 
