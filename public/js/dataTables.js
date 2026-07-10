@@ -579,8 +579,8 @@ const lineItemsTable = $('#lineItems-table').DataTable({
             return `<span>${qty}</span>`
             
         }},
-        {data: 'qty_assigned', title: 'QTY ASSIGNED', defaultContent: '-'},
-        {data: 'qty_completed', title: 'QTY COMPLETED', defaultContent: '-',
+        {data: 'qty_assigned', title: 'QTY ASSIGNED', defaultContent: '-', className: 'qty_assigned' },
+        {data: 'qty_completed', title: 'QTY COMPLETED', defaultContent: '-', className: 'qty_completed',
             render: function(data) {
                 if (data === null || data === undefined) return '-';
                 const value = parseFloat(data);
@@ -594,7 +594,8 @@ const lineItemsTable = $('#lineItems-table').DataTable({
             title: '',
             orderable: false,
             defaultContent: '',
-            render: () => `<button type="button" class="edit-line-item-btn" title="Edit qty completed"><i class="fa-solid fa-pen"></i></button>`
+            className: 'line-item-actions',
+            render: () => `<button type="button" class="edit-line-item-btn" title="Edit line item"><i class="fa-solid fa-pen"></i></button>`
         }
     ],
     layout: {
@@ -691,13 +692,27 @@ $('#lineItems-table tbody').on('click', '.edit-line-item-btn', function() {
     const data = row.data();
     if (!data) return;
 
-    const cell = $(row.node()).find('td').eq(4); // QTY COMPLETED column
-    cell.html(`
-        <input type="number" class="qty-edit-input" value="${data.qty_completed}" min="0">
-        <button type="button" class="save-qty-btn" title="Save"><i class="fa-solid fa-check"></i></button>
-        <button type="button" class="cancel-qty-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
-    `);
-    cell.find('.qty-edit-input').trigger('focus');
+    const rowNode = $(row.node());
+    const qtyAssigned = rowNode.find('.qty_assigned');
+    const qtyCompleted = rowNode.find('.qty_completed');
+    const actions = rowNode.find('.line-item-actions');
+
+    if (qtyAssigned.length) {
+        qtyAssigned.html(`<input type="number" class="qty-edit-input qty-assigned-input" value="${data.qty_assigned}" min="0">`);
+    }
+
+    if (qtyCompleted.length) {
+        qtyCompleted.html(`<input type="number" class="qty-edit-input qty-completed-input" value="${data.qty_completed}" min="0">`);
+    }
+
+    if (actions.length) {
+        actions.html(`
+            <button type="button" class="save-qty-btn" title="Save"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="cancel-qty-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+        `);
+    }
+
+    rowNode.find('.qty-edit-input').first().trigger('focus');
 });
 
 $('#lineItems-table tbody').on('click', '.cancel-qty-btn', function() {
@@ -709,13 +724,15 @@ $('#lineItems-table tbody').on('click', '.save-qty-btn', async function() {
     const data = row.data();
     if (!data) return;
 
-    const newQty = $(this).siblings('.qty-edit-input').val();
+    const rowNode = $(row.node());
+    const newQtyAssigned = rowNode.find('.qty-assigned-input').val();
+    const newQtyCompleted = rowNode.find('.qty-completed-input').val();
 
     try {
         const res = await fetch(`/api/contracts/work-orders/line-items/${data.line_item_id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ qtyCompleted: newQty })
+            body: JSON.stringify({ qtyAssigned: newQtyAssigned, qtyCompleted: newQtyCompleted })
         });
 
         if (!res.ok) {

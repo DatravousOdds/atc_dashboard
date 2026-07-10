@@ -3,6 +3,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const { path } = require('d3');
 require('dotenv').config();
+const bcrypt = require('bcryptjs')
 
 const app = express();
 
@@ -29,6 +30,63 @@ pool.query('SELECT NOW()', (err,res) => {
         console.error('❌ Database connection failed:', err)
     } else {
         console.log('✅ Database connected successfully!', res.rows[0])
+    }
+});
+
+app.post('/api/login/new-user', async (req, res) => {
+    const { email, pwd } = req.body;
+
+    if (!email || !pwd) {
+        return res.status(400).json({ message: "Email and password is required to create new user!"})
+    }
+
+    try {
+        const passwordHash = await bcrypt.hash(pwd, 12);
+        console.log("password hash: ", passwordHash);
+
+        const newUserQuery = 'INSERT INTO users(useremail, passwordhash) VALUES ($1, $2) RETURNING id, useremail'
+        const results = await pool.query(newUserQuery, [email, passwordHash]);
+
+        if (results.rows.length === 0) {
+            return res.status(500).json({message: "Failed to create user!"})
+        }
+
+        return res.status(200).json({ message: "New user added!" })
+
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({message: "Failed to create user " + err})
+    }
+})
+
+app.post('/api/login', async (req, res) => {
+    const { email, pwd } = req.body;
+
+    if (!email || !pwd) {
+        return res.status(400).json({ message: "Email and password is required to login!"})
+    }
+
+    try {
+        const userQuery = 'SELECT * FROM users WHERE useremail = $1'
+        const results = await pool.query(userQuery, [email]);
+
+        if (results.rows.length === 0) {
+            return res.status(401).json({message: "Email or password is invalid!"})
+        }
+
+        const passwordHash = results.rows[0].passwordhash;
+
+        const isMatch = await bcrypt.compare(pwd, passwordHash);
+
+        if(!isMatch) {
+            return res.status(401).json({message: "Email or password is invalid!"})
+        }
+
+        return res.status(200).json({ message: "User is authenticated" })
+
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({message: "Failed to log in " + err})
     }
 })
 
@@ -1000,12 +1058,12 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
 
 app.patch('/api/contracts/work-orders/line-items/:id', async(req,res) => {
     const { id } = req.params;
-    const { qtyCompleted } = req.body;
+    const { qtyAssigned, qtyCompleted } = req.body;
 
     try {
         const result = await pool.query(
-            `UPDATE line_items SET qty_completed = $1 WHERE id = $2 RETURNING *
-            `,[parseInt(qtyCompleted), id]
+            `UPDATE line_items SET qty_completed = $1, qty_assigned = $2 WHERE id = $3 RETURNING *
+            `,[parseInt(qtyCompleted), parseInt(qtyAssigned), id]
         );
         res.json(result.rows[0]);
     } catch (error) {

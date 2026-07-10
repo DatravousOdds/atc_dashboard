@@ -100,12 +100,42 @@ main {
 
 
 .content {
+    position: relative;
     display: flex;
     flex-direction: column;
     margin-left: 0;
     transition: 0.5s ease-in-out;
     width: 100%;
     min-width: 0;
+}
+
+.content-lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+}
+
+.content-lock-overlay.active {
+    display: flex;
+}
+
+.content-lock-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm, 0.75rem);
+    text-align: center;
+    color: #E8E8E8;
+}
+
+.content-lock-message i {
+    font-size: 2rem;
 }
 
 .content.active {
@@ -816,6 +846,8 @@ footer {
 
 .user-image-container {
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    line-height: 0;
 }
 
 .user-image-container img {
@@ -823,9 +855,62 @@ footer {
     object-fit: cover;
 }
 
+.user-information {
+    display: flex;
+    flex-direction: column;
+}
+
 .user-information .username {
     color: #C7CCE8;
     font-size: 1rem;
+}
+
+.user-information .user-status {
+    display: none;
+    font-size: 0.75rem;
+    color: #8892B0;
+}
+
+.guest-icon {
+    font-size: 50px;
+    color: #8892B0;
+}
+
+.user-image.hidden,
+.guest-icon.hidden {
+    display: none;
+}
+
+/* Logged-out state */
+#currentUserContainer.logged-out .user-status {
+    display: block;
+}
+
+#sidebar.logged-out #authTab {
+    color: var(--color-success, #1E7B4D);
+}
+
+#sidebar.logged-out #sidebarOptions {
+    display: none;
+}
+
+.sidebar-locked-message {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm, 0.5rem);
+    text-align: center;
+    color: #8892B0;
+    margin-top: 2rem;
+    padding: 0 var(--spacing-md, 1rem);
+}
+
+#sidebar.logged-out .sidebar-locked-message {
+    display: flex;
+}
+
+.sidebar-locked-message i {
+    font-size: 1.5rem;
 }
 
 
@@ -868,6 +953,7 @@ footer {
     width: 100%;
     border-radius: 8px;
     border: 1px solid var(--border-color);
+    border-top: 3px solid var(--color-prime);
     background-color: var(--container-background-dark, var(--navy-light));
 }
 
@@ -1013,6 +1099,656 @@ footer {
   .charts-container {
       grid-template-columns: repeat(2, 2fr);
   }
+}
+
+/* ================================
+   LOGIN MODAL
+   ================================ */
+
+.login-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 9999;
+}
+
+.login-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.login-modal-overlay.active .login-modal {
+    transform: scale(1);
+}
+
+.login-modal {
+    width: 100%;
+    max-width: 400px;
+    background: var(--bg-page);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 12px 32px var(--shadow-color);
+    padding: var(--spacing-lg);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.login-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.login-modal-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-prime);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.login-modal-header-text h2 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--main-text-color);
+}
+
+.login-modal-header-text p {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    margin-top: var(--spacing-xs);
+}
+
+.login-modal-header .close-button {
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-color);
+    background: var(--navy-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    padding: 0.15rem 0.6rem;
+    transition: var(--transition);
+}
+
+.login-modal-header .close-button:hover {
+    background: var(--navy-medium);
+}
+
+.login-form-banner {
+    display: none;
+    background: rgba(228, 32, 34, 0.1);
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.login-form-banner.active {
+    display: block;
+}
+
+.login-form-flex {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--spacing-md);
+}
+
+.login-form-flex label {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.login-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.login-input-wrapper i {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--text-color);
+    font-size: 0.85rem;
+}
+
+.login-input-wrapper input {
+    width: 100%;
+    padding: 0.65rem 0.85rem 0.65rem 2.25rem;
+    background: var(--navy-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+}
+
+.login-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--color-prime);
+}
+
+.login-form-flex.has-error .login-input-wrapper input {
+    border-color: var(--color-danger);
+}
+
+.field-error {
+    display: none;
+    color: var(--color-danger);
+    font-size: 0.78rem;
+    margin-top: var(--spacing-xs);
+}
+
+.login-form-flex.has-error .field-error {
+    display: block;
+}
+
+.login-form-footer-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--spacing-xs);
+}
+
+.forgot-password-link {
+    font-size: 0.8rem;
+    color: var(--color-prime);
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.forgot-password-note {
+    display: none;
+    font-size: 0.78rem;
+    color: var(--text-color);
+    background: var(--navy-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.forgot-password-note.active {
+    display: block;
+}
+
+.login-submit-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: 0.75rem;
+    background: var(--color-prime);
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.login-submit-btn:hover {
+    opacity: 0.9;
+}
+
+/* Settings tab */
+
+.settings-card {
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--color-prime);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    background-color: var(--container-background-dark, var(--navy-light));
+    padding: 1.5rem;
+    max-width: 560px;
+}
+
+.settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.settings-card-header i {
+    color: var(--text-color);
+    font-size: 1.25rem;
+}
+
+.settings-card-header h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-color);
+    letter-spacing: 0.025rem;
+    font-family: var(--font-body);
+}
+
+.settings-profile-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+}
+
+.settings-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.settings-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-avatar-fallback {
+    font-size: 84px;
+}
+
+.settings-avatar-fallback.hidden {
+    display: none;
+}
+
+.settings-avatar-edit-btn {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-prime);
+    color: #fff;
+    border: 2px solid var(--bg-page);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.settings-avatar-edit-btn:hover {
+    opacity: 0.9;
+}
+
+.settings-profile-fields {
+    flex: 1;
+}
+
+.settings-save-btn {
+    width: auto;
+    padding: 0.65rem 1.25rem;
+}
+
+.settings-save-note {
+    display: none;
+    font-size: 0.8rem;
+    color: var(--color-success);
+    margin-top: var(--spacing-sm);
+}
+
+.settings-save-note.active {
+    display: block;
+}
+
+.settings-save-note.error {
+    color: var(--color-danger);
+}
+
+/* ================================
+   REPORTS TAB
+   ================================ */
+
+.report-step {
+    display: none;
+}
+
+.report-step.active {
+    display: block;
+}
+
+/* Category filter tabs */
+.report-category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.report-category-btn {
+    background: var(--navy-light);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.report-category-btn:hover {
+    background: var(--navy-medium);
+    border-color: var(--color-prime);
+    color: var(--main-text-color);
+}
+
+.report-category-btn.active {
+    background: var(--color-prime);
+    border-color: var(--color-prime);
+    color: #fff;
+}
+
+/* Report type cards */
+.report-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.report-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    background-color: var(--container-background-dark, var(--navy-light));
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--border-color);
+    border-radius: 8px;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.report-card:hover {
+    border-color: var(--color-prime);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.report-card-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.report-card-radio {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    transition: var(--transition);
+}
+
+.report-card-icon {
+    font-size: 1.5rem;
+    color: var(--color-prime);
+}
+
+.report-card h3 {
+    color: var(--main-text-color);
+    font-size: 1rem;
+}
+
+.report-card p {
+    color: var(--text-color);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.report-card:has(.report-card-input:checked) {
+    border-top-color: var(--color-prime);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.report-card:has(.report-card-input:checked) .report-card-radio {
+    border-color: var(--color-prime);
+    background: var(--color-prime);
+    box-shadow: inset 0 0 0 3px var(--container-background-dark, var(--navy-light));
+}
+
+.report-card:has(.report-card-input:focus-visible) {
+    outline: 2px solid var(--color-prime);
+    outline-offset: 2px;
+}
+
+.report-step-cta {
+    justify-content: flex-end;
+    display: flex;
+}
+
+.report-run-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--color-prime);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.report-run-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.report-run-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Results screen */
+.report-back-btn {
+    background: none;
+    border: 1.5px solid var(--border-color);
+    color: var(--main-text-color);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-right: var(--spacing-sm);
+    transition: var(--transition);
+}
+
+.report-back-btn:hover {
+    background: var(--navy-light);
+    border-color: var(--color-prime);
+}
+
+#reportResultsStep .breadcrumb {
+    display: flex;
+    align-items: center;
+}
+
+.report-action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--navy-light);
+    border: 1.5px solid var(--border-color);
+    color: var(--main-text-color);
+    padding: 0.55rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.report-action-btn:hover {
+    background: var(--navy-medium);
+    border-color: var(--color-prime);
+}
+
+.report-action-btn-primary {
+    background: var(--color-prime);
+    border-color: var(--color-prime);
+    color: #fff;
+}
+
+.report-action-btn-primary:hover {
+    opacity: 0.9;
+}
+
+.report-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.report-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 180px;
+}
+
+.report-filter-field label {
+    font-weight: 600;
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+}
+
+.report-filter-field select,
+.report-filter-field input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1.5px solid var(--border-color);
+    font-size: 0.95rem;
+    background-color: var(--navy-light);
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.report-filter-field select:focus,
+.report-filter-field input:focus {
+    outline: none;
+    border-color: var(--color-prime);
+    box-shadow: 0 0 0 3px rgba(0, 0, 126, 0.12);
+}
+
+.report-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.report-results-header h2 {
+    margin: 0;
+}
+
+.report-search-container {
+    max-width: 280px;
+}
+
+.report-search-container input {
+    padding: 0.5rem 0.5rem 0.5rem 2rem;
+    border-radius: 6px;
+    border: 1.5px solid var(--border-color);
+    background-color: var(--navy-light);
+    color: var(--text-color);
+    width: 100%;
+}
+
+.report-search-container i {
+    top: 50%;
+}
+
+#reports-results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#reports-results-table th,
+#reports-results-table td {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+#reports-results-table th {
+    color: var(--main-text-color);
+    font-weight: 600;
+}
+
+.report-no-results td {
+    text-align: center;
+    color: var(--text-color);
+    padding: var(--spacing-lg);
+}
+
+.report-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
+}
+
+.report-page-btn,
+.report-page-nav {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    border: 1.5px solid var(--border-color);
+    background: var(--navy-light);
+    color: var(--main-text-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.report-page-btn:hover,
+.report-page-nav:hover:not(:disabled) {
+    border-color: var(--color-prime);
+}
+
+.report-page-btn.active {
+    background: var(--color-prime);
+    border-color: var(--color-prime);
+    color: #fff;
+}
+
+.report-page-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* Large desktop (2560px and up) */

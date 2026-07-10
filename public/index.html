@@ -30,12 +30,14 @@
     <main>
         <!-- Sidebar-->
          <section id="sidebar" class="sidebar">
-            <div class="current-user-container">
+            <div class="current-user-container" id="currentUserContainer">
                 <div class="user-image-container">
-                    <img src="assets/profile_pic.jpg" alt="pic of user" class="user-image" width="50" height="50">
+                    <img src="assets/profile_pic.jpg" alt="pic of user" class="user-image" id="currentUserImage" width="50" height="50">
+                    <i class="fa-solid fa-circle-user guest-icon" id="guestIcon"></i>
                 </div>
                 <div class="user-information">
-                    <span class="username">Travous Odds</span>
+                    <span class="username" id="currentUsername">Travous Odds</span>
+                    <span class="user-status" id="currentUserStatus">Not signed in</span>
                 </div>
             </div>
 
@@ -88,14 +90,26 @@
                     Settings
                 </li>
                 <li id="authTab">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
+                    <i class="fa-solid fa-right-from-bracket" id="authTabIcon"></i>
+                    <span id="authTabLabel">Logout</span>
                 </li>
 
             </ul>
+
+            <div class="sidebar-locked-message" id="sidebarLockedMessage">
+                <i class="fa-solid fa-lock"></i>
+                <p>Log in to view dashboard data</p>
+            </div>
          </section>
 
         <div class="content">
+            <div class="content-lock-overlay" id="contentLockOverlay">
+                <div class="content-lock-message">
+                    <i class="fa-solid fa-lock"></i>
+                    <p>Log in to view dashboard data</p>
+                    <button type="button" class="login-submit-btn" id="contentLockLoginBtn">Log In</button>
+                </div>
+            </div>
             <div class="sidebar-navigation" id="sidebarNavigation">
                 <i class="fa-solid fa-table-columns" id="sidebarToggle"></i>
             </div>
@@ -576,12 +590,204 @@
                     </div>
                 </div>
             </div>
-            <div id="reportsContent" class="tab-content" data-content="reports">Reports Content</div>
+            <div id="reportsContent" class="tab-content" data-content="reports">
+
+                <!-- STEP 1: Choose report type -->
+                <div id="reportTypeStep" class="report-step active">
+                    <div class="content-header">
+                        <div class="breadcrumb">
+                            <p>Reports</p>
+                            <h1>Pull Reports</h1>
+                        </div>
+                    </div>
+
+                    <div class="report-category-tabs" id="reportCategoryTabs">
+                        <button type="button" class="report-category-btn active" data-category="all" title="All reports">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </button>
+                        <button type="button" class="report-category-btn" data-category="projects">Projects</button>
+                        <button type="button" class="report-category-btn" data-category="work-orders">Work Orders</button>
+                        <button type="button" class="report-category-btn" data-category="invoices">Invoices</button>
+                        <button type="button" class="report-category-btn" data-category="contracts">Contracts</button>
+                    </div>
+
+                    <div class="report-type-grid" id="reportTypeGrid">
+                        <label class="report-card" data-category="projects">
+                            <input type="radio" name="reportType" value="project-performance" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-chart-line report-card-icon"></i>
+                            <h3>Project Performance</h3>
+                            <p>Revenue, expenses, and progress by project.</p>
+                        </label>
+
+                        <label class="report-card" data-category="work-orders">
+                            <input type="radio" name="reportType" value="work-order-summary" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-clipboard report-card-icon"></i>
+                            <h3>Work Order Summary</h3>
+                            <p>Assignments, completion status, and cycle time.</p>
+                        </label>
+
+                        <label class="report-card" data-category="invoices">
+                            <input type="radio" name="reportType" value="invoice-payment" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-file-invoice-dollar report-card-icon"></i>
+                            <h3>Invoice &amp; Payment</h3>
+                            <p>Submitted invoices and outstanding balances.</p>
+                        </label>
+
+                        <label class="report-card" data-category="projects">
+                            <input type="radio" name="reportType" value="budget-utilization" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-scale-balanced report-card-icon"></i>
+                            <h3>Budget Utilization</h3>
+                            <p>Budget vs. actual spend by project.</p>
+                        </label>
+
+                        <label class="report-card" data-category="contracts">
+                            <input type="radio" name="reportType" value="contract-win-rate" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-trophy report-card-icon"></i>
+                            <h3>Contract Win Rate</h3>
+                            <p>Bid outcomes and award value over time.</p>
+                        </label>
+
+                        <label class="report-card" data-category="contracts">
+                            <input type="radio" name="reportType" value="vendor-performance" class="report-card-input">
+                            <span class="report-card-radio"></span>
+                            <i class="fa-solid fa-truck-fast report-card-icon"></i>
+                            <h3>Vendor Performance</h3>
+                            <p>Pricing and reliability by vendor.</p>
+                        </label>
+                    </div>
+
+                    <div class="content-cta report-step-cta">
+                        <button type="button" class="report-run-btn" id="runReportBtn" disabled>
+                            Run Report
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Results -->
+                <div id="reportResultsStep" class="report-step">
+                    <div class="content-header">
+                        <div class="breadcrumb">
+                            <button type="button" class="report-back-btn" id="reportBackBtn" aria-label="Back to report types" title="Back to report types">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <div>
+                                <p>Reports</p>
+                                <h1 id="reportResultsTitle">Project Performance</h1>
+                            </div>
+                        </div>
+                        <div class="content-cta">
+                            <button type="button" class="report-action-btn" id="reportPrintBtn">
+                                <i class="fa-solid fa-print"></i>
+                                Print
+                            </button>
+                            <button type="button" class="report-action-btn report-action-btn-primary" id="reportExportBtn">
+                                <i class="fa-solid fa-file-export"></i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-filters">
+                        <div class="report-filter-field">
+                            <label for="reportProjectFilter">Project</label>
+                            <select id="reportProjectFilter">
+                                <option value="all">All Projects</option>
+                            </select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="reportFromDate">From</label>
+                            <input type="date" id="reportFromDate">
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="reportToDate">To</label>
+                            <input type="date" id="reportToDate">
+                        </div>
+                    </div>
+
+                    <div class="data-table-container report-results-container">
+                        <div class="report-results-header">
+                            <h2>Results</h2>
+                            <div class="search-input-container report-search-container">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="search" id="reportSearchInput" placeholder="Search results...">
+                            </div>
+                        </div>
+                        <table id="reports-results-table">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsResultsBody">
+                                <!-- Data rows will be populated here dynamically -->
+                            </tbody>
+                        </table>
+                        <div class="report-pagination" id="reportPagination">
+                            <button type="button" class="report-page-nav" id="reportPrevPage" disabled aria-label="Previous page" title="Previous page">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </button>
+                            <button type="button" class="report-page-btn active" data-page="1">1</button>
+                            <button type="button" class="report-page-btn" data-page="2">2</button>
+                            <button type="button" class="report-page-nav" id="reportNextPage" aria-label="Next page" title="Next page">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="invoiceContent" class="tab-content" data-content="invoices" >Invoice Content</div>
             <div id="artificalContent" class="tab-content" data-content="artificial-intelligence" >Artificial Content</div>
             <div id="importContent" class="tab-content" data-content="import-export" >Import/Export</div>
             <div id="generateInvoiceContent" class="tab-content" data-content="generate-invoice" >Generate Invoice</div>
-            <div id="settingsContent" class="tab-content" data-content="settings" >Setting Content</div>
+            <div id="settingsContent" class="tab-content" data-content="settings">
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <p>Settings</p>
+                        <h1>Account Settings</h1>
+                    </div>
+                </div>
+                <section class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa-solid fa-id-badge"></i>
+                        <h3>Profile</h3>
+                    </div>
+                    <div class="settings-profile-row">
+                        <div class="settings-avatar-wrapper">
+                            <img src="assets/profile_pic.jpg" alt="Profile picture" class="settings-avatar" id="settingsProfileImage">
+                            <i class="fa-solid fa-circle-user guest-icon settings-avatar-fallback hidden" id="settingsGuestIcon"></i>
+                            <button type="button" class="settings-avatar-edit-btn" id="settingsChangePictureBtn" title="Change profile picture">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+                            <input type="file" id="settingsProfilePictureInput" accept="image/*" hidden>
+                        </div>
+                        <div class="settings-profile-fields">
+                            <div class="login-form-flex">
+                                <label for="settingsDisplayName">Display Name</label>
+                                <div class="login-input-wrapper">
+                                    <i class="fa-regular fa-user"></i>
+                                    <input type="text" id="settingsDisplayName" placeholder="Enter display name" maxlength="60">
+                                </div>
+                                <span class="field-error" id="settingsDisplayNameError"></span>
+                            </div>
+                            <button type="button" class="login-submit-btn settings-save-btn" id="settingsSaveBtn">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                Save Changes
+                            </button>
+                            <p class="settings-save-note" id="settingsSaveNote"></p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     </main>
 
@@ -893,11 +1099,61 @@
                     </button>
                 </div>
             </div>
-        </div> 
+        </div>
      </div>
-    
+
+     <!-- Login Modal -->
+     <div class="login-modal-overlay" id="loginModalOverlay">
+        <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+            <div class="login-modal-header">
+                <div class="login-modal-header-text">
+                    <div class="login-modal-badge">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Sign In</span>
+                    </div>
+                    <h2 id="loginModalTitle">Welcome back</h2>
+                    <p>Sign in with your ATC account to continue.</p>
+                </div>
+                <span class="close-button" id="closeLoginModal">&times;</span>
+            </div>
+
+            <form id="loginForm" novalidate>
+                <p class="login-form-banner" id="loginFormBanner"></p>
+
+                <div class="login-form-flex">
+                    <label for="loginUsername">Username</label>
+                    <div class="login-input-wrapper">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="loginUsername" name="username" placeholder="Enter your username" autocomplete="username">
+                    </div>
+                    <span class="field-error" id="loginUsernameError"></span>
+                </div>
+
+                <div class="login-form-flex">
+                    <label for="loginPassword">Password</label>
+                    <div class="login-input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="loginPassword" name="password" placeholder="Enter your password" autocomplete="current-password">
+                    </div>
+                    <span class="field-error" id="loginPasswordError"></span>
+                </div>
+
+                <div class="login-form-footer-row">
+                    <a href="#" class="forgot-password-link" id="forgotPasswordLink">Forgot password?</a>
+                </div>
+                <p class="forgot-password-note" id="forgotPasswordNote">Password reset isn't available yet — contact your administrator.</p>
+
+                <button type="submit" class="login-submit-btn" id="loginSubmitBtn">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    Sign In
+                </button>
+            </form>
+        </div>
+     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/flatpickr.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/shared.js"></script>
@@ -905,6 +1161,7 @@
     <script src="js/workOrders.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/dataTables.js"></script>
+    <script src="js/reports.js"></script>
     
     
     
