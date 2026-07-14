@@ -185,6 +185,7 @@ workOrderCustomerResults.addEventListener('click', (e) => {
 
 projectSelectContainer.addEventListener("click", (e) => {
    workOrderProjectDropdown.classList.toggle("active");
+
 });
 
 fileUpload.addEventListener('click', () => {
@@ -359,6 +360,8 @@ document.addEventListener("click", (event) => {
     }
 });
 
+
+
 searchInput.addEventListener("input", () => {
     const query = searchInput.value.toLowerCase();
     
@@ -393,6 +396,11 @@ searchInput.addEventListener("input", () => {
                     projectNameDisplay.innerText = contract.contract_name;
                     // Update the contract ID in the app state
                     appState.contractId = contract.id;
+                    // trigger search
+                    const workOrderKPIs = await getWorkOrdersKPIs(appState.contractId);
+                    
+                    displayWorkOrdersKPIs(workOrderKPIs);
+
                 });
                 projectSearchDropdown.appendChild(li);
             });

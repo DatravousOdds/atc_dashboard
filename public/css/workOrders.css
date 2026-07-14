@@ -227,6 +227,12 @@
     color: #eaf1ea;
     cursor: pointer;
     border-radius: 6px;
+    transition: 0.3s ease-in-out;
+}
+
+.project-search-dropdown li:hover {
+    background-color: var(--border-color);
+    color: #fff;
 }
 
 .project-search-dropdown.active {

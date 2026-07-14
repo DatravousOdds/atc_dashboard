@@ -565,6 +565,12 @@ div.data-table-container:last-child {
     flex-wrap: wrap;
 }
 
+.dt-paging nav {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
 .dt-paging .dt-paging-button {
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1.5px solid var(--border-color);
