@@ -805,6 +805,60 @@ app.get('/api/projects/performance', async(req, res) => {
 });
 
 // ==================
+//  Reports Routes
+// ==================
+
+// Pull Reports > Project Performance: revenue, expense, and progress by project.
+// Same shape as /api/projects/status but without that route's "active projects only"
+// filter - a report should cover full project history, not just what's in progress.
+app.get('/api/projects/reports/project-performance', async(req, res) => {
+    const { contractId, year, month } = req.query;
+
+    let query = `
+        SELECT
+            c.contract_name AS project,
+            c.total_bid_amount AS revenue,
+            (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2))) AS expense,
+            (c.total_bid_amount - (m.total_cost + CAST(SUM(EXTRACT(EPOCH FROM t.hours_worked) / 3600.0 * e.hourly_rate) AS NUMERIC(10,2)))) AS net_profit,
+            ROUND(SUM(i.amount_paid) / c.total_bid_amount * 100, 2) AS progress_percent,
+            c.status
+        FROM contracts c
+        LEFT JOIN materials m ON m.contract_id = c.id
+        LEFT JOIN time_entries t ON t.contract_id = c.id
+        LEFT JOIN employees e ON t.employee_id = e.id
+        LEFT JOIN invoices i ON i.contract_id = c.id AND i.payment_status = 'paid'
+        WHERE c.contract_name NOT LIKE '%Zamora Inc%' AND c.contract_name NOT LIKE '%TxDOT%'
+    `;
+
+    const params = [];
+
+    if (contractId && contractId !== 'all') {
+        query += ' AND c.id = $' + (params.length + 1);
+        params.push(contractId);
+    }
+
+    if (year && year !== 'all') {
+        query += ' AND EXTRACT(YEAR FROM c.date_awarded) = $' + (params.length + 1);
+        params.push(year);
+    }
+
+    if (month && month !== 'all') {
+        query += ' AND EXTRACT(MONTH FROM c.date_awarded) = $' + (params.length + 1);
+        params.push(month);
+    }
+
+    query += ' GROUP BY c.contract_name, c.total_bid_amount, m.total_cost, c.status ORDER BY c.contract_name ASC';
+
+    try {
+        const results = await pool.query(query, params);
+        res.json(results.rows);
+    } catch (error) {
+        console.error("Error occurred when fetching project performance report data...", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// ==================
 //  Vendors Routes
 // ==================
 
@@ -1199,22 +1253,6 @@ app.post('/api/contracts/work-orders/line-items/insert', async(req, res) => {
         client.release();
     }
 })
-
-// app.patch('/api/contracts/work-orders/line-items/:id', async (req, res) => {
-//     const { id } = req.params;
-//     const { qtyCompleted } = req.body;
-
-//     try {
-//         const result = await pool.query(
-//             `UPDATE line_items SET qty_completed = $1 WHERE id = $2 RETURNING *`,
-//             [qtyCompleted, id]
-//         );
-//         res.json(result.rows[0]);
-//     } catch (err) {
-//         console.log(err.message);
-//         res.status(500).json({ error: 'Failed to update line item' });
-//     }
-// });
 
 const PORT = process.env.PORT || 3300;
 

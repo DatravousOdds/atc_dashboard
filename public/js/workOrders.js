@@ -398,8 +398,10 @@ searchInput.addEventListener("input", () => {
                     appState.contractId = contract.id;
                     // trigger search
                     const workOrderKPIs = await getWorkOrdersKPIs(appState.contractId);
-                    
                     displayWorkOrdersKPIs(workOrderKPIs);
+                    // reload work order table
+                    appState.workOrdersTable.ajax.reload();
+                    appState.selectedWorkOrderId = undefined;
 
                 });
                 projectSearchDropdown.appendChild(li);

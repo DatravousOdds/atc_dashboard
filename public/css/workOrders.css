@@ -8,6 +8,9 @@
     --border-color: #5C7CFA;
     --color-border-primary: #00007E;
 
+    --primary-button-color: #5C7CFA;
+    --primary-button-hover: #BAC7FD;
+
     /* ============================================================
        BRAND DISCIPLINE PASS
        Previously three near-identical reds did decorative work
@@ -45,7 +48,7 @@
 
 .download-link {
     /* CHANGED: was red - a download action isn't a warning. */
-    color: var(--color-navy-prime);
+    color: var(--color-green-progress-bar);
 }
 
 .content-header {
@@ -91,21 +94,18 @@
 }
 
 .work-order-btn:hover {
-    /* CHANGED: was --color-red-hover-light. This is your primary
-       "create" action - giving it the brand navy hover instead of
-       red keeps red meaning "something's wrong" everywhere else. */
-    background: #26268F;
+    background: #8b9ff1;
 }
 
 .work-order-btn {
     /* CHANGED: was hardcoded #EF5350. Primary action button now uses
        the brand navy, not red. */
-    background-color: var(--color-navy-prime);
+    background-color: var(--primary-button-color);
     border: none;
 }
 
 .export-btn:hover {
-    background-color: #1F3A57;
+    background-color: var(--border-color);
 }
 
 /* Project Wrapper */
@@ -312,7 +312,7 @@
 }
 
 .wo-project-dropdown li:hover {
-    background-color: #5C7CFA;
+    background-color: var(--color-blue-text-light);
 }
 
 /* KPIs */
@@ -378,8 +378,8 @@
 
 .modal {
     height: 80vh;
-    background-color: #142034;
-    border: 1px solid #1F3A57;
+    background-color: var(--color-blue-card-background);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     /* padding: 1rem; */
     width: 100%;
@@ -403,13 +403,13 @@
     z-index: 9999;
     position: sticky;
     top: 0;
-    background-color: #142034;
+    background-color: var(--color-blue-card-background);
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: #7D90A8 1px solid;
+    border-bottom: var(--color-prime) 1px solid;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -422,7 +422,7 @@
     /* CHANGED: was #ED7470 (a hardcoded coral, not tied to any
        variable - one of the three "extra reds"). This is a label,
        not an alert, so it now carries the brand navy instead. */
-    color: var(--color-navy-prime);
+    color: var(--primary-button-color);
     display: flex;
     gap: 0.5rem;
     align-items: center;
@@ -436,10 +436,8 @@
 
 .step .step-number {
     padding: 5px 10px;
-    background-color: #302637;
-    /* CHANGED: was #F37672 (hardcoded coral) - a step counter isn't
-       an alert, switched to navy for consistency. */
-    color: var(--color-navy-prime);
+    background-color: var(--primary-button-color);
+    color: var(--color-white-secondary);
     border-radius: 8px;
     font-weight: 600;
 }
@@ -462,8 +460,8 @@
 .modal-header .close-button {
     font-size: 1.5rem;
     color: #7D90A8;
-    background-color: #11263D;
-    border: 1px solid #1F3A57;
+    background-color: var(--border-color);
+    border: 1px solid var(--color-blue-text-light);
     cursor: pointer;
     padding: 0.25rem 0.75rem;
     border-radius: 8px;
@@ -553,7 +551,7 @@
 #workOrderForm input[type="date"],
 #workOrderForm input[type="number"],
 #workOrderForm select {
-    background-color: #11263D;
+    background-color: var(--color-blue-card-background);
     border: 1px solid #1F3A57;
     border-radius: 6px;
     color: #eaf1ea;
@@ -584,20 +582,20 @@ input, select {
     flex-direction: column;
     gap: 0.5rem;
     flex: 1;
-    border: 1px solid #1F3A57;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
-    background-color: #11263D;
+    background-color: var(--navy-medium);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 
 .schedule-col-wrapper {
     width: 100%;
-    border: 1px solid #1F3A57;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding : 1rem;
-    background-color: #163049;
+    background-color: var(--color-blue-card-background);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -664,7 +662,6 @@ input, select {
 .cap {
     display: inline-flex;
     align-items: center;
-    font-size: ;
     gap: 0.4rem;
     text-transform: capitalize;
     padding: 0.5rem 0.75rem;
@@ -887,7 +884,7 @@ input, select {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: #11263D;
+    background-color: var(--border-color);
     border-left: 3px solid #5C7CFA;
     padding: 0.75rem 1rem;
     margin-bottom: 0.75rem;
@@ -917,8 +914,8 @@ input, select {
 }
 
 .import-work-orders {
-    background-color: #11263D;
-    border: 2px dotted #1F3A57;
+    background-color: var(--border-color);
+    border: 2px dotted var(--color-blue-light);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     color: #fff;
     padding: 0.75rem 1.5rem;
@@ -944,9 +941,9 @@ input, select {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    background-color: #11263D;
+    background-color: var(--color-prime);
     border: 1px solid #1F3A57;
-    color: #B6C5D9;
+    color: var(--color-prime);
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
     cursor: pointer;
@@ -957,6 +954,7 @@ input, select {
     background-color: rgba(32, 53, 87, 0.1);
     transform: scale(1.04);
 }
+
 
 .line-items-table {
     padding: 1rem 0;
@@ -1013,7 +1011,7 @@ input, select {
 
 /* ── Header row ── */
 #lineItemsTable thead tr {
-  background: #11263D;
+  background: var(--navy-medium);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -1031,7 +1029,7 @@ input, select {
 /* ── Body rows ── */
 #lineItemsTable tbody tr {
   border-bottom: 1px solid #203A57;
-  background-color: #0D1F33;
+  background-color: var(--color-blue-card-background);
 }
 
 #lineItemsTable tbody tr:last-child {
@@ -1053,7 +1051,7 @@ input, select {
   border-radius: 6px;
   padding: 5px 7px;
   font-size: 13px;
-  background: #0D1F33;
+  background: var(--color-blue-card-background);
   color: #6b7280;
   box-sizing: border-box;
   outline: none;
@@ -1108,8 +1106,8 @@ input, select {
   margin-top: 12px;
   margin-left: 1rem;
   font-size: 13px;
-  color: var(--color-navy-prime);
-  background: #11263D;
+  color: var(--border-color-light);
+  background: var(--color-prime);
   border: 1px solid #1F3A57;
   border-radius: 6px;
   padding: 6px 14px;
@@ -1156,8 +1154,8 @@ input, select {
     margin-bottom: 1rem;
     border: 1px solid #1F3A57;
     border-radius: 8px;
-    box-shadow: rgba(0, 0, 0, 0.1);
-    background-color: #11263D;
+    box-shadow: 0px 4px 2px rgba(0, 0, 0, 0.1);
+    background-color: var(--border-color);
 }
 
 
@@ -1366,8 +1364,8 @@ span.flatpickr-weekday {
     justify-content: space-between;
     margin: 0 auto;
     padding: 1.5rem;
-    background-color: #0D1F33;
-    border-top: 1px solid #a4a4a4;
+    background-color: var(--color-blue-card-background);
+    border-top: 1px solid var(--primary-button-color);
     position: sticky;
     bottom: 0;
 }
