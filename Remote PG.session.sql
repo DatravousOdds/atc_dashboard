@@ -303,32 +303,49 @@
 --         , 2) AS percentage_completed
 -- FROM work_orders;
 
-WITH last_week_completed_work_orders AS (
-    SELECT 
-        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
-        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
-        FROM work_orders
-        WHERE contract_id = 1 
-        AND start_date >= NOW() - INTERVAL '2 week'
-        AND start_date < NOW() - INTERVAL '1 week'  
-    )
+-- WITH last_week_completed_work_orders AS (
+--     SELECT 
+--         COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+--         COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress
+--         FROM work_orders
+--         WHERE contract_id = 1 
+--         AND start_date >= NOW() - INTERVAL '2 week'
+--         AND start_date < NOW() - INTERVAL '1 week'  
+--     )
 
-    SELECT 
-        COUNT(*) as total_work_orders,
-        COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
-        ROUND(
-            COALESCE(COUNT(*) FILTER(WHERE status = 'completed')::numeric
-            / NULLIF(COUNT(*),0),0)
-            * 100,2) as completion_percent,
+--     SELECT 
+--         COUNT(*) as total_work_orders,
+--         COUNT(*) FILTER(WHERE status = 'completed') as total_completed,
+--         ROUND(
+--             COALESCE(COUNT(*) FILTER(WHERE status = 'completed')::numeric
+--             / NULLIF(COUNT(*),0),0)
+--             * 100,2) as completion_percent,
 
-        COALESCE((COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
-        / NULLIF(MAX(lw.total_completed),0) * 100, 0) as wow_completed_percent,
+--         COALESCE((COUNT(*) FILTER(WHERE status = 'completed') - MAX(lw.total_completed))::numeric
+--         / NULLIF(MAX(lw.total_completed),0) * 100, 0) as wow_completed_percent,
 
-        COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
-        COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
-        COALESCE(COUNT(*) FILTER(WHERE status = 'in-progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
-        COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
-    FROM work_orders
-    CROSS JOIN last_week_completed_work_orders lw
-    WHERE contract_id = 1
-    AND start_date >= NOW() - INTERVAL '1 week';
+--         COUNT(*) FILTER(WHERE status = 'assigned') as total_assigned,
+--         COUNT(*) FILTER(WHERE status = 'in-progress') as total_in_progress,
+--         COALESCE(COUNT(*) FILTER(WHERE status = 'in-progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
+--         COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
+--     FROM work_orders
+--     CROSS JOIN last_week_completed_work_orders lw
+--     WHERE contract_id = 1
+--     AND start_date >= NOW() - INTERVAL '1 week';
+
+-- CREATE TABLE expenses (
+--     id SERIAL PRIMARY KEY,
+--     type VARCHAR(50),
+--     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+--     date DATE,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     note TEXT,
+--     employee_id INT NOT NULL,
+--     contract_id INT NOT NULL,
+--     vendor_id INT,
+--     CONSTRAINT emp_fkey FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+--     CONSTRAINT contract_fkey FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE RESTRICT,
+--     CONSTRAINT vendor_fkey FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE RESTRICT
+-- );
+
+SELECT * FROM expenses;

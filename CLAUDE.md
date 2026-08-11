@@ -72,6 +72,7 @@ No formal schema file exists in-repo — infer table shapes from queries in `ser
 `time_entries`, `materials`, `invoices`, `work_orders`, `line_items`
 
 Notable relationships seen in queries:
+
 - `time_entries` joins `employees` (hourly_rate) to compute labor cost
 - `invoices.payment_status` distinguishes paid vs. unpaid
 - `contracts.status` drives win/loss and completed-project metrics
