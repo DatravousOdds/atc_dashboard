@@ -141,7 +141,17 @@ lineItemsTableBody.addEventListener('change', (e) => {
     let isEditable = e.target.checked ? true : false;
 
     toggleRow(selectedRow, isEditable);
+
+})
+
+lineItemsTableBody.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.delete-line-item');
+    if (!deleteBtn) return;
+
+    deleteBtn.closest('tr').remove();
+    // TO DO: Add function that removes line item from database
     
+
 })
 
 workOrderLocationInput.addEventListener('input', () => {
@@ -864,6 +874,11 @@ function addAdditionalRow(data = {}) {
             <select name="equipment" class="line-item-select" disabled>
                 ${buildSelectOptions(EQUIPMENT_SELECT_OPTIONS, data.equipment || 'none')}
             </select>
+        </td>
+        <td>
+            <button type="button" class="delete-line-item" aria-label="Delete line item">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </td>
     `;
     lineItemTable.appendChild(tr);

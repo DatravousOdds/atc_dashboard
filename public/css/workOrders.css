@@ -1027,6 +1027,24 @@ input[name="quantity"].over {
     border-color: var(--color-red-primary);
 }
 
+.delete-line-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #7D90A8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.delete-line-item:hover {
+    color: var(--color-red-primary);
+    background-color: rgba(228, 32, 34, 0.1);
+}
+
 .line-item-table-header span {
   display: inline-flex;
   align-items: center;
