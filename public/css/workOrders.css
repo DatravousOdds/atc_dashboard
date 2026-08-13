@@ -943,7 +943,7 @@ input, select {
     font-size: 0.875rem;
     background-color: var(--color-prime);
     border: 1px solid #1F3A57;
-    color: var(--color-prime);
+    color: var(--color-white-secondary);
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
     cursor: pointer;
@@ -974,6 +974,57 @@ input, select {
     font-size: 13px;
     color: #7D90A8;
     margin: 0;
+}
+
+.item-select-cell {
+    position: relative;
+}
+
+.item-select[type="checkbox"] {
+    opacity: 0;
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.item-select-box {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #203A57;
+    border-radius: 4px;
+    background-color: #11263D;
+    margin-right: 8px;
+    pointer-events: none;
+}
+
+.item-select[type="checkbox"]:checked + .item-select-box {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.item-select[type="checkbox"]:checked + .item-select-box::after {
+    content: "";
+    display: block;
+    width: 4px;
+    height: 8px;
+    margin: 1px auto 0;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+#lineItemsTable tbody tr.row-selected {
+    background-color: rgba(37, 99, 235, 0.12);
+}
+
+input[name="quantity"].over {
+    color: var(--color-red-primary);
+    border-color: var(--color-red-primary);
 }
 
 .line-item-table-header span {
@@ -1408,7 +1459,7 @@ span.flatpickr-weekday {
        switched to navy. If this is actually a destructive action
        (e.g. "Delete Work Order"), revert to var(--color-red-primary)
        instead - that would be a correct use of red. */
-    background-color: var(--color-navy-prime);
+    background-color: var(--primary-button-color);
     color: #fff;
     border: 1px solid transparent;
     box-shadow: 0 2px 4px rgba(0, 0, 126, 0.15);

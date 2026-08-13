@@ -30,7 +30,8 @@ const draftWorkOrderBtn = document.getElementById('draftWorkOrderBtn');
 const workOrderForm = document.getElementById('workOrderForm');
 const importBtn = document.getElementById('importBtn');
 
-const defaultLineItemsHtml = document.querySelector('#lineItemsTable tbody').innerHTML;
+const lineItemsTableBody = document.querySelector('#lineItemsTable tbody');
+const defaultLineItemsHtml = lineItemsTableBody.innerHTML;
 const scheduleStartValue = document.getElementById('scheduleStartValue');
 const scheduleEndValue = document.getElementById('scheduleEndValue');
 const defaultScheduleStart = scheduleStartValue.textContent;
@@ -115,6 +116,34 @@ addLineItem.addEventListener('click', () => {
     addAdditionalRow();
 })
 
+lineItemsTableBody.addEventListener('input', (e) => {
+    console.log()
+    if (e.target.name === 'quantity') {
+        e.target.value = sanitizeQtyInput(e.target.value);
+        return;
+    }
+
+    if (!DAY_FIELDS.includes(e.target.name)) return;
+
+    e.target.value = sanitizeQtyInput(e.target.value);
+
+    const row = e.target.closest('tr');
+    if (row) updateRemainingQty(row);
+})
+
+// listen for checkbox click on the tr
+lineItemsTableBody.addEventListener('change', (e) => {
+    if (e.target.name !== 'item-select') return;
+
+    const selectedRow = e.target.closest('tr');
+    selectedRow.classList.toggle('row-selected', e.target.checked);
+
+    let isEditable = e.target.checked ? true : false;
+
+    toggleRow(selectedRow, isEditable);
+    
+})
+
 workOrderLocationInput.addEventListener('input', () => {
     const query = workOrderLocationInput.value.trim().toLowerCase();
 
@@ -131,6 +160,9 @@ workOrderLocationInput.addEventListener('input', () => {
         .slice(0, 8);
 
     renderLocationResults(matches);
+
+    
+
 })
 
 workOrderLocationInput.addEventListener('focus', () => {
@@ -146,7 +178,21 @@ workOrderLocationResults.addEventListener('click', (e) => {
     workOrderLocationInput.value = match.textContent;
     workOrderContractId.value = match.dataset.id;
     workOrderLocationResults.classList.remove('active');
+
+    // fetch lines items for the selected contract and populate the line items table
+    fetch(`/api/contracts/work-orders/${workOrderContractId.value}/line-items`)
+    .then(res => res.json())
+    .then(data => {
+        console.log("Fetched line items for contract:", data);
+        populateLineItemsTable(data);
+    })
+    .catch(err => {
+        console.error("Error fetching line items:", err);
+    });
+
+
 })
+
 
 let customerSearchTimeout;
 
@@ -211,6 +257,8 @@ const LINE_ITEM_COLUMNS = [
     { field: 'material', aliases: ['material'] },
     { field: 'equipment', aliases: ['equipment'] },
 ];
+
+const DAY_FIELDS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
 // Columns that appear in imported work order spreadsheets but have no matching
 // column in the line items table - skip them instead of treating them as unknown.
@@ -423,7 +471,7 @@ workOrderForm.addEventListener('submit', async (e) => {
     const formData = new FormData(e.target);
 
     const formProps = Object.fromEntries(formData);
-    console.log("data collected:", formProps);
+    // console.log("data collected:", formProps);
 
     const remainingProps = {
         startDate:  document.getElementById('scheduleStartValue').textContent,
@@ -432,20 +480,57 @@ workOrderForm.addEventListener('submit', async (e) => {
 
     const rows = Array.from(document.querySelectorAll('#lineItemsTable tbody tr'));
     const lineItems = handleDataExtraction(rows);
+    console.log("Extracted line items:", lineItems);
 
-    remainingProps.lineItems = lineItems;
-    console.log("Remaining props:", remainingProps);
+    const selectedLineItems = lineItems.filter(item => item['item-select'] === 'on');
+
+    // validate the form before proceeding
+    const formValidations = [
+        {
+            // scheduleStartValue/scheduleEndValue show a placeholder date by
+            // default, so checking their text is unreliable - the flatpickr
+            // instance's selectedDates is the real source of truth
+            test: () => !window.workOrderDateRangePicker || window.workOrderDateRangePicker.selectedDates.length < 2,
+            message: 'Please select a start and end date before submitting the work order.'
+        },
+        {
+            test: () => selectedLineItems.length === 0,
+            message: 'Please select at least one line item before submitting the work order.'
+        },
+        {
+            test: () => selectedLineItems.some(({ mon, tue, wed, thu, fri }) =>
+                [mon, tue, wed, thu, fri].every(day => parseInt(day) <= 0)
+            ),
+            message: 'Selected line items must have valid daily quantities.'
+        },
+        // the quantity field holds what's remaining after daily quantities are
+        // subtracted (see updateRemainingQty) - negative means over-allocated
+        {
+            test: () => selectedLineItems.some(({ quantity }) => parseInt(quantity) < 0),
+            message: 'Selected daily quantities cannot exceed a line item\'s total quantity.'
+        }
+    ];
+
+    const failedValidation = formValidations.find(({ test }) => test());
+    if (failedValidation) {
+        console.log("Validation failed:", failedValidation.message);
+        alert(failedValidation.message);
+        return;
+    }
+
+    remainingProps.lineItems = selectedLineItems;
+    // console.log("Remaining props:", remainingProps);
 
     const finalPayload = { ...formProps, ...remainingProps};
-    console.log("Final payload", finalPayload);
+    // console.log("Final payload", finalPayload);
 
-    const result = await createWorkOrder(finalPayload);
+    // const result = await createWorkOrder(finalPayload);
 
-    if (!result) return;
+    // if (!result) return;
 
-    console.log("Work order created:", result.workOrder);
-    modal.classList.remove('active');
-    resetWorkOrderForm();
+    // console.log("Work order created:", result.workOrder);
+    // modal.classList.remove('active');
+    // resetWorkOrderForm();
     appState.workOrdersTable.ajax.reload();
 });
 
@@ -556,6 +641,23 @@ async function createWorkOrder(payload) {
 
 /* === HELPER FUNCTIONS === */
 
+function toggleRow(row, status) {
+    // loop through tds
+    const td = row.querySelectorAll('td');
+    td.forEach(d => {
+        const attribute = d.querySelector('input[type="number"], input[type="text"] , select');
+        
+        if (attribute !== null) {
+            if (status === false) {
+                attribute.setAttribute('disabled', 'disabled'); 
+            } else {
+                attribute.removeAttribute('disabled');
+            }
+        } 
+    });
+    
+}
+
 function setActiveContractsCount(data) {
     
     activeCount.textContent = `${data.length} active projects`;
@@ -600,6 +702,8 @@ function renderLocationResults(matches) {
         li.textContent = contract.contract_name;
         li.dataset.id = contract.id;
         workOrderLocationResults.appendChild(li);
+        console.log("rendered contract:", contract.contract_name, "with id:", contract.id);
+
     });
 
     workOrderLocationResults.classList.add('active');
@@ -664,64 +768,100 @@ function displayWorkOrdersKPIs(data) {
 }
 
 function handleDataExtraction(rows) {
-   return rows.map(row => {
-        const cells = row.querySelectorAll('td');
-        const rowData = {};
-        cells.forEach(cell => {
-            
-            const attribute = cell.querySelector('input, select');
+   return rows
+        .filter(row => row.querySelector('input[type="checkbox"]')?.checked)
+        .map(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = {};
+            cells.forEach(cell => {
+                console.log("Processing cell:", cell);
 
-            const key = attribute.name;
-            const value = attribute.value;
+                const attribute = cell.querySelector('input, select');
+                // console.log("Found attribute:", attribute);
 
-            rowData[key] = value;
-            
+                const key = attribute.name;
+                let value = attribute.value.trim();
 
+                // day fields are blank when the user never types over the "0" placeholder
+                if (DAY_FIELDS.includes(key) && value === '') value = '0';
+
+                rowData[key] = value;
+            })
+
+            console.log("data map:", rowData)
+            return rowData;
         })
+}
 
-        console.log("data map:", rowData)
-        return rowData;
-    })
+function sanitizeQtyInput(rawValue) {
+    const parsed = parseInt(rawValue, 10);
+    return Number.isNaN(parsed) || parsed < 0 ? '' : String(parsed);
+}
+
+function updateRemainingQty(row) {
+    const quantityInput = row.querySelector('input[name="quantity"]');
+    if (!quantityInput) return;
+
+    // capture the originally entered total before we start overwriting the
+    // displayed value with what's remaining
+    if (quantityInput.dataset.total === undefined) {
+        quantityInput.dataset.total = quantityInput.value || '0';
+    }
+
+    const total = parseInt(quantityInput.dataset.total) || 0;
+    const used = DAY_FIELDS.reduce((sum, day) => {
+        const dayInput = row.querySelector(`input[name="${day}"]`);
+        return sum + (parseInt(dayInput?.value) || 0);
+    }, 0);
+
+    const remaining = total - used;
+
+    quantityInput.value = remaining;
+    quantityInput.classList.toggle('over', remaining < 0);
 }
 
 function addAdditionalRow(data = {}) {
     const lineItemTable = document.querySelector('#lineItemsTable tbody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td>
-            <input type="text" name="item" class="line-item-input" value="${escapeHtml(data.item)}">
+        <td class="item-select-cell">
+            <input type="checkbox" class="item-select line-item-input" name="item-select">
+            <span class="item-select-box"></span>
         </td>
         <td>
-            <input type="text" name="description" class="line-item-input" value="${escapeHtml(data.description)}">
+            <input type="text" name="item" class="line-item-input" value="${escapeHtml(data.item)}" disabled>
         </td>
         <td>
-            <select name="unit" class="line-item-select" id="unitSelect">
+            <input type="text" name="description" class="line-item-input" value="${escapeHtml(data.description)}" disabled>
+        </td>
+        <td>
+            <select name="unit" class="line-item-select" id="unitSelect" disabled>
                 ${buildSelectOptions(UNIT_SELECT_OPTIONS, data.unit || 'ea')}
             </select>
         </td>
         <td>
-            <input type="number" name="quantity" placeholder="0" class="line-item-input" value="${escapeHtml(data.quantity)}">
+            <input type="number" name="quantity" placeholder="0" class="line-item-input" value="${escapeHtml(parseInt(data.quantity))}" disabled>
         </td>
         <td>
-            <input type="number" name="mon" placeholder="0" class="line-item-input" value="${escapeHtml(data.mon)}">
+            <input type="number" name="mon" placeholder="0" class="line-item-input" value="${escapeHtml(data.mon)}" disabled>
         </td>
         <td>
-            <input type="number" name="tue" placeholder="0" class="line-item-input" value="${escapeHtml(data.tue)}">
+            <input type="number" name="tue" placeholder="0" class="line-item-input" value="${escapeHtml(data.tue)}" disabled>
         </td>
         <td>
-            <input type="number" name="wed" placeholder="0" class="line-item-input" value="${escapeHtml(data.wed)}">
+            <input type="number" name="wed" placeholder="0" class="line-item-input" value="${escapeHtml(data.wed)}" disabled>
         </td>
         <td>
-            <input type="number" name="thu" placeholder="0" class="line-item-input" value="${escapeHtml(data.thu)}">
+            <input type="number" name="thu" placeholder="0" class="line-item-input" value="${escapeHtml(data.thu)}" disabled>
         </td>
         <td>
-            <input type="number" name="fri" placeholder="0" class="line-item-input" value="${escapeHtml(data.fri)}">
+            <input type="number" name="fri" placeholder="0" class="line-item-input" value="${escapeHtml(data.fri)}" disabled>
         </td>
         <td>
-            <input type="text" name="material" placeholder="Material..." class="line-item-input" value="${escapeHtml(data.material)}">
+            <input type="text" name="material" placeholder="Material..." class="line-item-input" value="${escapeHtml(data.material)}" disabled>
         </td>
         <td>
-            <select name="equipment" class="line-item-select">
+            <select name="equipment" class="line-item-select" disabled>
                 ${buildSelectOptions(EQUIPMENT_SELECT_OPTIONS, data.equipment || 'none')}
             </select>
         </td>
