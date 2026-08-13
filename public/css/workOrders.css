@@ -843,6 +843,27 @@ input, select {
     color: #eaf1ea;
 }
 
+.delete-line-item-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #11263D;
+    color: #B6C5D9;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    width: 1.75rem;
+    height: 1.75rem;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.delete-line-item-btn:hover {
+    background-color: rgba(228, 32, 34, 0.1);
+    border-color: var(--color-red-primary);
+    color: var(--color-red-primary);
+}
+
 .qty-edit-input {
     background-color: #163049;
     border: 1px solid var(--color-border-primary);
@@ -1027,7 +1048,8 @@ input[name="quantity"].over {
     border-color: var(--color-red-primary);
 }
 
-.delete-line-item {
+.delete-line-item,
+.delete-wo-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1040,7 +1062,8 @@ input[name="quantity"].over {
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.delete-line-item:hover {
+.delete-line-item:hover,
+.delete-wo-btn:hover {
     color: var(--color-red-primary);
     background-color: rgba(228, 32, 34, 0.1);
 }

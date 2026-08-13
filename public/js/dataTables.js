@@ -411,6 +411,11 @@ const workOrdersTable = $('#workOrders-table').DataTable({
             },
 
             title: 'VALUE', defaultContent: '-'},
+        {data: null, title: '', orderable: false,
+            render: function(data) {
+                return `<button type="button" class="delete-wo-btn" data-id="${data.id}" aria-label="Delete work order"><i class="fa-solid fa-trash"></i></button>`;
+            },
+            defaultContent: ''},
     ],
     layout: {
         topStart: function() {
@@ -547,6 +552,26 @@ $('#workOrders-table tbody').on('click', 'tr', function() {
     selectWorkOrderRow(this);
 });
 
+$('#workOrders-table tbody').on('click', '.delete-wo-btn', function(e) {
+    e.stopPropagation();
+
+    const id = $(this).data('id');
+    if (!confirm('Permanently delete this work order? This cannot be undone.')) return;
+
+    fetch(`/api/contracts/work-orders/${id}`, { method: 'DELETE' })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP status error: ${res.status}`);
+            if (appState.selectedWorkOrderId === id) {
+                appState.selectedWorkOrderId = undefined;
+            }
+            workOrdersTable.ajax.reload();
+        })
+        .catch(err => {
+            console.error('Failed to delete work order:', err);
+            alert('Failed to delete work order. Please try again.');
+        });
+});
+
 appState.workOrdersTable = workOrdersTable;
 
 let lineItemsStatusFilter = 'all';
@@ -595,7 +620,10 @@ const lineItemsTable = $('#lineItems-table').DataTable({
             orderable: false,
             defaultContent: '',
             className: 'line-item-actions',
-            render: () => `<button type="button" class="edit-line-item-btn" title="Edit line item"><i class="fa-solid fa-pen"></i></button>`
+            render: () => `
+                <button type="button" class="edit-line-item-btn" title="Edit line item"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="delete-line-item-btn" title="Delete line item"><i class="fa-solid fa-trash"></i></button>
+            `
         }
     ],
     layout: {
@@ -744,4 +772,27 @@ $('#lineItems-table tbody').on('click', '.save-qty-btn', async function() {
     }
 
     lineItemsTable.ajax.reload();
+});
+
+$('#lineItems-table tbody').on('click', '.delete-line-item-btn', async function(e) {
+    e.stopPropagation();
+
+    const row = lineItemsTable.row($(this).closest('tr'));
+    const data = row.data();
+    if (!data) return;
+
+    if (!confirm('Permanently delete this line item? This cannot be undone.')) return;
+
+    try {
+        const res = await fetch(`/api/contracts/work-orders/line-items/${data.line_item_id}`, { method: 'DELETE' });
+
+        if (!res.ok) {
+            throw new Error(`HTTP status error: ${res.status}`);
+        }
+
+        lineItemsTable.ajax.reload();
+    } catch (err) {
+        console.error('Failed to delete line item:', err);
+        alert('Failed to delete line item. Please try again.');
+    }
 });

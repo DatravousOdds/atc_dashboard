@@ -1125,6 +1125,24 @@ app.patch('/api/contracts/work-orders/line-items/:id', async(req,res) => {
     }
 })
 
+// Permanently deletes a single line item.
+app.delete('/api/contracts/work-orders/line-items/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query('DELETE FROM line_items WHERE id = $1 RETURNING id', [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Line item not found' });
+        }
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to delete line item' });
+    }
+});
+
 // Gets work for a specific contract
 app.get('/api/contracts/work-orders/:id', async (req, res) => {
     const contractId  = req.params.id;
@@ -1159,6 +1177,33 @@ app.get('/api/contracts/work-orders/:id', async (req, res) => {
        res.json(results.rows)
     } catch (error) {
         console.log(error)
+    }
+});
+
+// Permanently deletes a work order and its line items. No schema file exists
+// to confirm line_items.work_order_id has ON DELETE CASCADE, so line items
+// are deleted explicitly in the same transaction rather than assumed.
+app.delete('/api/contracts/work-orders/:id', async (req, res) => {
+    const { id } = req.params;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM line_items WHERE work_order_id = $1', [id]);
+        const result = await client.query('DELETE FROM work_orders WHERE id = $1 RETURNING id', [id]);
+        await client.query('COMMIT');
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Work order not found' });
+        }
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to delete work order' });
+    } finally {
+        client.release();
     }
 });
 
