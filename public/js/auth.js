@@ -93,11 +93,32 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         const result = await request.json();
-        console.log("Here is the results:", result);
+        // console.log("Here is the results:", result);
     }
 
-    const newUser = await createNewUser('datravousodds@gmail', 'Travis010799@');
-    console.log("new user:", newUser)
+    async function getUser(data) {
+        try {
+           const response =  await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type':'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            const result = await response.json()
+
+            return result;
+
+        } catch (error) {
+            console.error('Login failed', error.message);
+        }
+    }
+
 
     function openLoginModal() {
         loginModalOverlay.classList.add('active');
@@ -201,14 +222,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         forgotPasswordNote.classList.toggle('active');
     });
 
-    loginForm.addEventListener('submit', function (e) {
+    loginForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
         if (!validateForm()) return;
 
-        console.log('Login form validated for user:', usernameField.value.trim());
-        isLoggedIn = true;
-        applyAuthState(isLoggedIn);
-        closeLoginModalFn();
+        const formData = new FormData(e.target).entries();
+        const data = Object.fromEntries(formData);
+        // const newUser = await createNewUser('datravousodds@gmail', 'Travis010799@');
+        // console.log("new user:", newUser)
+        const login = await getUser(data);
+        if (login.success) {
+            isLoggedIn = true;
+            applyAuthState(isLoggedIn);
+            closeLoginModalFn();
+        }
+        // console.log('Login form validated for user:', usernameField.value.trim());
+        
     });
 });

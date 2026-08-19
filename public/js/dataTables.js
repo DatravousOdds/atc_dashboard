@@ -149,7 +149,7 @@ const profitabilityTable = $('#profitability-table').DataTable({
             url: '/api/contracts/winLoss',
             type: 'GET',
             dataSrc: function(json) {
-                console.log('API Response contracts:', json);
+                // console.log('API Response contracts:', json);
 
                 if(Array.isArray(json)) {
                     return json;
@@ -161,7 +161,7 @@ const profitabilityTable = $('#profitability-table').DataTable({
             { data: 'project', title: 'Project', defaultContent: '-' },
             { data: 'total_hours', title: 'Total Hours', defaultContent: '0', render: function(data) {
                 if (!data) return '0';
-                console.log("Total Hours: ", data)
+                // console.log("Total Hours: ", data)
                 const totalWeeks = data / 60; // Hours per week
                 const months = totalWeeks / 4.33 // Average week in a month
                 return `${data} hrs (${Math.ceil(months)} months)`;
@@ -191,7 +191,7 @@ const profitabilityTable = $('#profitability-table').DataTable({
                 },
                 createdCell: (td, cellData) => {
                     if (cellData > 0) {
-                        console.log('Profit Margin Cell:',td, cellData);
+                        // console.log('Profit Margin Cell:',td, cellData);
                         $(td).addClass('is-positive');
                        
                     } else if (cellData < 0) {
@@ -247,7 +247,7 @@ const itemProfitabilityTable =  $('#item-profit-table').DataTable({
         url: '/api/contracts/item-profit',
         type: 'GET',
         dataSrc: function(json) {
-            console.log("API Response item profit:", json)
+            // console.log("API Response item profit:", json)
             if(Array.isArray(json)) {
                 return json;
             }
@@ -284,7 +284,7 @@ const projectStatusTable = $('#projects-status-table').DataTable({
         url: '/api/projects/status',
         type: 'GET',
         dataSrc: function(json) {
-            console.log("API Response project status:", json)
+            // console.log("API Response project status:", json)
             if(Array.isArray(json)) {
                 return json;
             }
@@ -311,7 +311,7 @@ const projectBudgetUtilizationTable = $('#project-budget-table').DataTable({
         url: '/api/projects/budget/utilization',
         type: 'GET',
         dataSrc: function(json) {
-            console.log("API Response project budget utilization:", json)
+            // console.log("API Response project budget utilization:", json)
             if(Array.isArray(json)) {
                 return json;
             }

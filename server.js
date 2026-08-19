@@ -60,15 +60,16 @@ app.post('/api/login/new-user', async (req, res) => {
 })
 
 app.post('/api/login', async (req, res) => {
-    const { email, pwd } = req.body;
+    const { username, password } = req.body;
+    console.log(username,password)
 
-    if (!email || !pwd) {
+    if (!username || !password) {
         return res.status(400).json({ message: "Email and password is required to login!"})
     }
 
     try {
         const userQuery = 'SELECT * FROM users WHERE useremail = $1'
-        const results = await pool.query(userQuery, [email]);
+        const results = await pool.query(userQuery, [username]);
 
         if (results.rows.length === 0) {
             return res.status(401).json({message: "Email or password is invalid!"})
@@ -76,13 +77,17 @@ app.post('/api/login', async (req, res) => {
 
         const passwordHash = results.rows[0].passwordhash;
 
-        const isMatch = await bcrypt.compare(pwd, passwordHash);
+        console.log("password hash:",passwordHash)
+
+        const isMatch = await bcrypt.compare(password, passwordHash);
+
+        console.log("Is there an match",isMatch)
 
         if(!isMatch) {
             return res.status(401).json({message: "Email or password is invalid!"})
         }
 
-        return res.status(200).json({ message: "User is authenticated" })
+        res.status(200).json({ success: true, message: "User is authenticated" })
 
     } catch (err) {
         console.log(err.message);
@@ -1038,7 +1043,7 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
 
     if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
 
-    let query = `SELECT c.contract_name, li.id, bi.description, bi.unit_of_measure,
+    let query = `SELECT c.contract_name, li.id, bi.id AS bid_item_id, bi.description, bi.unit_of_measure,
                     bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
                     ROUND(COALESCE((li.qty_completed * 100.0) / NULLIF(li.qty_assigned, 0), 0), 0) as progress
                 FROM bid_items bi
@@ -1228,18 +1233,16 @@ app.post('/api/contracts/work-orders', async(req, res) => {
         await client.query('BEGIN');
 
         const year = new Date().getFullYear();
-        const totalItems = Array.isArray(lineItems) ? lineItems.length : 0;
-        const value = workOrderValue ? parseFloat(workOrderValue) : null;
+        const totalItems = Array.isArray(lineItems) ? lineItems : [];
+        const value = workOrderValue ? parseFloat(workOrderValue) : 0;
         const assignee = workOrderProject ? parseInt(workOrderProject, 10) : null;
 
-        // nextval() is called once in the CTE so the same generated id can be reused
-        // both as the primary key and inside the formatted work_order_id string -
-        // calling nextval() twice in one INSERT would advance the sequence twice.
         const insertQuery = `
             WITH new_id AS (
                 SELECT nextval('work_orders_id_seq') AS id
             )
-            INSERT INTO work_orders (
+            INSERT INTO work_orders
+            (
                 id, contract_id, client_id, work_order_id, title, status,
                 total_items, start_date, due_date, value, assignee, items_completed, created_at, updated_at
             )
@@ -1255,12 +1258,21 @@ app.post('/api/contracts/work-orders', async(req, res) => {
             workOrderClientId,
             year,
             workOrderTitle,
-            totalItems,
+            totalItems.length,
             new Date(startDate),
             new Date(endDate),
             value,
             assignee,
         ]);
+
+        for (const item of totalItems) {
+            const { bidItemId, qtyAssigned } = item;
+            const insertQuery = `
+                INSERT INTO line_items (work_order_id, bid_item_id, qty_assigned, qty_completed)
+                VALUES ($1, $2, $3, $4)
+            `;
+            await client.query(insertQuery, [result.rows[0].id, bidItemId, qtyAssigned, 0]);
+        }
 
         await client.query('COMMIT');
         res.status(200).json({ success: true, workOrder: result.rows[0] });

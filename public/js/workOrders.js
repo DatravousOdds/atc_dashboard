@@ -31,7 +31,7 @@ const workOrderForm = document.getElementById('workOrderForm');
 const importBtn = document.getElementById('importBtn');
 
 const lineItemsTableBody = document.querySelector('#lineItemsTable tbody');
-const defaultLineItemsHtml = lineItemsTableBody.innerHTML;
+const DEFAULT_LINE_ITEM_ROWS = 2;
 const scheduleStartValue = document.getElementById('scheduleStartValue');
 const scheduleEndValue = document.getElementById('scheduleEndValue');
 const defaultScheduleStart = scheduleStartValue.textContent;
@@ -39,8 +39,51 @@ const defaultScheduleEnd = scheduleEndValue.textContent;
 
 const exportBtn = document.getElementById('exportBtn');
 
+const UNIT_SELECT_OPTIONS = [
+    { value: 'ea', label: 'EA' },
+    { value: 'lf', label: 'LF' },
+    { value: 'sy', label: 'SY' },
+    { value: 'sf', label: 'SF' },
+    { value: 'ton', label: 'TON' },
+    { value: 'cy', label: 'CY' },
+    { value: 'ls', label: 'LS' },
+    { value: 'mo', label: 'MO' },
+    { value: 'wk', label: 'WK' },
+];
+
+
+const IMPORT_HEADER_ROW_INDEX = 3;
+
+// Columns the line items table accepts. Spreadsheet headers are matched against
+// these aliases (case-insensitive) regardless of their order/position in the file.
+const LINE_ITEM_COLUMNS = [
+    { field: 'item', aliases: ['item'] },
+    { field: 'description', aliases: ['description'] },
+    { field: 'unit', aliases: ['unit'] },
+    { field: 'quantity', aliases: ['qty', 'quantity'] },
+    { field: 'mon', aliases: ['mon', 'monday'] },
+    { field: 'tue', aliases: ['tue', 'tuesday'] },
+    { field: 'wed', aliases: ['wed', 'wednesday'] },
+    { field: 'thu', aliases: ['thu', 'thru', 'thursday'] },
+    { field: 'fri', aliases: ['fri', 'friday'] },
+    { field: 'material', aliases: ['material'] },
+    { field: 'equipment', aliases: ['equipment'] },
+];
+
+const DAY_FIELDS = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+// Columns that appear in imported work order spreadsheets but have no matching
+// column in the line items table - skip them instead of treating them as unknown.
+const IMPORT_SKIPPED_COLUMNS = ['labor', 'unit price', 'extension'];
+
+const EQUIPMENT_SELECT_OPTIONS = [
+    { value: 'none', label: 'None' },
+    { value: 'excavator', label: 'Excavator' },
+    { value: 'bulldozer', label: 'Bulldozer' },
+];
 
 init();
+for (let i = 0; i < DEFAULT_LINE_ITEM_ROWS; i++) addAdditionalRow();
 
 
 newWorkOrderBtn.addEventListener('click', () => {
@@ -250,47 +293,7 @@ fileUpload.addEventListener('click', () => {
 
 let f;
 
-const IMPORT_HEADER_ROW_INDEX = 3;
 
-// Columns the line items table accepts. Spreadsheet headers are matched against
-// these aliases (case-insensitive) regardless of their order/position in the file.
-const LINE_ITEM_COLUMNS = [
-    { field: 'item', aliases: ['item'] },
-    { field: 'description', aliases: ['description'] },
-    { field: 'unit', aliases: ['unit'] },
-    { field: 'quantity', aliases: ['qty', 'quantity'] },
-    { field: 'mon', aliases: ['mon', 'monday'] },
-    { field: 'tue', aliases: ['tue', 'tuesday'] },
-    { field: 'wed', aliases: ['wed', 'wednesday'] },
-    { field: 'thu', aliases: ['thu', 'thru', 'thursday'] },
-    { field: 'fri', aliases: ['fri', 'friday'] },
-    { field: 'material', aliases: ['material'] },
-    { field: 'equipment', aliases: ['equipment'] },
-];
-
-const DAY_FIELDS = ['mon', 'tue', 'wed', 'thu', 'fri'];
-
-// Columns that appear in imported work order spreadsheets but have no matching
-// column in the line items table - skip them instead of treating them as unknown.
-const IMPORT_SKIPPED_COLUMNS = ['labor', 'unit price', 'extension'];
-
-const UNIT_SELECT_OPTIONS = [
-    { value: 'ea', label: 'EA' },
-    { value: 'lf', label: 'LF' },
-    { value: 'sy', label: 'SY' },
-    { value: 'sf', label: 'SF' },
-    { value: 'ton', label: 'TON' },
-    { value: 'cy', label: 'CY' },
-    { value: 'ls', label: 'LS' },
-    { value: 'mo', label: 'MO' },
-    { value: 'wk', label: 'WK' },
-];
-
-const EQUIPMENT_SELECT_OPTIONS = [
-    { value: 'none', label: 'None' },
-    { value: 'excavator', label: 'Excavator' },
-    { value: 'bulldozer', label: 'Bulldozer' },
-];
 
 
 realFileUpload.addEventListener('change', (e) => {
@@ -479,7 +482,6 @@ workOrderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
-
     const formProps = Object.fromEntries(formData);
     // console.log("data collected:", formProps);
 
@@ -490,7 +492,7 @@ workOrderForm.addEventListener('submit', async (e) => {
 
     const rows = Array.from(document.querySelectorAll('#lineItemsTable tbody tr'));
     const lineItems = handleDataExtraction(rows);
-    console.log("Extracted line items:", lineItems);
+    // console.log("Extracted line items:", lineItems);
 
     const selectedLineItems = lineItems.filter(item => item['item-select'] === 'on');
 
@@ -508,6 +510,12 @@ workOrderForm.addEventListener('submit', async (e) => {
             message: 'Please select at least one line item before submitting the work order.'
         },
         {
+            // manually-typed rows (via "+ Add Line Item") have no matching
+            // bid_items row, so there's nothing valid to store as bid_item_id yet
+            test: () => selectedLineItems.some(item => !item.bidItemId),
+            message: 'Manually added line items aren\'t supported yet - select from a project instead.'
+        },
+        {
             test: () => selectedLineItems.some(({ mon, tue, wed, thu, fri }) =>
                 [mon, tue, wed, thu, fri].every(day => parseInt(day) <= 0)
             ),
@@ -523,24 +531,27 @@ workOrderForm.addEventListener('submit', async (e) => {
 
     const failedValidation = formValidations.find(({ test }) => test());
     if (failedValidation) {
-        console.log("Validation failed:", failedValidation.message);
+        // console.log("Validation failed:", failedValidation.message);
         alert(failedValidation.message);
         return;
     }
-
-    remainingProps.lineItems = selectedLineItems;
-    // console.log("Remaining props:", remainingProps);
+    console.log("Selected line items",selectedLineItems)
+    remainingProps.lineItems = selectedLineItems.map(item => ({
+        bidItemId: parseInt(item.bidItemId),
+        qtyAssigned: DAY_FIELDS.reduce((sum, day) => sum + parseInt(item[day] || 0), 0),
+    }));
 
     const finalPayload = { ...formProps, ...remainingProps};
-    // console.log("Final payload", finalPayload);
+    console.log("Final payload", finalPayload);
 
-    // const result = await createWorkOrder(finalPayload);
+    const result = await createWorkOrder(finalPayload);
 
-    // if (!result) return;
+    if (!result) return;
 
-    // console.log("Work order created:", result.workOrder);
-    // modal.classList.remove('active');
-    // resetWorkOrderForm();
+    console.log("Work order created:", result.workOrder);
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    resetWorkOrderForm();
     appState.workOrdersTable.ajax.reload();
 });
 
@@ -561,7 +572,7 @@ async function getWorkOrdersKPIs(id) {
         }
 
         const data = await res.json();
-        console.log("KPI data: ", data);
+        // console.log("KPI data: ", data);
         return data;
 
     } catch (err) {
@@ -578,7 +589,7 @@ async function getContracts() {
         }
 
         const results = await response.json();
-        console.log("contract data:",results)
+        // console.log("contract data:",results)
         return results;
     } catch (err) {
         throw new Error(`Error fetching contracts... ${err.message}`)
@@ -668,8 +679,7 @@ function toggleRow(row, status) {
     
 }
 
-function setActiveContractsCount(data) {
-    
+function setActiveContractsCount(data) { 
     activeCount.textContent = `${data.length} active projects`;
 };
 
@@ -782,13 +792,12 @@ function handleDataExtraction(rows) {
         .filter(row => row.querySelector('input[type="checkbox"]')?.checked)
         .map(row => {
             const cells = row.querySelectorAll('td');
-            const rowData = {};
-            cells.forEach(cell => {
-                console.log("Processing cell:", cell);
+            const rowData = { bidItemId: row.dataset.bidItemId || null };
+            cells.forEach((cell, idx) => {
 
                 const attribute = cell.querySelector('input, select');
-                // console.log("Found attribute:", attribute);
-
+                // console.log(`Element: ${attribute} Index: ${idx}`);
+                if (idx === 12) return;
                 const key = attribute.name;
                 let value = attribute.value.trim();
 
@@ -833,6 +842,7 @@ function updateRemainingQty(row) {
 function addAdditionalRow(data = {}) {
     const lineItemTable = document.querySelector('#lineItemsTable tbody');
     const tr = document.createElement('tr');
+    if (data.bid_item_id) tr.dataset.bidItemId = data.bid_item_id;
     tr.innerHTML = `
         <td class="item-select-cell">
             <input type="checkbox" class="item-select line-item-input" name="item-select">
@@ -980,7 +990,8 @@ function resetImportControls() {
 function resetWorkOrderForm() {
     workOrderForm.reset();
 
-    document.querySelector('#lineItemsTable tbody').innerHTML = defaultLineItemsHtml;
+    lineItemsTableBody.innerHTML = '';
+    for (let i = 0; i < DEFAULT_LINE_ITEM_ROWS; i++) addAdditionalRow();
 
     document.querySelector('.selected-file-name').textContent = '';
     showImportMessage('', false);

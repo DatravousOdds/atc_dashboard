@@ -22,7 +22,7 @@ sidebar.addEventListener('click', (e) => {
        
        if (tab) {
             const targetContent = tab.getAttribute('data-tab');
-            console.log("Switching to tab:", targetContent);
+            // console.log("Switching to tab:", targetContent);
             document.querySelectorAll(".tab-content").forEach(content => {
                 if (content.id === targetContent) {
                     content.classList.add('active');
@@ -49,8 +49,16 @@ sidebarToggle.addEventListener('click', function() {
     document.querySelector('.sidebar').classList.toggle('active');
     document.querySelector('.content').classList.toggle('active');
 
-    
+
 })
+
+document.addEventListener('click', (e) => {
+    if (!sidebar.classList.contains('active')) return;
+    if (sidebar.contains(e.target) || sidebarToggle.contains(e.target)) return;
+
+    sidebar.classList.remove('active');
+    document.querySelector('.content').classList.remove('active');
+});
 
 
 
@@ -63,7 +71,7 @@ async function getTotalContractValue(year, month, contractId) {
     if( month && month !=='all') params.append('month', month);
     if( contractId && contractId !=='all') params.append('contractId', contractId);
 
-    console.log("Fetching total contract value with params:", params.toString());
+    // console.log("Fetching total contract value with params:", params.toString());
     
     try {
         const res = await fetch(`/api/contracts/value?${params.toString()}`);
@@ -100,10 +108,10 @@ async function getTotalRevenue() {
 
         if (contractDropdown.value === 'all') {
             const totalRevenue = data.reduce((sum, row) => sum + parseFloat(row.total_revenue), 0);
-            console.log("total revenue:", totalRevenue)
+            // console.log("total revenue:", totalRevenue)
             averageContractValue.textContent = formatCurrency(totalRevenue) || "$0.00";
         } else {
-            console.log("total revenue for this contract is: ", data[0].total_revenue)
+            // console.log("total revenue for this contract is: ", data[0].total_revenue)
             averageContractValue.textContent = formatCurrency(data[0].total_revenue) || "$0.00";
         }
         
@@ -128,7 +136,7 @@ function getItemProfitability(year, month, contractId) {
     fetch(`/api/contracts/item-profit?${params.toString()}`)
     .then(res => res.json())
     .then(data => { 
-        console.log("Item Profitability data:", data);
+        // console.log("Item Profitability data:", data);
         if (itemProfitabilityTable) {
             itemProfitabilityTable.clear();
             itemProfitabilityTable.rows.add(data);
@@ -192,7 +200,7 @@ function getWinRatePercentage(year, month, contractId) {
     fetch(`/api/contracts/win-rate?${params.toString()}`)
     .then(res => res.json())
     .then(data => {
-        console.log("Pending Invoices:", data);
+        // console.log("Pending Invoices:", data);
         winRate.textContent = data.pending_invoices ? `${formatCurrency(data.pending_invoices)}` : "$0.00";
     })
     .catch(error => {
@@ -426,7 +434,7 @@ function performSearch(query) {
     .then(res => res.json())
     .then(data => {
         displayResults(data);
-        console.log("Search: ",data)
+        // console.log("Search: ",data)
     })
     .catch(error => {
         console.error('Search error:', error)

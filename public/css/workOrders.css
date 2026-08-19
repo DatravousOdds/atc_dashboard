@@ -710,6 +710,18 @@ input, select {
     font-weight: 600;
 }
 
+#workOrders-table tbody tr {
+    cursor: pointer;
+}
+
+#workOrders-table tbody tr:hover {
+    background-color: rgba(92, 124, 250, 0.08);
+}
+
+#workOrders-table tbody tr.row-selected {
+    background-color: rgba(0, 0, 126, 0.12);
+}
+
 #workOrders-table tbody tr.row-selected td:first-child {
     /* CHANGED: was var(--color-red-primary). Row selection is a UI
        state, not a warning - navy indicator instead. */

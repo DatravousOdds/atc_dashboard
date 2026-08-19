@@ -40,7 +40,7 @@ function initRevenueVsExpenseChart() {
     const month = monthDropdown.value;
     const contractId = contractDropdown.value;
 
-    console.log("Filters - Year:", year, "Month:", month, "Contract ID:", contractId);
+    // console.log("Filters - Year:", year, "Month:", month, "Contract ID:", contractId);
     // fetch api
     fetch(`/api/contracts/finance/revenue-vs-expense?year=${year}&month=${month}&contractId=${contractId}`)
     .then(res => res.json())
@@ -212,11 +212,11 @@ function initRevenueByCustomer() {
     .then(res => res.json())
     .then(data => {
 
-        console.log("Revenue by Customer Data:", data);
+        // console.log("Revenue by Customer Data:", data);
         const customers = data.map(customer => customer.name);
         const revenue = data.map(customer => parseFloat(customer.total_revenue));
-        console.log("Customers:", customers);
-        console.log("Revenue:", revenue)
+        // console.log("Customers:", customers);
+        // console.log("Revenue:", revenue)
         if (revenueByCustomerChart) {
             revenueByCustomerChart.destroy();
         }
@@ -400,7 +400,7 @@ function initMostQuotedVendors() {
     // get the year
     const month = monthDropdown.value;
     const year = dateRangeDropdown.value;
-    console.log("Current year:",year)
+    // console.log("Current year:",year)
     // fetch data with params
     const request =  await fetch(`api/contracts/perMonth?month=${month}&year=${year}`);
 
@@ -409,7 +409,7 @@ function initMostQuotedVendors() {
     }
 
     const result = await request.json();
-    console.log("API results for CPM",result);
+    // console.log("API results for CPM",result);
     // update table 
     let contractCount = new Array(12).fill(0);
     // console.log(contractCount);
@@ -427,7 +427,7 @@ function initMostQuotedVendors() {
     contractsPerMonthChart.options.scales.y.max = Math.max(...contractCount) + 5;
     contractsPerMonthChart.update();
 
-    console.log("dataset", contractsPerMonthChart.data.datasets);
+    // console.log("dataset", contractsPerMonthChart.data.datasets);
     
     
 }
