@@ -72,13 +72,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     const passwordField = document.getElementById('loginPassword');
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
     const forgotPasswordNote = document.getElementById('forgotPasswordNote');
-
+    const session = await checkSession();
     if (!loginModalOverlay || !loginForm) return;
 
-    applyAuthState(isLoggedIn);
-
-    if (!isLoggedIn) {
-        openLoginModal();
+    if (!session) {
+        openLoginModal()
+    } else {
+        console.log("session:", session)
+        applyAuthState(true);
     }
 
     async function createNewUser(email, password) {
@@ -119,6 +120,25 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    async function checkSession() {
+        try {
+           const response = await fetch('/api/me');
+
+           if (response.status === 401) {
+                return null; // not logged in -
+           }
+
+           if (!response.ok) {
+            throw new Error(`Failed to fetch session: ${response.statusText}`);
+           }
+
+           const session = await response.json();
+           return session;
+
+        } catch (error) {
+            throw new Error(`Internal server error: ${error.message}`)
+        }
+    }
 
     function openLoginModal() {
         loginModalOverlay.classList.add('active');
@@ -181,12 +201,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     if (authTab) {
         authTab.addEventListener('click', function () {
-            if (isLoggedIn) {
-                isLoggedIn = false;
-                applyAuthState(isLoggedIn);
-            } else {
-                openLoginModal();
-            }
+            // disable dashboard, show login modal
+            
+            // remove user session
+
+
+
+
         });
     }
 
@@ -229,12 +250,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const formData = new FormData(e.target).entries();
         const data = Object.fromEntries(formData);
-        // const newUser = await createNewUser('datravousodds@gmail', 'Travis010799@');
-        // console.log("new user:", newUser)
+
         const login = await getUser(data);
         if (login.success) {
-            isLoggedIn = true;
-            applyAuthState(isLoggedIn);
+            applyAuthState(true);
             closeLoginModalFn();
         }
         // console.log('Login form validated for user:', usernameField.value.trim());

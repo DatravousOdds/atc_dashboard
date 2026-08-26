@@ -1,15 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const session = require('express-session');
+const pgStore = require('connect-pg-simple')(session);
 const { path } = require('d3');
 require('dotenv').config();
 const bcrypt = require('bcryptjs')
+
+const { sessionCheck } = require('./src/middleware/checkSession');
+
+
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
 
 
 // PostgreSQL Connection
@@ -23,6 +30,21 @@ const pool = new Pool({
     // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+app.use(session({
+    store: new pgStore({
+        pool: pool,
+        tableName: "session"
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    }
+}))
 
 // Test the connection
 pool.query('SELECT NOW()', (err,res) => {
@@ -59,6 +81,8 @@ app.post('/api/login/new-user', async (req, res) => {
     }
 })
 
+
+
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     console.log(username,password)
@@ -87,12 +111,31 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({message: "Email or password is invalid!"})
         }
 
-        res.status(200).json({ success: true, message: "User is authenticated" })
+        // regenerates session on login
+        req.session.regenerate((regenErr) => {
+            if (regenErr) {
+                console.log(regenErr.message);
+                return res.status(500).json({ message: "Failed to log in " + regenErr });
+            }
+
+            req.session.userId = results.rows[0].id;
+            req.session.userEmail = results.rows[0].useremail;
+
+            res.status(200).json({ success: true, message: "User is authenticated" });
+        });
 
     } catch (err) {
         console.log(err.message);
         res.status(500).json({message: "Failed to log in " + err})
     }
+})
+
+app.get('/api/me', sessionCheck, async (req, res) => {
+    res.status(200).json({ userId: req.session.userId, userEmail: req.session.userEmail});
+})
+
+app.post('/api/logout', async (req, res) => {
+    
 })
 
 // Routes
