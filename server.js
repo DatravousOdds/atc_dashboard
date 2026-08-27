@@ -81,8 +81,6 @@ app.post('/api/login/new-user', async (req, res) => {
     }
 })
 
-
-
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     console.log(username,password)
@@ -134,7 +132,23 @@ app.get('/api/me', sessionCheck, async (req, res) => {
     res.status(200).json({ userId: req.session.userId, userEmail: req.session.userEmail});
 })
 
-app.post('/api/logout', async (req, res) => {
+app.get('/api/logout', async (req, res) => {
+    // check if session exist
+    if (!req.session) {
+        return null;
+    }
+    // destroys session
+    req.session.destroy((err) => {
+        if (err) {
+            res.status(402).json({ success: false, message: err})  
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Session has been successfully deleted!"
+        })
+        
+    })
     
 })
 

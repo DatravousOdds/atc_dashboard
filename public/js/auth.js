@@ -140,6 +140,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    async function deleteSession() {
+        try {
+            const response = await fetch('/api/logout');
+
+            if (!response.ok) {
+                throw new Error(`Https request error: ${response.statusText}`)
+            }
+
+            return await response.json();
+            
+        } catch (error) {
+            console.error("Internal server error:" + error)
+        }
+    }
+
     function openLoginModal() {
         loginModalOverlay.classList.add('active');
         document.body.style.overflow = "hidden";
@@ -200,14 +215,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     if (authTab) {
-        authTab.addEventListener('click', function () {
-            // disable dashboard, show login modal
-            
+        authTab.addEventListener('click', async function () {
+            // disable dashboard
+            applyAuthState(false);
             // remove user session
+            const deletedSession = await deleteSession();
+            if (!deletedSession.success) {
+                return deleteSession.message
+            } 
 
-
-
-
+            openLoginModal(); 
         });
     }
 
