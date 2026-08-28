@@ -1368,6 +1368,64 @@ app.post('/api/contracts/work-orders/line-items/insert', async(req, res) => {
     }
 })
 
+// Bond capacity used by active prime contracts, broken out per project. Bonds
+// are carried by the prime, not subcontractors, so subcontractor contracts
+// don't count against capacity. total_bid_amount is used as a proxy for bond
+// usage per project — there's no separate per-project bond amount tracked in
+// the schema.
+app.get('/api/contracts/bond-capacity', async (req, res) => {
+    try {
+        const capacityResult = await pool.query('SELECT total_capacity FROM bond_capacity ORDER BY id DESC LIMIT 1');
+        const totalCapacity = capacityResult.rows.length ? parseFloat(capacityResult.rows[0].total_capacity) : 0;
+
+        const usageResult = await pool.query(`
+            SELECT contract_name AS project, total_bid_amount AS amount
+            FROM contracts
+            WHERE status = 'active' AND type = 'Prime'
+            ORDER BY total_bid_amount DESC
+        `);
+
+        const byProject = usageResult.rows.map(row => ({
+            project: row.project,
+            amount: parseFloat(row.amount) || 0
+        }));
+        const usedCapacity = byProject.reduce((sum, p) => sum + p.amount, 0);
+
+        res.json({
+            totalCapacity,
+            usedCapacity,
+            remainingCapacity: totalCapacity - usedCapacity,
+            byProject
+        });
+    } catch (error) {
+        console.log(error.message)
+    }
+})
+
+app.get('/api/settings/bond-capacity', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT total_capacity FROM bond_capacity ORDER BY id DESC LIMIT 1');
+        res.json({ totalCapacity: result.rows.length ? parseFloat(result.rows[0].total_capacity) : 0 });
+    } catch (error) {
+        console.log(error.message)
+    }
+})
+
+app.put('/api/settings/bond-capacity', async (req, res) => {
+    const { totalCapacity } = req.body;
+    try {
+        const existing = await pool.query('SELECT id FROM bond_capacity ORDER BY id DESC LIMIT 1');
+        if (existing.rows.length) {
+            await pool.query('UPDATE bond_capacity SET total_capacity = $1, updated_at = NOW() WHERE id = $2', [totalCapacity, existing.rows[0].id]);
+        } else {
+            await pool.query('INSERT INTO bond_capacity (total_capacity) VALUES ($1)', [totalCapacity]);
+        }
+        res.json({ totalCapacity: parseFloat(totalCapacity) });
+    } catch (error) {
+        console.log(error.message)
+    }
+})
+
 const PORT = process.env.PORT || 3300;
 
 app.listen(PORT, () => {

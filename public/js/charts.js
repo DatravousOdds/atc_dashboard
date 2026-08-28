@@ -16,15 +16,41 @@ let chartsInitialized = false;
 function initCharts() {
     if (chartsInitialized) return;
     chartsInitialized = true;
-    
+
     initRevenueVsExpenseChart();
     initContractsPerMonth();
     initAverageContractValue();
-    initMostQuotedVendors();
     initRevenueByCustomer();
     initProjectPerformance();
-    
+    initBondCapacityChart();
+
 }
+
+// Draws the "X% used" headline in the doughnut's cutout. Chart.js has no
+// built-in center-text support, so this is a small custom plugin scoped to
+// just the bond capacity chart via canvas id.
+const bondCapacityCenterTextPlugin = {
+    id: 'bondCapacityCenterText',
+    afterDraw(chart) {
+        if (chart.canvas.id !== 'bondCapacityChart' || !chart.$centerLabel) return;
+        const { ctx, chartArea } = chart;
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '700 26px system-ui, -apple-system, "Segoe UI", sans-serif';
+        ctx.fillStyle = chart.$centerLabel.color;
+        ctx.fillText(chart.$centerLabel.value, centerX, centerY - 10);
+
+        ctx.font = '500 11px system-ui, -apple-system, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#7c8a99';
+        ctx.fillText(chart.$centerLabel.sublabel, centerX, centerY + 14);
+        ctx.restore();
+    }
+};
+Chart.register(bondCapacityCenterTextPlugin);
 
 // ====== TO DO =================
 //  UPDATE LABELS & VALUE 
@@ -296,103 +322,121 @@ function initAverageContractValue() {
 
 }
 
-let laborVsProfitChart;
-function initMostQuotedVendors() {
-    const ctx = document.getElementById("laborVsProfitChart");
-    // Get filters
-    const contractId = contractDropdown.value;
-    // api fetch
-    fetch(`api/contracts/labor-vs-profit?contractId=${contractId}`)
-    .then(res => res.json())
-    .then(data => {
-        const laborCost = data.map(item => parseFloat(item.labor_cost));
-        const profit = data.map(item => parseFloat(item.profit));
-        const labels = data.map(item => item.project);
-        
-        // draw chart
 
-        if (laborVsProfitChart) {
-            laborVsProfitChart.destroy();
-        }
+// Bond capacity: company-wide bonding ceiling vs. how much of it is tied up in
+// active contracts right now, broken out per project. total_bid_amount stands
+// in for each project's bond usage since there's no separate bond amount
+// tracked per contract.
+let bondCapacityChart;
+const BOND_PROJECT_COLORS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'];
+const BOND_OTHER_COLOR = '#9085e9';
+const BOND_AVAILABLE_COLOR = '#55687E';
+const BOND_OVER_COLOR = '#E42022';
+const BOND_TOP_N = 5;
 
-        laborVsProfitChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: 
-                [
-                    {
-                    label: 'Labor Cost',
-                    data: laborCost,
-                    borderWidth:2,
-                    borderColor: '#DC143C',
-                    backgroundColor: '#e0424294',
-                    borderRadius:8,
-                    hoverBackgroundColor: '#DC143C',
-                    yAxisID: 'yMoney'
-                    },
+function initBondCapacityChart() {
+    const ctx = document.getElementById('bondCapacityChart');
+    if (!ctx) return;
 
-                    {
-                    label: 'Profit',
-                    data: profit,
-                    borderWidth:2,
-                    borderColor: '#ffffff55',
-                    backgroundColor: '#ffffff22',
-                    borderRadius:8,
-                    tension: 0.1,
-                    hoverBackgroundColor: '#ffffff99',
-                    yAxisID: 'yMoney' 
-                    },
+    fetch('api/contracts/bond-capacity')
+        .then(res => res.json())
+        .then(data => {
+            const totalCapacity = parseFloat(data.totalCapacity) || 0;
+            const usedCapacity = parseFloat(data.usedCapacity) || 0;
+            const percentUsed = totalCapacity > 0 ? (usedCapacity / totalCapacity) * 100 : 0;
 
-                ]
-            },
+            const byProject = (data.byProject || []).filter(p => p.amount > 0);
+            const topProjects = byProject.slice(0, BOND_TOP_N);
+            const otherAmount = byProject.slice(BOND_TOP_N).reduce((sum, p) => sum + p.amount, 0);
 
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#7c8a99'
-                        },
-                        grid: {
-                            color: '#334155'
-                        }
-                    },
-                    yMoney: {
-                        type: 'linear',
-                        position: 'left',
-                        beginAtZero: true,
-                        ticks: { 
-                            callback: function(value) {
-                                return new Intl.NumberFormat('en-US', {
-                                    style: 'currency',
-                                    currency: 'USD',
-                                    maximumSignificantDigits: 3
-                                }).format(value)
-                            },        
-                            color: '#55687E'
-                        },
-                        grid: {
-                            color: '#334155'
-                        }
-                    },
+            const labels = topProjects.map(p => p.project);
+            const values = topProjects.map(p => p.amount);
+            const colors = topProjects.map((_, i) => BOND_PROJECT_COLORS[i]);
+
+            if (otherAmount > 0) {
+                labels.push('Other Active Projects');
+                values.push(otherAmount);
+                colors.push(BOND_OTHER_COLOR);
+            }
+
+            let centerLabel, centerSub, centerColor;
+
+            if (totalCapacity <= 0) {
+                labels.push('No Capacity Set');
+                values.push(1);
+                colors.push(BOND_AVAILABLE_COLOR);
+                centerLabel = '—';
+                centerSub = 'Set capacity in Settings';
+                centerColor = '#7c8a99';
+            } else if (usedCapacity >= totalCapacity) {
+                centerLabel = `${Math.round(percentUsed)}%`;
+                centerSub = 'Over Bond Capacity';
+                centerColor = BOND_OVER_COLOR;
+            } else {
+                labels.push('Available');
+                values.push(totalCapacity - usedCapacity);
+                colors.push(BOND_AVAILABLE_COLOR);
+                centerLabel = `${Math.round(percentUsed)}%`;
+                centerSub = 'Bond Capacity Used';
+                centerColor = '#E8E8E8';
+            }
+
+            if (bondCapacityChart) {
+                bondCapacityChart.destroy();
+            }
+
+            bondCapacityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: '#11263D',
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
                 },
-
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#E8E8E8'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.8,
+                    cutout: '72%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#E8E8E8',
+                                boxWidth: 12,
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const formatted = new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                        maximumFractionDigits: 0
+                                    }).format(context.parsed);
+                                    return `${context.label}: ${formatted}`;
+                                }
+                            }
                         }
-                    },
-                    tooltip: {
-                        
                     }
                 }
-            }
-        }) 
-    })
-    
+            });
+
+            bondCapacityChart.$centerLabel = {
+                value: centerLabel,
+                sublabel: centerSub,
+                color: centerColor
+            };
+            bondCapacityChart.update();
+        })
+        .catch(err => {
+            console.log('Fetching Error:', err);
+        });
 }
 
 
@@ -526,9 +570,7 @@ monthDropdown.addEventListener('change', () => {
 })
 
 contractDropdown.addEventListener('change', () => {
-    initMostQuotedVendors();
     initRevenueByCustomer();
     initRevenueVsExpenseChart();
-    // initLaborVsProfit();
 })
 

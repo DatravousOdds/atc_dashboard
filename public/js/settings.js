@@ -92,4 +92,64 @@ document.addEventListener('DOMContentLoaded', function () {
         applyAuthState(isLoggedIn);
         showSaveNote('Changes saved.', false);
     });
+
+    // ============================================
+    // BOND CAPACITY — real backend value, shared across all users
+    // ============================================
+    const bondCapacityInput = document.getElementById('bondCapacityInput');
+    const bondCapacityError = document.getElementById('bondCapacityError');
+    const bondCapacitySaveBtn = document.getElementById('bondCapacitySaveBtn');
+    const bondCapacitySaveNote = document.getElementById('bondCapacitySaveNote');
+
+    if (bondCapacityInput && bondCapacitySaveBtn) {
+        function showBondCapacityNote(message, isError) {
+            bondCapacitySaveNote.textContent = message;
+            bondCapacitySaveNote.classList.toggle('error', !!isError);
+            bondCapacitySaveNote.classList.add('active');
+        }
+
+        function clearBondCapacityError() {
+            bondCapacityInput.closest('.login-form-flex').classList.remove('has-error');
+            bondCapacityError.textContent = '';
+        }
+
+        fetch('/api/settings/bond-capacity')
+            .then(res => res.json())
+            .then(data => {
+                bondCapacityInput.value = data.totalCapacity || '';
+            })
+            .catch(err => console.log('Fetching Error:', err));
+
+        bondCapacityInput.addEventListener('input', clearBondCapacityError);
+
+        bondCapacitySaveBtn.addEventListener('click', function () {
+            const totalCapacity = parseFloat(bondCapacityInput.value);
+
+            clearBondCapacityError();
+            bondCapacitySaveNote.classList.remove('active');
+
+            if (isNaN(totalCapacity) || totalCapacity < 0) {
+                bondCapacityInput.closest('.login-form-flex').classList.add('has-error');
+                bondCapacityError.textContent = 'Enter a valid bond capacity.';
+                return;
+            }
+
+            fetch('/api/settings/bond-capacity', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ totalCapacity })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    showBondCapacityNote('Changes saved.', false);
+                    if (typeof initBondCapacityChart === 'function') {
+                        initBondCapacityChart();
+                    }
+                })
+                .catch(err => {
+                    console.log('Fetching Error:', err);
+                    showBondCapacityNote('Failed to save. Please try again.', true);
+                });
+        });
+    }
 });

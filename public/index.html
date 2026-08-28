@@ -232,9 +232,9 @@
                         </div>
 
                         <div id="chart5" class="chart-container">
-                            <h3>Labor vs. Profit</h3>
-                            <canvas id="laborVsProfitChart"></canvas>
-                        </div> 
+                            <h3>Bond Capacity Usage</h3>
+                            <canvas id="bondCapacityChart"></canvas>
+                        </div>
                     </div>
                     
 
@@ -786,6 +786,25 @@
                             <p class="settings-save-note" id="settingsSaveNote"></p>
                         </div>
                     </div>
+                </section>
+                <section class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <h3>Bond Capacity</h3>
+                    </div>
+                    <div class="login-form-flex">
+                        <label for="bondCapacityInput">Total Bond Capacity</label>
+                        <div class="login-input-wrapper">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                            <input type="number" id="bondCapacityInput" placeholder="Enter total bond capacity" min="0" step="1000">
+                        </div>
+                        <span class="field-error" id="bondCapacityError"></span>
+                    </div>
+                    <button type="button" class="login-submit-btn settings-save-btn" id="bondCapacitySaveBtn">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Save Changes
+                    </button>
+                    <p class="settings-save-note" id="bondCapacitySaveNote"></p>
                 </section>
             </div>
         </div>
