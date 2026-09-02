@@ -1100,20 +1100,15 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
 
     if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
 
-    let query = `SELECT c.contract_name, li.id, bi.id AS bid_item_id, bi.description, bi.unit_of_measure,
-                    bi.quantity, li.qty_completed, (li.qty_assigned - li.qty_completed) as remaining_qty,
-                    ROUND(COALESCE((li.qty_completed * 100.0) / NULLIF(li.qty_assigned, 0), 0), 0) as progress
+    let query = `SELECT bi.id AS bid_item_id, bi.description, bi.unit_of_measure, bi.quantity
                 FROM bid_items bi
-                JOIN line_items li ON bi.id = li.bid_item_id
-                JOIN contracts c ON bi.contract_id = c.id 
                 WHERE 1=1
-
     `;
 
     const params = [];
 
     if (contractId !== "all" && contractId) {
-        query += ` AND c.id = $` + (params.length + 1)
+        query += ` AND bi.contract_id = $` + (params.length + 1)
         params.push(contractId);
     }
 
