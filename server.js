@@ -5,7 +5,11 @@ const session = require('express-session');
 const pgStore = require('connect-pg-simple')(session);
 const { path } = require('d3');
 require('dotenv').config();
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_KEY);
+
+
 
 const { sessionCheck } = require('./src/middleware/checkSession');
 
@@ -1264,6 +1268,34 @@ app.delete('/api/contracts/work-orders/:id', async (req, res) => {
     }
 });
 
+ async function sendWorkOrderEmail(data) { 
+    const { employeeEmail, workOrderId, workOrderTitle } = data;
+    if ( !employeeEmail || !workOrderId || !workOrderTitle) {
+        console.log("Missing required data for sending work order email:", data);
+        return;
+    }
+
+    try {
+         // Generate work order PDF
+        const pdfBuffer = generateWorkOrderPDF(data);
+
+        // create email
+        await resend.emails.send({
+                from: 'ATC Dashboard <admin@americantraffictx.com>',
+                to: employeeEmail,
+                subject: `New Work Order Assigned: ${workOrderTitle}`,
+                text: `You have been assigned a new work order (ID: ${workOrderId}). Please review the attached PDF for details.`,
+                attachments: [
+                    { filename: `WorkOrder-${workOrderId}.pdf`, content: pdfBuffer, contentType: 'application/pdf'}
+                ]
+            });
+
+    } catch (error) {
+        console.error("Error sending work order email:", error);
+    }
+
+}
+
 // Creates the work order itself. Does not touch line_items - bid_item_id isn't
 // collected by the modal yet, so line items are inserted separately via
 // /api/contracts/work-orders/line-items/insert once that gap is closed.
@@ -1327,6 +1359,10 @@ app.post('/api/contracts/work-orders', async(req, res) => {
         }
 
         await client.query('COMMIT');
+
+        // Send email notification to the assigned employee
+        
+
         res.status(200).json({ success: true, workOrder: result.rows[0] });
     } catch (error) {
         await client.query('ROLLBACK');
