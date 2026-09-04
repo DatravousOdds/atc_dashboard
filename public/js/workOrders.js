@@ -539,6 +539,13 @@ workOrderForm.addEventListener('submit', async (e) => {
     remainingProps.lineItems = selectedLineItems.map(item => ({
         bidItemId: parseInt(item.bidItemId),
         qtyAssigned: DAY_FIELDS.reduce((sum, day) => sum + parseInt(item[day] || 0), 0),
+        mon: parseInt(item.mon) || 0,
+        tue: parseInt(item.tue) || 0,
+        wed: parseInt(item.wed) || 0,
+        thu: parseInt(item.thu) || 0,
+        fri: parseInt(item.fri) || 0,
+        material: item.material || null,
+        equipment: item.equipment || null,
     }));
 
     const finalPayload = { ...formProps, ...remainingProps};

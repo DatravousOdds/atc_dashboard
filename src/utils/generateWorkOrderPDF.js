@@ -1,54 +1,61 @@
-const { PDFDocument } = require('pdfkit');
-
+const PDFDocument = require('pdfkit');
 
 async function generateWorkOrderPDF(workOrderData) {
     console.log("Generating PDF for work order:", workOrderData);
-    const { customerName, projectName, workOrderId, startDate, endDate, lineItems } = workOrderData;
-    await new Promise((resolve, reject) => {
-    const doc = new PDFDocument({margin: 50});
-    const chunks = [];
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', err => reject(err));
+    const { customerName, projectName, workOrderId, startDate, endDate, lineItems, bidItems } = workOrderData;
 
-    // Title
-    doc.fontSize(20).text(`American Traffic Construction LLC - Work Assignment: ${workOrderId}`, { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(16).text(`Customer: ${customerName}`, { align: 'left' });
-    doc.moveDown(0.5);
-    doc.fontSize(16).text(`Project: ${projectName}`, { align: 'left' });
-    doc.moveDown(0.5);
-    doc.fontSize(16).text(`Start Date: ${startDate}`, { align: 'left' });
-    doc.moveDown(0.5);
-    doc.fontSize(16).text(`End Date: ${endDate}`, { align: 'left' });
-    doc.moveDown(1);
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ margin: 50 });
+        const chunks = [];
+        doc.on('data', chunk => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', err => reject(err));
 
-    // Line Items Table Header
-    doc.fontSize(14).text('Line Items:', { underline: true });
-    doc.moveDown(0.5);
+        // Title
+        doc.fontSize(20).text(`American Traffic Construction LLC - Work Assignment: ${workOrderId}`, { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text(`Customer: ${customerName ?? 'N/A'}`, { align: 'left' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text(`Project: ${projectName ?? 'N/A'}`, { align: 'left' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text(`Start Date: ${startDate}`, { align: 'left' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text(`End Date: ${endDate}`, { align: 'left' });
+        doc.moveDown(1);
 
+        // Line Items Table Header
+        doc.fontSize(8).text('Line Items:', { underline: true });
+        doc.moveDown(0.5);
 
-    // Table Headers
-    doc.table({
-        data: [
-            ['Item', 'Description', 'Unit', 'Qty', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Material', 'Equipment'],
-            lineItems.map(item => [
-                item.item,
-                item.description,
-                item.unit,
-                item.quantity,
-                item.mon ? 'X' : '',
-                item.tue ? 'X' : '',
-                item.wed ? 'X' : '',
-                item.thu ? 'X' : '',
-                item.fri ? 'X' : '',
-                item.material ? 'X' : '',
-                item.equipment ? 'X' : ''
-            ])
-        ]
-    });
+        const bidItemMap = new Map(bidItems.map(bi => [bi.id, bi]));
 
-    doc.end();
+        // Table
+        doc.table({
+            columnStyles: ["6%", "40%", "8%", "6%", "6%", "6%", "6%", "6%", "6%", "*", "*"],
+            //              Item  Desc  Unit  Qty  Mon   Tue   Wed   Thu   Fri  Material Equipment
+            data: [
+                ['Item', 'Description', 'Unit', 'Qty', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Material', 'Equipment'],
+                ...lineItems.map(item => {
+                    const bi = bidItemMap.get(item.bidItemId) || {};
+                    return [
+                        bi.bid_item_no ?? '',
+                        bi.description ?? '',
+                        bi.unit_of_measure ?? '',
+                        item.qtyAssigned ?? '',
+                        item.mon || '',
+                        item.tue || '',
+                        item.wed || '',
+                        item.thu || '',
+                        item.fri || '',
+                        item.material || '',
+                        item.equipment || '',
+                    ];
+                }),
+            ],
+        });
 
+        doc.end();
     });
 }
+
+module.exports = generateWorkOrderPDF;

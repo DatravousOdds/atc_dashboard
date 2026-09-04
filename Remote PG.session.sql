@@ -1,3 +1,4 @@
+-- Active: 1784319030555@@192.168.1.80@5432@atc_contracts
 -- This query oversee project performance by the number of completed projects
 -- WITH last_time_entry AS (
 --     SELECT 
@@ -348,4 +349,9 @@
 --     CONSTRAINT vendor_fkey FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE RESTRICT
 -- );
 
-SELECT * FROM expenses;
+
+SELECT * FROM employees WHERE 1=1 AND id = 1;
+
+SELEC
+
+SELECT description, unit_of_measure, quantity, 

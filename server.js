@@ -9,6 +9,8 @@ const bcrypt = require('bcryptjs');
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_KEY);
 
+const generateWorkOrderPDF = require('./src/utils/generateWorkOrderPDF');
+
 
 
 const { sessionCheck } = require('./src/middleware/checkSession');
@@ -68,7 +70,7 @@ app.post('/api/login/new-user', async (req, res) => {
 
     try {
         const passwordHash = await bcrypt.hash(pwd, 12);
-        console.log("password hash: ", passwordHash);
+        // console.log("password hash: ", passwordHash);
 
         const newUserQuery = 'INSERT INTO users(useremail, passwordhash) VALUES ($1, $2) RETURNING id, useremail'
         const results = await pool.query(newUserQuery, [email, passwordHash]);
@@ -87,7 +89,7 @@ app.post('/api/login/new-user', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log(username,password)
+    // console.log(username,password)
 
     if (!username || !password) {
         return res.status(400).json({ message: "Email and password is required to login!"})
@@ -103,11 +105,11 @@ app.post('/api/login', async (req, res) => {
 
         const passwordHash = results.rows[0].passwordhash;
 
-        console.log("password hash:",passwordHash)
+        // console.log("password hash:",passwordHash)
 
         const isMatch = await bcrypt.compare(password, passwordHash);
 
-        console.log("Is there an match",isMatch)
+        // console.log("Is there an match",isMatch)
 
         if(!isMatch) {
             return res.status(401).json({message: "Email or password is invalid!"})
@@ -1100,7 +1102,7 @@ app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
 // Gets line items for a specific work order
 app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
     const contractId = req.params.id;
-    console.log("Select lines for contract: ", contractId);
+    // console.log("Select lines for contract: ", contractId);
 
     if(!contractId) return res.status(404).json({ success: false, message: `contract ${contractId}, not found! `});
 
@@ -1116,11 +1118,11 @@ app.get('/api/contracts/work-orders/:id/line-items', async (req, res) => {
         params.push(contractId);
     }
 
-    console.log(query)
+    // console.log(query)
 
     try {
         const result =  await pool.query(query, params);
-        console.log("line items returned: ",result.rows)
+        // console.log("line items returned: ",result.rows)
         res.json(result.rows)
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message })
@@ -1268,27 +1270,29 @@ app.delete('/api/contracts/work-orders/:id', async (req, res) => {
     }
 });
 
- async function sendWorkOrderEmail(data) { 
+async function sendWorkOrderEmail(data) {
+    console.log("Preparing to send work order email with data:", data);
     const { employeeEmail, workOrderId, workOrderTitle } = data;
-    if ( !employeeEmail || !workOrderId || !workOrderTitle) {
+    if (!employeeEmail || !workOrderId || !workOrderTitle) {
         console.log("Missing required data for sending work order email:", data);
         return;
     }
 
     try {
-         // Generate work order PDF
-        const pdfBuffer = generateWorkOrderPDF(data);
+        // Generate work order PDF
+        const pdfBuffer = await generateWorkOrderPDF(data);
 
         // create email
+        // TODO: revert to 'ATC Dashboard <admin@americantraffictx.com>' once that domain is verified in Resend
         await resend.emails.send({
-                from: 'ATC Dashboard <admin@americantraffictx.com>',
-                to: employeeEmail,
-                subject: `New Work Order Assigned: ${workOrderTitle}`,
-                text: `You have been assigned a new work order (ID: ${workOrderId}). Please review the attached PDF for details.`,
-                attachments: [
-                    { filename: `WorkOrder-${workOrderId}.pdf`, content: pdfBuffer, contentType: 'application/pdf'}
-                ]
-            });
+            from: 'ATC Dashboard <onboarding@resend.dev>',
+            to: employeeEmail,
+            subject: `New Work Order Assigned: ${workOrderTitle}`,
+            text: `You have been assigned a new work order (ID: ${workOrderId}). Please review the attached PDF for details.`,
+            attachments: [
+                { filename: `WorkOrder-${workOrderId}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }
+            ]
+        });
 
     } catch (error) {
         console.error("Error sending work order email:", error);
@@ -1350,18 +1354,52 @@ app.post('/api/contracts/work-orders', async(req, res) => {
         ]);
 
         for (const item of totalItems) {
-            const { bidItemId, qtyAssigned } = item;
+            const { bidItemId, qtyAssigned, mon, tue, wed, thu, fri, material, equipment } = item;
             const insertQuery = `
-                INSERT INTO line_items (work_order_id, bid_item_id, qty_assigned, qty_completed)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO line_items
+                    (work_order_id, bid_item_id, qty_assigned, qty_completed, mon, tue, wed, thu, fri, material, equipment)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             `;
-            await client.query(insertQuery, [result.rows[0].id, bidItemId, qtyAssigned, 0]);
+            await client.query(insertQuery, [
+                result.rows[0].id, bidItemId, qtyAssigned, 0, mon, tue, wed, thu, fri, material, equipment,
+            ]);
         }
 
         await client.query('COMMIT');
 
         // Send email notification to the assigned employee
+        try {
+            console.log("Preparing to send work order email for work order ID:", result.rows[0].work_order_id);
+            const bidItemIds = totalItems.map(item => item.bidItemId);
+
+            const [{rows: [employee] }, { rows: bidItems }, { rows: [contract] }, { rows: [client] }] = await Promise.all([
+                pool.query('SELECT email FROM employees WHERE id = $1', [assignee]),
+                pool.query('SELECT id, bid_item_no, description, unit_of_measure FROM bid_items WHERE id = ANY($1::int[])', [bidItemIds]),
+                pool.query('SELECT contract_name FROM contracts WHERE id = $1', [workOrderContractId]),
+                pool.query('SELECT name FROM clients WHERE id = $1', [workOrderClientId]),
+            ]);
+
+            if (employee && employee?.email) {
+                await sendWorkOrderEmail({
+                    employeeEmail: employee.email,
+                    workOrderId: result.rows[0].work_order_id,
+                    workOrderTitle: workOrderTitle,
+                    projectName: contract?.contract_name,
+                    customerName: client?.name,
+                    startDate: startDate,
+                    endDate: endDate,
+                    lineItems: totalItems,
+                    bidItems: bidItems
+                });
+            } else {
+                console.log("No employee found with ID:", assignee, "or employee has no email.");
+            }
+
+        } catch (error) {
+            console.error("Error sending work order email:", error);
+        }
         
+
 
         res.status(200).json({ success: true, workOrder: result.rows[0] });
     } catch (error) {
@@ -1373,7 +1411,7 @@ app.post('/api/contracts/work-orders', async(req, res) => {
     }
 })
 
-app.post('/api/contracts/work-orders/line-items/insert', async(req, res) => {
+app.post('/api/contracts/work-orders/line-items/insert', async (req, res) => {
     const { workOrderId, lineItems } = req.body;
     const client = await pool.connect();
 
