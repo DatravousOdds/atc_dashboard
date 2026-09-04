@@ -1481,6 +1481,303 @@ app.post('/api/contracts/work-orders/line-items/insert', async (req, res) => {
     }
 })
 
+// ===== Field progress reports (FieldLog) =====
+// A foreman reports quantities against one work order's line items via a
+// public token link (no login) - see /api/field-reports/*. Submitting only
+// records a pending weekly_reports row; nothing in line_items/work_orders
+// changes until an office admin approves it via /api/progress-reports/:id/approve.
+// See migrations/003_field_reports.sql for the schema.
+
+// Cumulative per-bid-item progress for a contract, computed live from
+// line_items.qty_completed (which only reflects *approved* reports) rather
+// than stored anywhere, so it can't go stale as later reports get approved.
+async function getContractBidItemProgress(contractId) {
+    const { rows } = await pool.query(
+        `SELECT bi.id, bi.bid_item_no, bi.description, bi.unit_of_measure, bi.quantity AS proposal,
+                COALESCE(SUM(li.qty_completed), 0) AS to_date
+         FROM bid_items bi
+         LEFT JOIN line_items li ON li.bid_item_id = bi.id
+         WHERE bi.contract_id = $1
+         GROUP BY bi.id, bi.bid_item_no, bi.description, bi.unit_of_measure, bi.quantity
+         ORDER BY bi.id`,
+        [contractId]
+    );
+
+    return rows.map((row) => {
+        const proposal = parseFloat(row.proposal);
+        const toDate = parseFloat(row.to_date);
+        return {
+            ...row,
+            proposal,
+            to_date: toDate,
+            remaining: proposal - toDate,
+            status: toDate > proposal ? 'Over' : toDate >= proposal ? 'Complete' : 'Open',
+        };
+    });
+}
+
+// Generates (or reuses) a work order's reusable report link.
+app.post('/api/field-reports/links', async (req, res) => {
+    const { workOrderId } = req.body;
+
+    try {
+        await pool.query(
+            `INSERT INTO field_report_links (work_order_id) VALUES ($1)
+             ON CONFLICT (work_order_id) DO NOTHING`,
+            [workOrderId]
+        );
+        const result = await pool.query(
+            'SELECT token FROM field_report_links WHERE work_order_id = $1',
+            [workOrderId]
+        );
+        res.json({ token: result.rows[0].token });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to generate report link' });
+    }
+});
+
+// Public - no session check. Powers the field report form: the work order's
+// own line items (what was assigned to that foreman), each with the bid
+// item's true contract-wide proposal/to-date for overage context.
+app.get('/api/field-reports/:token', async (req, res) => {
+    const { token } = req.params;
+
+    try {
+        const { rows: [context] } = await pool.query(
+            `SELECT wo.id AS work_order_id, wo.contract_id, wo.work_order_id AS work_order_code,
+                    wo.title, c.contract_name,
+                    NULLIF(TRIM(CONCAT(e.first_name, ' ', e.last_name)), '') AS assignee_name,
+                    cl.name AS customer_name
+             FROM field_report_links frl
+             JOIN work_orders wo ON wo.id = frl.work_order_id
+             JOIN contracts c ON c.id = wo.contract_id
+             LEFT JOIN clients cl ON cl.id = c.client_id
+             LEFT JOIN employees e ON e.id = wo.assignee
+             WHERE frl.token = $1`,
+            [token]
+        );
+
+        if (!context) {
+            return res.status(404).json({ error: 'Report link not found' });
+        }
+
+        const { rows: lineItems } = await pool.query(
+            `SELECT li.id AS line_item_id, li.bid_item_id, li.qty_assigned, li.qty_completed,
+                    bi.bid_item_no, bi.description, bi.unit_of_measure, bi.quantity AS proposal,
+                    (SELECT COALESCE(SUM(li2.qty_completed), 0)
+                     FROM line_items li2
+                     WHERE li2.bid_item_id = li.bid_item_id) AS prior
+             FROM line_items li
+             JOIN bid_items bi ON bi.id = li.bid_item_id
+             WHERE li.work_order_id = $1
+             ORDER BY li.id`,
+            [context.work_order_id]
+        );
+
+        res.json({ ...context, lineItems });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to load report link' });
+    }
+});
+
+// Public - no session check. Records a pending report only; line_items/
+// work_orders are untouched until office approval.
+app.post('/api/field-reports/:token/submit', async (req, res) => {
+    const { token } = req.params;
+    const { weekStart, weekEnd, foremanName, crewNotes, items } = req.body;
+    const client = await pool.connect();
+
+    try {
+        const linkResult = await client.query(
+            'SELECT work_order_id FROM field_report_links WHERE token = $1',
+            [token]
+        );
+
+        if (linkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Report link not found' });
+        }
+
+        const workOrderId = linkResult.rows[0].work_order_id;
+        const submittedItems = Array.isArray(items) ? items : [];
+
+        await client.query('BEGIN');
+
+        const reportResult = await client.query(
+            `INSERT INTO weekly_reports (work_order_id, week_start, week_end, foreman_name, crew_notes)
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [workOrderId, weekStart, weekEnd, foremanName, crewNotes]
+        );
+        const weeklyReportId = reportResult.rows[0].id;
+
+        for (const item of submittedItems) {
+            await client.query(
+                `INSERT INTO weekly_report_line_items (weekly_report_id, bid_item_id, qty_this_week)
+                 VALUES ($1, $2, $3)`,
+                [weeklyReportId, item.bidItemId, item.qtyThisWeek]
+            );
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, weeklyReportId });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to submit report' });
+    } finally {
+        client.release();
+    }
+});
+
+// Overview for the Progress Reports tab: completion stats, overage flags,
+// and the list of weekly submissions for a contract.
+app.get('/api/contracts/:contractId/progress-reports', async (req, res) => {
+    const { contractId } = req.params;
+
+    try {
+        const items = await getContractBidItemProgress(contractId);
+        const totalProposal = items.reduce((sum, i) => sum + i.proposal, 0);
+        const totalToDate = items.reduce((sum, i) => sum + i.to_date, 0);
+        const completionPercent = totalProposal > 0 ? (totalToDate / totalProposal) * 100 : 0;
+        const overageFlags = items.filter((i) => i.status === 'Over');
+
+        const { rows: reports } = await pool.query(
+            `SELECT wr.id, wr.week_start, wr.week_end, wr.foreman_name, wr.status, wr.submitted_at,
+                    wo.work_order_id AS work_order_code, wo.title,
+                    'WPR-' || LPAD(wr.id::text, 4, '0') AS report_code,
+                    (SELECT COUNT(*) FROM weekly_report_line_items wrli WHERE wrli.weekly_report_id = wr.id) AS line_item_count,
+                    (SELECT COALESCE(SUM(wrli.qty_this_week), 0) FROM weekly_report_line_items wrli WHERE wrli.weekly_report_id = wr.id) AS total_units
+             FROM weekly_reports wr
+             JOIN work_orders wo ON wo.id = wr.work_order_id
+             WHERE wo.contract_id = $1
+             ORDER BY wr.submitted_at DESC`,
+            [contractId]
+        );
+
+        res.json({
+            completionPercent: Math.round(completionPercent * 100) / 100,
+            weeksSubmitted: reports.filter((r) => r.status === 'approved').length,
+            awaitingReview: reports.filter((r) => r.status === 'pending').length,
+            itemsOverProposal: overageFlags.length,
+            overageFlags,
+            reports,
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to load progress reports' });
+    }
+});
+
+// Detail view for one weekly submission (the "Weekly submissions" panel).
+app.get('/api/progress-reports/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { rows: [report] } = await pool.query(
+            `SELECT wr.id, wr.work_order_id, wr.week_start, wr.week_end, wr.foreman_name,
+                    wr.crew_notes, wr.status, wr.submitted_at, wr.approved_at,
+                    wo.work_order_id AS work_order_code, wo.title
+             FROM weekly_reports wr
+             JOIN work_orders wo ON wo.id = wr.work_order_id
+             WHERE wr.id = $1`,
+            [id]
+        );
+
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        const { rows: items } = await pool.query(
+            `SELECT wrli.bid_item_id, wrli.qty_this_week,
+                    bi.bid_item_no, bi.description, bi.unit_of_measure
+             FROM weekly_report_line_items wrli
+             JOIN bid_items bi ON bi.id = wrli.bid_item_id
+             WHERE wrli.weekly_report_id = $1
+             ORDER BY bi.id`,
+            [id]
+        );
+
+        res.json({ ...report, items });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to load report' });
+    }
+});
+
+// "Contract to date" tab: every bid item on the contract with cumulative status.
+app.get('/api/contracts/:contractId/progress-reports/to-date', async (req, res) => {
+    const { contractId } = req.params;
+
+    try {
+        const items = await getContractBidItemProgress(contractId);
+        res.json(items);
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to load contract to-date' });
+    }
+});
+
+// The only route that actually writes qty_completed for a field report -
+// everything before this point just records what was submitted.
+app.post('/api/progress-reports/:id/approve', async (req, res) => {
+    const { id } = req.params;
+    const client = await pool.connect();
+
+    try {
+        const { rows: [report] } = await pool.query(
+            'SELECT id, work_order_id, status FROM weekly_reports WHERE id = $1',
+            [id]
+        );
+
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+        if (report.status === 'approved') {
+            return res.status(400).json({ error: 'Report already approved' });
+        }
+
+        const { rows: items } = await pool.query(
+            'SELECT bid_item_id, qty_this_week FROM weekly_report_line_items WHERE weekly_report_id = $1',
+            [id]
+        );
+
+        await client.query('BEGIN');
+
+        const skippedBidItems = [];
+        for (const item of items) {
+            const result = await client.query(
+                `UPDATE line_items SET qty_completed = qty_completed + $1
+                 WHERE work_order_id = $2 AND bid_item_id = $3
+                 RETURNING id`,
+                [item.qty_this_week, report.work_order_id, item.bid_item_id]
+            );
+            if (result.rows.length === 0) skippedBidItems.push(item.bid_item_id);
+        }
+
+        await client.query(
+            `UPDATE weekly_reports SET status = 'approved', approved_at = NOW() WHERE id = $1`,
+            [id]
+        );
+
+        await client.query('COMMIT');
+
+        // Run after COMMIT, via pool, matching the existing convention (see
+        // the work order creation route) - syncWorkOrderProgress uses pool
+        // internally, so calling it inside this transaction's client would
+        // let its writes escape a later rollback.
+        await syncWorkOrderProgress(report.work_order_id);
+
+        res.json({ success: true, skippedBidItems });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error.message);
+        res.status(500).json({ error: 'Failed to approve report' });
+    } finally {
+        client.release();
+    }
+});
+
 // Bond capacity used by active prime contracts, broken out per project. Bonds
 // are carried by the prime, not subcontractors, so subcontractor contracts
 // don't count against capacity. total_bid_amount is used as a proxy for bond

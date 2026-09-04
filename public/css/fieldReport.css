@@ -1,0 +1,226 @@
+/* Standalone field report page - no login, no sidebar shell. Uses the same
+   variables.css tokens as the rest of the app so it reads as one product,
+   without pulling in styles.css/workOrders.css component rules that are
+   scoped to specific dark modal chrome (see #workOrderForm in workOrders.css). */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--background-prime);
+    color: var(--main-text-color);
+    line-height: 1.5;
+    padding: var(--spacing-xl) var(--spacing-md) 4rem;
+}
+
+.fr-header {
+    max-width: 760px;
+    margin: 0 auto var(--spacing-lg);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.fr-header h1 {
+    font-size: 1.35rem;
+    color: var(--color-prime);
+}
+
+.fr-header .fr-wo-code {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+}
+
+.fr-card {
+    max-width: 760px;
+    margin: 0 auto var(--spacing-lg);
+    background: #fff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+body[data-theme="dark"] .fr-card { background: var(--navy-light); }
+
+.fr-card h2 {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.fr-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md) var(--spacing-lg);
+}
+
+.fr-field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.fr-field input,
+.fr-field select,
+.fr-field textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--background-prime);
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+}
+
+.fr-field.readonly input {
+    background: var(--navy-light);
+    color: var(--text-color);
+}
+
+.fr-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.fr-count {
+    font-size: 0.8rem;
+    color: var(--text-color);
+}
+
+.fr-table-wrap { overflow-x: auto; }
+
+.fr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.fr-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-color);
+    padding: 0.5rem 0.6rem;
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.fr-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--border-color-light);
+    vertical-align: middle;
+}
+
+.fr-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.fr-table input.fr-qty-input {
+    width: 5.5rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.fr-table tr.fr-over td { background: rgba(228, 32, 34, 0.06); }
+.fr-table tr.fr-over input.fr-qty-input { border-color: var(--color-danger); }
+
+.fr-overage-note {
+    font-size: 0.75rem;
+    color: var(--color-danger);
+    margin-top: 0.15rem;
+}
+
+.fr-summary {
+    max-width: 760px;
+    margin: 0 auto var(--spacing-lg);
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.fr-summary .stat {
+    flex: 1;
+    min-width: 140px;
+    background: #fff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+}
+body[data-theme="dark"] .fr-summary .stat { background: var(--navy-light); }
+
+.fr-summary .stat .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-color);
+}
+.fr-summary .stat .value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-top: 0.15rem;
+}
+.fr-summary .stat.warn .value { color: var(--color-danger); }
+
+.fr-actions {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+.fr-btn {
+    padding: 0.65rem 1.4rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+body[data-theme="dark"] .fr-btn { background: var(--navy-light); }
+
+.fr-btn.primary {
+    background: var(--color-prime);
+    border-color: var(--color-prime);
+    color: #fff;
+}
+.fr-btn.primary:hover { opacity: 0.9; }
+.fr-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.fr-confirm {
+    max-width: 520px;
+    margin: 4rem auto;
+    text-align: center;
+}
+.fr-confirm i {
+    font-size: 2.5rem;
+    color: var(--color-success);
+    margin-bottom: var(--spacing-md);
+}
+.fr-confirm h1 { font-size: 1.3rem; margin-bottom: var(--spacing-sm); }
+.fr-confirm p { color: var(--text-color); }
+
+.fr-error {
+    max-width: 520px;
+    margin: 4rem auto;
+    text-align: center;
+    color: var(--color-danger);
+}
+
+[hidden] { display: none !important; }

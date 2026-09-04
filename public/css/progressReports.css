@@ -1,0 +1,235 @@
+/* Progress Reports tab - built with the same tokens as the rest of the
+   dashboard shell (variables.css), sized for stat tiles + a two-column
+   review layout rather than reusing workOrders.css's KPI-card internals,
+   which are purpose-built for the completed/assigned/cycle-time trio. */
+
+#prContractSelect {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--background-prime);
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+}
+
+.pr-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.pr-stat {
+    background: var(--container-background-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+}
+body[data-theme="dark"] .pr-stat { background: var(--navy-light); }
+
+.pr-stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pr-stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 0.35rem;
+    color: var(--main-text-color);
+}
+.pr-stat-value.warn { color: var(--color-danger); }
+
+.pr-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--navy-medium);
+    margin-top: 0.6rem;
+    overflow: hidden;
+}
+.pr-progress-fill {
+    height: 100%;
+    background: var(--color-prime);
+    width: 0%;
+    transition: var(--transition);
+}
+
+.pr-overage-panel {
+    background: rgba(228, 32, 34, 0.06);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+.pr-overage-panel h3 {
+    color: var(--color-danger);
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.pr-overage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spacing-sm);
+}
+.pr-overage-card {
+    background: var(--background-prime);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+}
+.pr-overage-card .code { color: var(--text-color); font-size: 0.75rem; }
+.pr-overage-card .desc { font-weight: 600; margin: 0.15rem 0; }
+.pr-overage-card .amt { color: var(--color-danger); font-weight: 600; }
+
+.pr-subtabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+}
+.pr-subtab {
+    padding: 0.6rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.pr-subtab.active {
+    color: var(--color-prime);
+    border-bottom-color: var(--color-prime);
+    font-weight: 600;
+}
+
+.pr-submissions-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: var(--spacing-md);
+}
+
+.pr-submissions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pr-submission-card {
+    background: var(--container-background-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+body[data-theme="dark"] .pr-submission-card { background: var(--navy-light); }
+.pr-submission-card.active { border-color: var(--color-prime); }
+.pr-submission-card .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+.pr-submission-card .meta {
+    font-size: 0.78rem;
+    color: var(--text-color);
+    margin-top: 0.2rem;
+}
+
+.pr-badge {
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+.pr-badge.pending { background: rgba(199, 125, 18, 0.15); color: var(--color-warning); }
+.pr-badge.approved { background: rgba(30, 123, 77, 0.15); color: var(--color-success); }
+
+.pr-submission-detail {
+    background: var(--container-background-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+}
+body[data-theme="dark"] .pr-submission-detail { background: var(--navy-light); }
+
+.pr-empty { color: var(--text-color); font-size: 0.9rem; }
+
+.pr-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+.pr-detail-header h3 { font-size: 1.05rem; }
+.pr-detail-header .sub { font-size: 0.82rem; color: var(--text-color); margin-top: 0.15rem; }
+
+.pr-crew-note {
+    background: var(--background-prime);
+    border-left: 3px solid var(--color-prime);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    margin: var(--spacing-sm) 0;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.pr-table-wrap { overflow-x: auto; }
+.pr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.pr-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-color);
+    padding: 0.5rem 0.6rem;
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+}
+.pr-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+.pr-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pr-table tr.over td { background: rgba(228, 32, 34, 0.06); }
+
+.pr-status-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+}
+.pr-status-chip.Complete { background: rgba(30, 123, 77, 0.15); color: var(--color-success); }
+.pr-status-chip.Open { background: var(--navy-light); color: var(--text-color); }
+.pr-status-chip.Over { background: rgba(228, 32, 34, 0.15); color: var(--color-danger); }
+
+.pr-approve-btn {
+    padding: 0.5rem 1.1rem;
+    background: var(--color-prime);
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.pr-approve-btn:hover { opacity: 0.9; }
+.pr-approve-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+[hidden] { display: none !important; }

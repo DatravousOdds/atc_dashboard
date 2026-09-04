@@ -413,7 +413,8 @@ const workOrdersTable = $('#workOrders-table').DataTable({
             title: 'VALUE', defaultContent: '-'},
         {data: null, title: '', orderable: false,
             render: function(data) {
-                return `<button type="button" class="delete-wo-btn" data-id="${data.id}" aria-label="Delete work order"><i class="fa-solid fa-trash"></i></button>`;
+                return `<button type="button" class="copy-report-link-btn" data-id="${data.id}" aria-label="Copy progress report link"><i class="fa-solid fa-link"></i></button>` +
+                       `<button type="button" class="delete-wo-btn" data-id="${data.id}" aria-label="Delete work order"><i class="fa-solid fa-trash"></i></button>`;
             },
             defaultContent: ''},
     ],
@@ -563,6 +564,29 @@ workOrdersTable.on('draw', function() {
 
 $('#workOrders-table tbody').on('click', 'tr', function() {
     selectWorkOrderRow(this);
+});
+
+$('#workOrders-table tbody').on('click', '.copy-report-link-btn', async function(e) {
+    e.stopPropagation();
+
+    const id = $(this).data('id');
+
+    try {
+        const res = await fetch('/api/field-reports/links', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workOrderId: id }),
+        });
+        if (!res.ok) throw new Error(`HTTP status error: ${res.status}`);
+
+        const { token } = await res.json();
+        const link = `${window.location.origin}/field-report.html?token=${token}`;
+        await navigator.clipboard.writeText(link);
+        alert('Progress report link copied to clipboard:\n' + link);
+    } catch (err) {
+        console.error('Failed to generate report link:', err);
+        alert('Failed to generate report link. Please try again.');
+    }
 });
 
 $('#workOrders-table tbody').on('click', '.delete-wo-btn', function(e) {

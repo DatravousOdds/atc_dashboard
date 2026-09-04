@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="./css/variables.css">
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="stylesheet" href="./css/workOrders.css">
+    <link rel="stylesheet" href="./css/progressReports.css">
     <!-- Font Awesome-->
     <script src="https://kit.fontawesome.com/854f8a6196.js" crossorigin="anonymous"></script>
     <!-- JQuery-->
@@ -56,6 +57,10 @@
                 <li data-tab="workOrderContent">
                     <i class="fa-solid fa-clipboard"></i>
                     Work Orders
+                </li>
+                <li data-tab="workOrderContent" data-wosubtab="progressReports" class="sidebar-sub-item">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    Progress Reports
                 </li>
                 <li data-tab="reportsContent">
                     <i class="fa-solid fa-chart-column"></i>
@@ -430,6 +435,8 @@
                         </button>
                     </div>
                 </div>
+
+                <div id="woMainView">
                 <!-- Project -->
                 <div class="project-wrapper">
                     <div class="project-container">
@@ -585,10 +592,82 @@
                             <tbody>
                                 <!-- Data rows will be populated here dynamically -->
                             </tbody>
-                        </table>  
+                        </table>
                     </div>
                 </div>
-            </div>
+                </div><!-- /woMainView -->
+
+                <div id="woProgressReportsView" hidden>
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <p>Work Orders / <span>Progress Reports</span></p>
+                        <h1 id="prContractTitle">Progress Reports</h1>
+                    </div>
+                    <div class="content-cta">
+                        <select id="prContractSelect" aria-label="Select project"></select>
+                    </div>
+                </div>
+
+                <div class="pr-stats">
+                    <div class="pr-stat">
+                        <div class="pr-stat-label"><i class="fa-solid fa-arrow-trend-up"></i> Contract Complete</div>
+                        <div class="pr-stat-value" id="prCompletePercent">0%</div>
+                        <div class="pr-progress-bar"><div class="pr-progress-fill" id="prCompleteBar"></div></div>
+                    </div>
+                    <div class="pr-stat">
+                        <div class="pr-stat-label"><i class="fa-solid fa-circle-check"></i> Weeks Submitted</div>
+                        <div class="pr-stat-value" id="prWeeksSubmitted">0</div>
+                    </div>
+                    <div class="pr-stat">
+                        <div class="pr-stat-label"><i class="fa-solid fa-cloud-arrow-up"></i> Awaiting Review</div>
+                        <div class="pr-stat-value" id="prAwaitingReview">0</div>
+                    </div>
+                    <div class="pr-stat">
+                        <div class="pr-stat-label"><i class="fa-solid fa-triangle-exclamation"></i> Items Over Proposal</div>
+                        <div class="pr-stat-value warn" id="prItemsOver">0</div>
+                    </div>
+                </div>
+
+                <div class="pr-overage-panel" id="prOveragePanel" hidden>
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> Overage Flags</h3>
+                    <div class="pr-overage-grid" id="prOverageGrid"></div>
+                </div>
+
+                <div class="pr-subtabs">
+                    <button type="button" class="pr-subtab active" data-subtab="submissions">Weekly submissions</button>
+                    <button type="button" class="pr-subtab" data-subtab="toDate">Contract to date</button>
+                </div>
+
+                <div class="pr-panel" id="prSubmissionsPanel">
+                    <div class="pr-submissions-layout">
+                        <div class="pr-submissions-list" id="prSubmissionsList"></div>
+                        <div class="pr-submission-detail" id="prSubmissionDetail">
+                            <p class="pr-empty">Select a submission to view its details.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-panel" id="prToDatePanel" hidden>
+                    <div class="pr-table-wrap">
+                        <table class="pr-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Description</th>
+                                    <th>Unit</th>
+                                    <th class="num">Proposal</th>
+                                    <th class="num">To Date</th>
+                                    <th class="num">Remaining</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prToDateBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                </div><!-- /woProgressReportsView -->
+            </div><!-- /workOrderContent -->
+
             <div id="reportsContent" class="tab-content" data-content="reports">
 
                 <!-- STEP 1: Choose report type -->
@@ -1084,6 +1163,7 @@
     <script src="js/workOrders.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/dataTables.js"></script>
+    <script src="js/progressReports.js"></script>
     <script src="js/reports.js"></script>
     
     

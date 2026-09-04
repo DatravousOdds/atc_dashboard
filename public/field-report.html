@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Progress Report</title>
+    <link rel="icon" type="image/png" href="./assets/favicon-96x96.png">
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/fieldReport.css">
+    <script src="https://kit.fontawesome.com/854f8a6196.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div id="loadingState" class="fr-confirm">
+        <p>Loading report&hellip;</p>
+    </div>
+
+    <div id="errorState" class="fr-error" hidden>
+        <h1>Link not found</h1>
+        <p>This report link isn't valid, or the work order it points to no longer exists. Contact your office admin for a new link.</p>
+    </div>
+
+    <div id="confirmState" class="fr-confirm" hidden>
+        <i class="fa-solid fa-circle-check"></i>
+        <h1>Report submitted</h1>
+        <p>Thanks — your weekly quantities have been sent to the office for review.</p>
+    </div>
+
+    <div id="formState" hidden>
+        <div class="fr-header">
+            <div>
+                <h1 id="woTitle">Weekly Progress Report</h1>
+                <div class="fr-wo-code" id="woCode"></div>
+            </div>
+        </div>
+
+        <div class="fr-card">
+            <h2>Report Period &amp; Project</h2>
+            <div class="fr-info-grid">
+                <div class="fr-field">
+                    <label for="weekSelect">Reporting week (Sun&ndash;Sat)</label>
+                    <select id="weekSelect"></select>
+                </div>
+                <div class="fr-field readonly">
+                    <label>Customer</label>
+                    <input type="text" id="customerName" readonly>
+                </div>
+                <div class="fr-field readonly">
+                    <label>Project</label>
+                    <input type="text" id="projectName" readonly>
+                </div>
+                <div class="fr-field">
+                    <label for="foremanName">Foreman</label>
+                    <input type="text" id="foremanName" placeholder="Your name">
+                </div>
+            </div>
+        </div>
+
+        <div class="fr-card">
+            <div class="fr-toolbar">
+                <h2 style="margin-bottom:0">Quantities This Week</h2>
+                <span class="fr-count" id="itemCount"></span>
+            </div>
+            <div class="fr-table-wrap">
+                <table class="fr-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Description</th>
+                            <th>Unit</th>
+                            <th class="num">Proposal</th>
+                            <th class="num">Prior</th>
+                            <th class="num">This Week</th>
+                            <th class="num">To Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="fr-card">
+            <h2>Crew Notes</h2>
+            <textarea id="crewNotes" rows="4" placeholder="Delays, weather, change-order work, safety items..."></textarea>
+        </div>
+
+        <div class="fr-summary">
+            <div class="stat">
+                <div class="label">Line items reported</div>
+                <div class="value" id="statReported">0</div>
+            </div>
+            <div class="stat warn">
+                <div class="label">Overages flagged</div>
+                <div class="value" id="statOverages">0</div>
+            </div>
+        </div>
+
+        <div class="fr-actions">
+            <button type="button" class="fr-btn primary" id="submitBtn">Submit report</button>
+        </div>
+    </div>
+
+    <script src="./js/fieldReport.js"></script>
+</body>
+</html>
