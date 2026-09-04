@@ -545,6 +545,19 @@ workOrdersTable.on('draw', function() {
 
             if (appState.lineItemsTable) appState.lineItemsTable.ajax.reload();
         }
+    } else {
+        // ajax.reload() redraws every row from scratch, which drops the
+        // row-selected class even though the selection itself hasn't changed -
+        // re-apply it and refresh the cached row data (progress/status may
+        // have just changed from a line item edit).
+        const selectedRow = workOrdersTable.rows().nodes().filter(
+            tr => workOrdersTable.row(tr).data()?.id === appState.selectedWorkOrderId
+        );
+        if (selectedRow.length) {
+            $('#workOrders-table tbody tr').removeClass('row-selected');
+            $(selectedRow).addClass('row-selected');
+            appState.selectedWorkOrderData = workOrdersTable.row(selectedRow[0]).data();
+        }
     }
 });
 
@@ -556,15 +569,22 @@ $('#workOrders-table tbody').on('click', '.delete-wo-btn', function(e) {
     e.stopPropagation();
 
     const id = $(this).data('id');
+    // Captured before delete/reload wipes the row - this is the deleted work
+    // order's own contract, which may differ from appState.contractId (the
+    // page's separate filter, null when viewing "all projects").
+    const rowContractId = workOrdersTable.row($(this).closest('tr')).data()?.contract_id;
     if (!confirm('Permanently delete this work order? This cannot be undone.')) return;
 
     fetch(`/api/contracts/work-orders/${id}`, { method: 'DELETE' })
-        .then(res => {
+        .then(async res => {
             if (!res.ok) throw new Error(`HTTP status error: ${res.status}`);
             if (appState.selectedWorkOrderId === id) {
                 appState.selectedWorkOrderId = undefined;
             }
             workOrdersTable.ajax.reload();
+            if (rowContractId) {
+                window.displayWorkOrdersKPIs(await window.getWorkOrdersKPIs(rowContractId));
+            }
         })
         .catch(err => {
             console.error('Failed to delete work order:', err);
@@ -730,8 +750,29 @@ $('#lineItems-table tbody').on('click', '.edit-line-item-btn', function() {
     }
 
     if (qtyCompleted.length) {
-        qtyCompleted.html(`<input type="number" class="qty-edit-input qty-completed-input" value="${data.qty_completed}" min="0">`);
+        qtyCompleted.html(`<input type="number" class="qty-edit-input qty-completed-input" value="${data.qty_completed}" min="0" max="${data.qty_assigned}">`);
     }
+
+    // Keep qty completed from exceeding qty assigned - the "max" attribute alone
+    // only affects the spinner buttons/validity state, not typed input, and needs
+    // to track qty assigned live since both fields are editable in the same row.
+    const qtyAssignedInput = rowNode.find('.qty-assigned-input');
+    const qtyCompletedInput = rowNode.find('.qty-completed-input');
+
+    qtyAssignedInput.on('input', function() {
+        const assignedVal = parseInt(this.value) || 0;
+        qtyCompletedInput.attr('max', assignedVal);
+        if (parseInt(qtyCompletedInput.val()) > assignedVal) {
+            qtyCompletedInput.val(assignedVal);
+        }
+    });
+
+    qtyCompletedInput.on('input', function() {
+        const assignedVal = parseInt(qtyAssignedInput.val()) || 0;
+        if (parseInt(this.value) > assignedVal) {
+            this.value = assignedVal;
+        }
+    });
 
     if (actions.length) {
         actions.html(`
@@ -764,14 +805,23 @@ $('#lineItems-table tbody').on('click', '.save-qty-btn', async function() {
         });
 
         if (!res.ok) {
-            throw new Error(`Failed to update line item (status ${res.status})`);
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || `Failed to update line item (status ${res.status})`);
         }
     } catch (err) {
         console.log(err.message);
-        
+        alert(err.message);
     }
 
     lineItemsTable.ajax.reload();
+    workOrdersTable.ajax.reload();
+    // Line items belong to the currently selected work order, so its own
+    // contract_id is the correct one to refresh - not appState.contractId,
+    // the page's separate filter (null when viewing "all projects").
+    const selectedContractId = appState.selectedWorkOrderData?.contract_id;
+    if (selectedContractId) {
+        window.displayWorkOrdersKPIs(await window.getWorkOrdersKPIs(selectedContractId));
+    }
 });
 
 $('#lineItems-table tbody').on('click', '.delete-line-item-btn', async function(e) {
@@ -791,6 +841,11 @@ $('#lineItems-table tbody').on('click', '.delete-line-item-btn', async function(
         }
 
         lineItemsTable.ajax.reload();
+        workOrdersTable.ajax.reload();
+        const selectedContractId = appState.selectedWorkOrderData?.contract_id;
+        if (selectedContractId) {
+            window.displayWorkOrdersKPIs(await window.getWorkOrdersKPIs(selectedContractId));
+        }
     } catch (err) {
         console.error('Failed to delete line item:', err);
         alert('Failed to delete line item. Please try again.');

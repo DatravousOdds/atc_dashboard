@@ -1066,8 +1066,11 @@ app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
         COUNT(*) FILTER(WHERE status = 'in progress') as total_in_progress
         FROM work_orders
         WHERE contract_id = $1
-        AND start_date >= NOW() - INTERVAL '2 week'
-        AND start_date < NOW() - INTERVAL '1 week'
+        -- updated_at reflects when status last changed (set by syncWorkOrderProgress),
+        -- which is what a completion trend should track - start_date is when work was
+        -- scheduled to begin, unrelated to when it was actually completed.
+        AND updated_at >= NOW() - INTERVAL '2 week'
+        AND updated_at < NOW() - INTERVAL '1 week'
     )
 
     SELECT
@@ -1084,7 +1087,9 @@ app.get('/api/contracts/work-orders/:id/kpis', async(req, res) => {
         COUNT(*) as total_assigned,
         COUNT(*) FILTER(WHERE status = 'in progress') as total_in_progress,
         COALESCE(COUNT(*) FILTER(WHERE status = 'in progress') - MAX(lw.total_in_progress), 0) as wow_assigned_count,
-        COALESCE(AVG(due_date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
+        -- Actual elapsed time to completion, not the planned window - due_date - start_date
+        -- would show the same value regardless of whether work finished early or late.
+        COALESCE(AVG(updated_at::date - start_date) FILTER(WHERE status = 'completed'), 0) as avg_cycle_time
     FROM work_orders
     CROSS JOIN last_week_completed_work_orders lw
     WHERE contract_id = $1
@@ -1173,15 +1178,51 @@ app.get('/api/contracts/work-orders/line-items/export', async(req, res) => {
     }
 });
 
+// line_items is the source of truth for completion - work_orders.items_completed/
+// total_items/status are cached counts derived from it (read by the KPI queries
+// and the Work Orders table's progress bar), so they need to be resynced any
+// time a line item changes.
+async function syncWorkOrderProgress(workOrderId) {
+    const { rows: [counts] } = await pool.query(
+        `SELECT
+            COUNT(*) AS total_items,
+            COUNT(*) FILTER (WHERE qty_completed >= qty_assigned) AS items_completed
+         FROM line_items WHERE work_order_id = $1`,
+        [workOrderId]
+    );
+
+    const totalItems = parseInt(counts.total_items);
+    const itemsCompleted = parseInt(counts.items_completed);
+    const status = totalItems === 0 ? 'pending'
+        : itemsCompleted === totalItems ? 'completed'
+        : itemsCompleted > 0 ? 'in progress'
+        : 'pending';
+
+    await pool.query(
+        `UPDATE work_orders SET items_completed = $1, total_items = $2, status = $3, updated_at = NOW() WHERE id = $4`,
+        [itemsCompleted, totalItems, status, workOrderId]
+    );
+}
+
 app.patch('/api/contracts/work-orders/line-items/:id', async(req,res) => {
     const { id } = req.params;
     const { qtyAssigned, qtyCompleted } = req.body;
+
+    // Enforced server-side too - the frontend caps this in the UI, but that's
+    // bypassable (devtools, disabled JS), and qty_completed driving work order
+    // completion status means bad data here would corrupt status/progress.
+    if (parseInt(qtyCompleted) > parseInt(qtyAssigned)) {
+        return res.status(400).json({ error: 'Qty completed cannot exceed qty assigned' });
+    }
 
     try {
         const result = await pool.query(
             `UPDATE line_items SET qty_completed = $1, qty_assigned = $2 WHERE id = $3 RETURNING *
             `,[parseInt(qtyCompleted), parseInt(qtyAssigned), id]
         );
+
+        await syncWorkOrderProgress(result.rows[0].work_order_id);
+
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error.message)
@@ -1193,11 +1234,13 @@ app.delete('/api/contracts/work-orders/line-items/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM line_items WHERE id = $1 RETURNING id', [id]);
+        const result = await pool.query('DELETE FROM line_items WHERE id = $1 RETURNING id, work_order_id', [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Line item not found' });
         }
+
+        await syncWorkOrderProgress(result.rows[0].work_order_id);
 
         res.status(200).json({ success: true });
     } catch (error) {
@@ -1213,6 +1256,7 @@ app.get('/api/contracts/work-orders/:id', async (req, res) => {
 
     let query = `SELECT
                     wo.id,
+                    wo.contract_id,
                     wo.work_order_id,
                     wo.title,
                     NULLIF(TRIM(CONCAT(e.first_name, ' ', e.last_name)), '') AS assignee_name,

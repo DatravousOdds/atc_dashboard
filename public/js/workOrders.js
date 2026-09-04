@@ -1,3 +1,12 @@
+// Exposed first, before anything else in this module runs - getWorkOrdersKPIs/
+// displayWorkOrdersKPIs are function declarations (hoisted, fully defined already),
+// so this doesn't need to wait. dataTables.js (a classic script, no module scope)
+// calls these via window the same way shared.js exposes window.appState - if this
+// sat at the bottom of the file instead, any error anywhere above it in this ~1000
+// line module would silently stop it from ever running, leaving window.* undefined.
+window.getWorkOrdersKPIs = getWorkOrdersKPIs;
+window.displayWorkOrdersKPIs = displayWorkOrdersKPIs;
+
 const workOrderDropdown = document.getElementById("wo-project-dropdown");
 const searchBtn = document.getElementById("searchBtn");
 const workOrderProjectDropdown = document.querySelector(".wo-project-dropdown");
@@ -480,7 +489,7 @@ searchBtn.addEventListener("click", () => {
 
 workOrderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
+    
     const formData = new FormData(e.target);
     const formProps = Object.fromEntries(formData);
     // console.log("data collected:", formProps);
@@ -560,6 +569,14 @@ workOrderForm.addEventListener('submit', async (e) => {
     document.body.style.overflow = 'auto';
     resetWorkOrderForm();
     appState.workOrdersTable.ajax.reload();
+
+    // Refresh using the contract this work order was actually created under
+    // (picked in the modal's project search), not appState.contractId - that's
+    // a separate page-level filter for the table view and may be null (viewing
+    // "all") even though the work order itself always has a real contract id.
+    const kpiData = await getWorkOrdersKPIs(finalPayload.workOrderContractId);
+    console.log("KPI data after work order submit:", kpiData);
+    displayWorkOrdersKPIs(kpiData);
 });
 
 
@@ -777,14 +794,14 @@ function displayWorkOrdersKPIs(data) {
     totalWorkOrdersAssigned.innerText = data.total_work_orders;
     workOrdersCompletedPercent.innerHTML = `<p>${data.completion_percent || 0 }% completed</p>`;
     workOrderCompletedTrend.innerHTML = `
-    <i class"fa-solid fa-caret-${parseFloat(data.wow_completed_percent) > 0 ? "down" : "up"}></i>
+    <i class="fa-solid fa-caret-${parseFloat(data.wow_completed_percent) > 0 ? "down" : "up"}"></i>
     <p>${data.wow_completed_percent}% vs last week</p>
     `;
 
     totalAssignedWorkOrders.innerText = data.total_assigned;
     totalAssignedInProgress.innerHTML = `<p>${data.total_in_progress} in progress</p>`;
     totalAssignedTrend.innerHTML = 
-    `<i class"fa-solid fa-caret-${parseInt(data.wow_assigned_count) > 0 ? "down" : "up"}></i>
+    `<i class="fa-solid fa-caret-${parseInt(data.wow_assigned_count) > 0 ? "down" : "up"}"></i>
     <p class="kpi-trend-value">${data.wow_assigned_count} this week</p>`
     
 
